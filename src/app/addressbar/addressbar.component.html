@@ -1,0 +1,56 @@
+<p-card [dt]="cardStyles">
+  <p-breadcrumb
+    class="card"
+    [model]="items()"
+    [home]="home"
+    [dt]="breadcrumbStyles"
+  >
+    <ng-template #separator>
+      <!-- <i class="pi pi-chevron-right"></i> -->
+      <p-divider layout="vertical" />
+    </ng-template>
+
+    <ng-template #item let-item>
+      @let isFolder = (item.depth || 0) > 0;
+      @let itemIcon = isFolder ? "pi pi-folder" : "pi pi-file";
+      @let itemLabel = item.title || "";
+      @let routerLink =
+        "/storage/" + (isFolder ? item.root + "/" + item.id : "");
+
+      <ng-container *ngIf="routerLink; else elseBlock">
+        <a
+          [routerLink]="routerLink"
+          class="p-breadcrumb-item-link"
+          [pTooltip]="itemLabel"
+          tooltipPosition="top"
+        >
+          <p-message
+            severity="info"
+            variant="simple"
+            [icon]="itemIcon"
+            size="small"
+          >
+            <span class="font-semibold">{{
+              isFolder ? "Folder" : "File"
+            }}</span>
+          </p-message>
+        </a>
+      </ng-container>
+
+      <ng-template #elseBlock>
+        <a class="cursor-pointer" [href]="item.url">
+          <p-message
+            severity="info"
+            variant="simple"
+            [icon]="itemIcon"
+            size="small"
+            [pTooltip]="itemLabel"
+            tooltipPosition="top"
+          >
+            <span class="">{{ isFolder ? "Folder" : "File" }}</span>
+          </p-message>
+        </a>
+      </ng-template>
+    </ng-template>
+  </p-breadcrumb>
+</p-card>

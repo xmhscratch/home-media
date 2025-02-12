@@ -1,0 +1,16 @@
+{
+  "id": "com.home-media.me",
+  "version": "1.0.0",
+  "vendor": "xmhscratch",
+  "type": "web",
+  "main": "index.html",
+  "title": "Home Media",
+  "appDescription": "WebOS TV",
+  "icon": "icon.png",
+  "largeIcon": "largeIcon.png",
+  "splashBackground": "icon.png",
+  "bgImage": "icon.png",
+  "bgColor": "#F37521",
+  "iconColor": "#F37521",
+  "disableBackHistoryAPI": false
+}

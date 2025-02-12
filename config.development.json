@@ -1,0 +1,18 @@
+{
+    "debug": false,
+    "port": "4110",
+    "hostName": "streaming.home-media.me",
+    "streamApiUrl": "http://192.168.56.55:4110",
+    "redis": {
+        "db": "0",
+        "host": "192.168.56.55",
+        "port": "6379",
+        "password": ""
+    },
+    "sqlite": {
+        "path": "/export/data"
+    },
+    "tmpPath": "/export/tmp",
+    "rootPath": "/home/web/repos/home-media",
+    "dataDir": "./public"
+}

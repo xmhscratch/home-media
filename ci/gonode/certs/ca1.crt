@@ -1,0 +1,4 @@
+subject=/CN=*.localdomain.local
+issuer=/C=GB/ST=Greater Manchester/L=Salford/O=Sectigo Limited/CN=Sectigo RSA Domain Validation Secure Server CA
+-----BEGIN CERTIFICATE-----
+-----END CERTIFICATE-----

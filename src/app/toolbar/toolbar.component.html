@@ -1,0 +1,39 @@
+<p-toolbar class="max-w-full" [dt]="toolbarStyles">
+  <ng-template #start>
+    <app-addressbar class="container max-w-full"></app-addressbar>
+  </ng-template>
+
+  <ng-template #center></ng-template>
+
+  <ng-template #end>
+    <!-- <p-selectbutton
+      [options]="viewModeOpts"
+      [(ngModel)]="viewMode"
+      optionLabel="label"
+      optionValue="value"
+      aria-labelledby="basic"
+      allowEmpty="false"
+      size="small"
+    >
+      <ng-template #item let-item>
+        <span [class]="">{{ item.label }}</span>
+        <p-button [icon]="item.icon" [rounded]="true" [text]="true" (onClick)="toggleThemeMode()" />
+      </ng-template>
+    </p-selectbutton> -->
+
+    <p-selectbutton
+      [options]="themeModeOpts"
+      [(ngModel)]="themeMode"
+      optionLabel="label"
+      optionValue="value"
+      aria-labelledby="basic"
+      allowEmpty="false"
+      size="small"
+      (onOptionClick)="setThemeMode(themeMode)"
+    >
+      <ng-template #item let-item>
+        <i [class]="item.icon"></i>
+      </ng-template>
+    </p-selectbutton>
+  </ng-template>
+</p-toolbar>

@@ -1,0 +1,69 @@
+@let isFolder = (item.depth || 0) > 0;
+<!-- @let itemIcon = isFolder ? "pi pi-folder" : "pi pi-file";
+@let itemLabel = item.title || ""; -->
+
+@if (isFolder) {
+  <p-card [ngClass]="currentClasses" [dt]="cardStyles">
+    <ng-template pTemplate="header">
+      <p-panel class="" [toggleable]="false" (click)="handleEventClick($event)">
+        <ng-template pTemplate="header">
+          <div class="flex items-center gap-2">
+            <p-avatar icon="pi pi-folder" shape="circle" />
+            <span class="font-bold">{{ item.depth || 0 }} Item(s)</span>
+          </div>
+        </ng-template>
+      </p-panel>
+    </ng-template>
+
+    <ng-template pTemplate="content">
+      <p-tag severity="contrast" class="cursor-pointer">
+        <p-fluid>
+          <span class="font-medium text-sm mb-1 block">{{ item.title }}</span>
+          <!-- <span class="font-medium text-sm mb-1 block">{{ item.id }}</span> -->
+        </p-fluid>
+      </p-tag>
+    </ng-template>
+  </p-card>
+} @else {
+  <p-card
+    [ngClass]="currentClasses"
+    class=""
+    [style]="{ overflow: 'hidden' }"
+    [dt]="cardStyles"
+  >
+    <ng-template pTemplate="header">
+      <div class="relative">
+        <p-image
+          alt="Card"
+          class="w-full inline-block"
+          previewImageSrc="https://subsplease.org/wp-content/uploads/2025/01/146484.jpg"
+          [preview]="true"
+        >
+          <ng-template pTemplate="image">
+            <img
+              src="https://primefaces.org/cdn/primeng/images/galleria/galleria10.jpg"
+              class="h-60"
+            />
+          </ng-template>
+        </p-image>
+
+        <div class="absolute top-3 right-3">
+          <p-chip icon="pi pi-trash" [dt]="chipStyles" />
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="content">
+      <p-tag
+        severity="contrast"
+        class="cursor-pointer"
+        (click)="handleEventClick($event)"
+      >
+        <p-fluid>
+          <span class="font-medium text-sm mb-1 block">{{ item.title }}</span>
+          <!-- <span class="font-medium text-sm mb-1 block">{{ item.id }}</span> -->
+        </p-fluid>
+      </p-tag>
+    </ng-template>
+  </p-card>
+}

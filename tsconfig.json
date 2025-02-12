@@ -1,0 +1,43 @@
+/* To learn more about Typescript configuration file: https://www.typescriptlang.org/docs/handbook/tsconfig-json.html. */
+/* To learn more about Angular compiler options: https://angular.dev/reference/configs/angular-compiler-options. */
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "outDir": "./dist/client",
+    "strict": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "sourceMap": true,
+    "declaration": false,
+    "experimentalDecorators": true,
+    "moduleResolution": "bundler",
+    "importHelpers": true,
+    "useDefineForClassFields": false,
+    "target": "ES2022",
+    "module": "ES2022",
+    "lib": [
+      "ES6",
+      "ES2015",
+      "ES2015.promise",
+      "ES7",
+      "ES2022",
+      "DOM"
+    ],
+    "typeRoots": ["./node_modules/@types", "./types"],
+		"types": ["node", "lodash-es", "sql.js", "jest"],
+    "paths": {
+      "@/*": ["./src/app/*"]
+    },
+  },
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "strictTemplates": true
+  }
+}

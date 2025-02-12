@@ -1,0 +1,174 @@
+version: '3.9'
+
+services:
+  redis:
+    image: bitnami/redis:7.4
+    environment:
+    - REDIS_REPLICATION_MODE=master
+    - REDIS_PASSWORD=
+    - ALLOW_EMPTY_PASSWORD=true
+    - REDIS_TLS_ENABLED=no
+    - REDIS_TLS_PORT_NUMBER=6379
+    - REDIS_TLS_AUTH_CLIENTS=no
+    ports:
+    - 6379:6379
+    networks:
+    - backend
+    volumes:
+    - redis:/bitnami/redis
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+        - node.role == manager
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.4.2
+    ports:
+    - "5000:5000"
+    - "9600:9600"
+    environment:
+      LS_JAVA_OPTS: "-Xmx2048m -Xms2048m"
+      XPACK_MONITORING_ENABLED: "false"
+      HTTP_HOST: "0.0.0.0"
+    networks:
+    - backend
+    volumes:
+    - logstash_pipeline:/usr/share/logstash/pipeline/
+    deploy:
+      mode: replicated
+      replicas: 1
+
+  file:
+    image: localhost:5000/home-media-streaming:latest
+    container_name: hms_file_app
+    ports:
+    - 4150:4150
+    networks:
+    - backend
+    environment:
+    - APP_NAME=hms_file
+    - GO_ENV=development
+    volumes:
+    - tmp:/export/tmp/
+    - data:/export/data/
+    - root:/go/src/home-media/
+    working_dir: /go/src/home-media/streaming
+    depends_on:
+    - redis
+    command:
+    - go run ./file/main.go
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+        - node.role == manager
+
+  api:
+    image: localhost:5000/home-media-streaming:latest
+    container_name: hms_api_app
+    ports:
+    - 4110:4110 # http
+    - 4111:4111 # config share
+    networks:
+    - backend
+    environment:
+    - APP_NAME=hms_api
+    - GO_ENV=development
+    volumes:
+    - tmp:/export/tmp/
+    - data:/export/data/
+    - root:/go/src/home-media/
+    working_dir: /go/src/home-media/streaming
+    depends_on:
+    - redis
+    command:
+    - go run ./api/main.go
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+        - node.role == manager
+
+  encoder:
+    image: localhost:5000/home-media-streaming:latest
+    container_name: hms_encoder_app
+    networks:
+    - backend
+    environment:
+    - APP_NAME=hms_encoder
+    - GO_ENV=development
+    volumes:
+    - tmp:/export/tmp/
+    - data:/export/data/
+    - root:/go/src/home-media/
+    working_dir: /go/src/home-media/streaming
+    depends_on:
+    - redis
+    command:
+    - go run ./encoder/main.go
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+        - node.role != manager
+
+  joiner:
+    image: localhost:5000/home-media-streaming:latest
+    container_name: hms_joiner_app
+    networks:
+    - backend
+    environment:
+    - APP_NAME=hms_joiner
+    - GO_ENV=development
+    volumes:
+    - tmp:/export/tmp/
+    - data:/export/data/
+    - root:/go/src/home-media/
+    working_dir: /go/src/home-media/streaming
+    depends_on:
+    - redis
+    command:
+    - go run ./joiner/main.go
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+        - node.role != manager
+
+networks:
+  backend:
+    driver: overlay
+    attachable: true
+
+volumes:
+  tmp:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: '/home/tmp/'
+
+  data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: '/home/data/'
+
+  redis:
+    driver: local
+
+  logstash_pipeline:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: ${CHANNEL_DIR}
+
+  root:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: '/home/web/repos/home-media/'
