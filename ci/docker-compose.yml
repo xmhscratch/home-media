@@ -90,6 +90,29 @@ services:
         constraints:
         - node.role == manager
 
+  downloader:
+    image: localhost:5000/home-media-streaming:latest
+    container_name: hms_downloader_app
+    networks:
+    - backend
+    environment:
+    - APP_NAME=hms_downloader
+    - GO_ENV=development
+    volumes:
+    - tmp:/export/tmp/
+    - data:/export/data/
+    - root:/go/src/home-media/
+    working_dir: /go/src/home-media/cmd
+    depends_on:
+    - redis
+    command:
+    - go run ./downloader/main.go
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+        - node.role == manager
+
   encoder:
     image: localhost:5000/home-media-streaming:latest
     container_name: hms_encoder_app

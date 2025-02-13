@@ -1,6 +1,7 @@
 package session
 
 import (
+	"crypto/sha1"
 	"fmt"
 	"home-media/sys"
 	"net/url"
@@ -77,16 +78,17 @@ func BuildDQMessage(
 
 	return &DQMessage{
 		SessionId:   sessionId,
+		FileType:    sourceType,
 		SavePath:    savePath,
 		DownloadURL: downloadUrl,
 	}
 }
 
-func minToSec(min float64) float64 {
-	return min * 60
+func GetFileKeyName(savePath string) string {
+	return fmt.Sprintf("%x", sha1.Sum([]byte(savePath)))
 }
 
-func getMimeType(filePath string) string {
+func GetMimeType(filePath string) string {
 	re, err := regexp.Compile(`[\/]{0,1}([\w\W]+)+([\.]{1}[a-zA-Z0-9]+?)$`)
 	matches := re.FindStringSubmatch(filePath)
 	if err != nil {
@@ -98,6 +100,10 @@ func getMimeType(filePath string) string {
 	} else {
 		return "" // "application/octet-stream"
 	}
+}
+
+func minToSec(min float64) float64 {
+	return min * 60
 }
 
 func torrentConfig() (config *torrent.ClientConfig) {
@@ -115,7 +121,7 @@ func torrentConfig() (config *torrent.ClientConfig) {
 	config.PeriodicallyAnnounceTorrentsToDht = true
 	config.MaxUnverifiedBytes = 0
 
-	config.ListenPort = 42103
+	config.ListenPort = 42104
 	// config.NoDefaultPortForwarding = true
 	// config.NoUpload = true
 	config.Seed = false

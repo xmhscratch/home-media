@@ -81,62 +81,69 @@ type fileMetaInfoAlias struct {
 	Size int64  `json:"size"`
 }
 
-func (meta FileMetaInfo) MarshalJSON() ([]byte, error) {
+func (ctx FileMetaInfo) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&fileMetaInfoAlias{
-		Path: meta.Path,
-		Size: meta.Size,
+		Path: ctx.Path,
+		Size: ctx.Size,
 	})
 }
 
-func (meta *FileMetaInfo) UnmarshalJSON(data []byte) error {
+func (ctx *FileMetaInfo) UnmarshalJSON(data []byte) error {
 	var err error
-	_, err = fileMetaInfoUnmarshal(meta, data)
+	_, err = fileMetaInfoUnmarshal(ctx, data)
 	return err
 }
 
-func (meta FileMetaInfo) MarshalBinary() ([]byte, error) {
-	return meta.MarshalJSON()
+func (ctx FileMetaInfo) MarshalBinary() ([]byte, error) {
+	return ctx.MarshalJSON()
 }
 
-func (meta *FileMetaInfo) UnmarshalBinary(data []byte) error {
+func (ctx *FileMetaInfo) UnmarshalBinary(data []byte) error {
 	var err error
-	_, err = fileMetaInfoUnmarshal(meta, data)
+	_, err = fileMetaInfoUnmarshal(ctx, data)
 	return err
 }
 
-func (infs FileMetaInfoList) MarshalBinary() ([]byte, error) {
-	return json.Marshal(infs)
+func (list FileMetaInfoList) MarshalBinary() ([]byte, error) {
+	return json.Marshal(list)
 }
 
-func (infs *FileMetaInfoList) UnmarshalBinary(data []byte) error {
-	return json.Unmarshal([]byte(data), &infs)
+func (list *FileMetaInfoList) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal([]byte(data), &list)
 }
 
-func fileMetaInfoUnmarshal(meta *FileMetaInfo, data []byte) (*FileMetaInfo, error) {
+func fileMetaInfoUnmarshal(ctx *FileMetaInfo, data []byte) (*FileMetaInfo, error) {
 	var (
 		err       error
 		unescaped string
-		mj        *fileMetaInfoAlias
+		a         *fileMetaInfoAlias
 	)
 
-	if err = json.Unmarshal([]byte(data), &mj); err != nil {
-		if err = json.Unmarshal([]byte(data), &unescaped); err != nil {
-			return meta, err
-		}
-		if err = json.Unmarshal([]byte(unescaped), &mj); err != nil {
-			return meta, err
+doneParsing:
+	for range [1]struct{}{} {
+		if err = json.Unmarshal([]byte(data), &a); err != nil {
+			if err = json.Unmarshal([]byte(data), &unescaped); err != nil {
+				break doneParsing
+			}
+			if err = json.Unmarshal([]byte(unescaped), &a); err != nil {
+				break doneParsing
+			}
 		}
 	}
 
-	if meta == nil {
-		meta = &FileMetaInfo{
-			Path: mj.Path,
-			Size: mj.Size,
+	if a != nil {
+		err = nil
+	}
+
+	if ctx == nil {
+		ctx = &FileMetaInfo{
+			Path: a.Path,
+			Size: a.Size,
 		}
 	} else {
-		meta.Path = mj.Path
-		meta.Size = mj.Size
+		ctx.Path = a.Path
+		ctx.Size = a.Size
 	}
 
-	return meta, err
+	return ctx, err
 }

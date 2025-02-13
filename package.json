@@ -26,12 +26,13 @@
     "docker:build:streaming": "docker build --no-cache --progress=plain -t localhost:5000/home-media-streaming:latest ./ci/streaming",
     "docker:inspect:sysenv": "docker run --rm -it --entrypoint sh localhost:5000/sysenv:latest",
     "docker:inspect:streaming": "docker run --rm -it --entrypoint sh localhost:5000/home-media-streaming:latest",
-    "redis": "CHANNEL_DIR=$(pwd)/channel docker-compose -f './ci/docker-compose.yml' up redis",
-    "logstash": "CHANNEL_DIR=$(pwd)/channel docker-compose -f './ci/docker-compose.yml' up logstash",
-    "streaming:start:file": "CHANNEL_DIR=$(pwd)/channel docker-compose -f './ci/docker-compose.yml' up file",
-    "streaming:start:api": "CHANNEL_DIR=$(pwd)/channel docker-compose -f './ci/docker-compose.yml' up api",
-    "streaming:start:encoder": "CHANNEL_DIR=$(pwd)/channel docker-compose -f './ci/docker-compose.yml' up encoder",
-    "streaming:start:joiner": "CHANNEL_DIR=$(pwd)/channel docker-compose -f './ci/docker-compose.yml' up joiner"
+    "redis": "dotenvx run -- docker-compose -f './ci/docker-compose.yml' up redis",
+    "logstash": "dotenvx run -- docker-compose -f './ci/docker-compose.yml' up logstash",
+    "streaming:start:file": "dotenvx run -- docker-compose -f './ci/docker-compose.yml' up file",
+    "streaming:start:api": "dotenvx run -- docker-compose -f './ci/docker-compose.yml' up api",
+    "streaming:start:downloader": "dotenvx run -- docker-compose -f './ci/docker-compose.yml' up downloader",
+    "streaming:start:encoder": "dotenvx run -- docker-compose -f './ci/docker-compose.yml' up encoder",
+    "streaming:start:joiner": "dotenvx run -- docker-compose -f './ci/docker-compose.yml' up joiner"
   },
   "private": true,
   "dependencies": {
@@ -45,6 +46,7 @@
     "@angular/platform-server": "^18.2.0",
     "@angular/router": "^18.2.0",
     "@angular/ssr": "^18.2.12",
+    "@dotenvx/dotenvx": "^1.36.0",
     "@fastly/performance-observer-polyfill": "^2.0.0",
     "@grpc/grpc-js": "^1.12.5",
     "@grpc/proto-loader": "^0.7.13",

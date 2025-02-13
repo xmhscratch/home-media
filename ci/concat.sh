@@ -1,7 +1,7 @@
 #!/bin/bash
 
-INPUT=$1
-OUTPUT=$2
+INPUT=$(echo $1 | sed "s/^['\"]//; s/['\"]$//")
+OUTPUT=$(echo $2 | sed "s/^['\"]//; s/['\"]$//")
 
 # echo $INPUT
 # echo $OUTPUT
@@ -20,9 +20,9 @@ cmd1=(
 echo ${cmd1[@]};
 echo ${cmd1[@]} | sh;
 
-cmd2=(
+# cmd2=(
 
-)
+# )
 
-echo ${cmd2[@]};
-echo ${cmd2[@]} | sh;
+# echo ${cmd2[@]};
+# echo ${cmd2[@]} | sh;

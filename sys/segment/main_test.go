@@ -8,12 +8,12 @@ import (
 
 func TestSegmentEncode(t *testing.T) {
 	sm := &session.SQMessage{
-		KeyId:    "3467902dcd01be2a54f1201ed23bae03ceff8510",
-		Index:    2,
-		Source:   "/home/web/repos/home-media/public/678bb5a27e785308b9e937a3/[SubsPlease] Thunderbolt Fantasy S4 - 12 (1080p) [B25E935B].mkv",
-		Start:    "00:10:00.0000",
+		KeyId:    "ad288d149b79c2c409db528d4bd734e7fbb2a204",
+		Index:    0,
+		Source:   "/home/web/repos/home-media/public/678bb5a27e785308b9e937a3/[Erai-raws] Re Zero kara Hajimeru Isekai Seikatsu 3rd Season - 10 [1080p CR WEBRip HEVC EAC3][MultiSub][93760310].mkv",
+		Start:    "00:00:00.0000",
 		Duration: "00:05:00.0000",
-		Output:   "/home/web/repos/home-media/public/678bb5a27e785308b9e937a3/3ff5ab6fa16862e4c4fbf060f50ce69f288a4557_002",
+		Output:   "/home/web/repos/home-media/public/678bb5a27e785308b9e937a3/9e4095203ae99f1efb34ddaf399671e78c485cd1_000",
 	}
 	Encode(sample.SampleConfig, sm)
 }

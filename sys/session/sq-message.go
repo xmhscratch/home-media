@@ -2,7 +2,6 @@ package session
 
 import (
 	"context"
-	"crypto/sha1"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -23,7 +22,7 @@ func (ctx *SQSegmentInfo) Init(cfg *sys.Config) error {
 		genSegmentPath func(c int64) string = func(c int64) string {
 			return filepath.Join(
 				cfg.RootPath, cfg.DataDir, ctx.SavePath[:24],
-				fmt.Sprintf("%x_%03d", sha1.Sum([]byte(ctx.SavePath[25:])), c),
+				fmt.Sprintf("%s_%03d", GetFileKeyName(ctx.SavePath), c),
 			)
 		}
 	)
@@ -54,7 +53,7 @@ func (ctx *SQSegmentInfo) Init(cfg *sys.Config) error {
 	}
 
 	if err == nil {
-		ctx.KeyId = fmt.Sprintf("%x", sha1.Sum([]byte(ctx.DownloadURL)))
+		ctx.KeyId = GetFileKeyName(ctx.SavePath)
 
 		if err := rds.HSet(
 			context.TODO(),

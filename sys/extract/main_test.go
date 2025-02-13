@@ -1,10 +1,13 @@
-package download
+package extract
 
 import (
+	"testing"
+
 	"home-media/sys/sample"
 	"home-media/sys/session"
 	"path/filepath"
-	"testing"
+
+	"github.com/sanity-io/litter"
 )
 
 var SampleDQMessage *session.DQMessage = &session.DQMessage{
@@ -14,20 +17,10 @@ var SampleDQMessage *session.DQMessage = &session.DQMessage{
 	DownloadURL: filepath.Join(sample.SampleSessionID, "2", sample.SampleFilePath),
 }
 
-func TestDownload(t *testing.T) {
-	Start(sample.SampleConfig, SampleDQMessage)
+func TestExtractSubtitles(t *testing.T) {
+	litter.D(ExtractSubtitles(sample.SampleConfig, SampleDQMessage))
 }
 
-// func TestTest(t *testing.T) {
-// 	// var exitCode int = 0
-
-// 	var waitExitCode chan int = make(chan int, 2)
-// 	defer close(waitExitCode)
-
-// 	// go func() {
-// 	time.Sleep(time.Duration(2) * time.Second)
-// 	waitExitCode <- 3
-// 	// }()
-
-// 	fmt.Println(<-waitExitCode)
-// }
+func TestExtractDubs(t *testing.T) {
+	litter.D(ExtractDubs(sample.SampleConfig, SampleDQMessage))
+}

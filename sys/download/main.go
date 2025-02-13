@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"home-media/sys"
 	"home-media/sys/command"
-	"home-media/sys/duration"
+	"home-media/sys/extract"
+	"home-media/sys/metadata"
 	"home-media/sys/runtime"
 	"home-media/sys/session"
 	"os"
@@ -73,7 +74,9 @@ func OnPushedHandler(cfg *sys.Config, rds *redis.Client) sys.OnPushedFunc {
 		// none blocking download
 		go func() {
 			Start(cfg, dm)
-			duration.Update(cfg, dm)
+			metadata.UpdateDuration(cfg, dm)
+			metadata.UpdateSubtitles(cfg, dm)
+			metadata.UpdateDubs(cfg, dm)
 		}()
 		// litter.D("item pushed", dm)
 	}
@@ -105,6 +108,7 @@ func PeriodicRemoveHandler(cfg *sys.Config, rds *redis.Client) sys.PeriodicRemov
 func OnRemovedHandler(cfg *sys.Config, rds *redis.Client) sys.OnRemovedFunc {
 	return func(item interface{}, keyId string) {
 		dm := item.(*session.DQMessage)
+
 		go func() {
 			sm := session.SQSegmentInfo{DQMessage: dm}
 			sm.Init(cfg)
@@ -113,5 +117,13 @@ func OnRemovedHandler(cfg *sys.Config, rds *redis.Client) sys.OnRemovedFunc {
 				fmt.Println(err)
 			}
 		}()
+
+		if err := extract.ExtractSubtitles(cfg, dm); err != nil {
+			fmt.Println(err)
+		}
+
+		if err := extract.ExtractDubs(cfg, dm); err != nil {
+			fmt.Println(err)
+		}
 	}
 }

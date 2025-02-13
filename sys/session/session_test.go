@@ -85,7 +85,6 @@ func TestNotifyDownloaded(t *testing.T) {
 	if ss, err = InitTorrent(
 		sample.SampleConfig,
 		sample.SampleSessionID,
-		sample.SampleMagnetSource,
 	); err != nil {
 		t.Fatal(err)
 		return

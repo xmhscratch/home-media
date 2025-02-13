@@ -65,20 +65,32 @@ type FileTorrent struct {
 	Files       FileMetaInfoList `json:"-"`
 }
 
+type FSubDubList []FSubDub
+type FSubDub struct {
+	StreamIndex int64  `json:"stream_index,string"`
+	CodecName   string `json:"codec_name"`
+	LangCode    string `json:"lang_code"`
+	LangTitle   string `json:"lang_title"`
+}
+
 type Session[T FileSourceType] struct {
-	*File[T] `json:"-"`
-	ID       string           `json:"id"`
-	KeyName  string           `json:"-"`
-	RootID   string           `json:"rootId"`
-	NodeID   string           `json:"nodeId"`
-	Files    FileMetaInfoList `json:"files"`
-	Config   *sys.Config      `json:"-"`
+	*File[T]  `json:"-"`
+	ID        string           `json:"id"`
+	KeyName   string           `json:"-"`
+	RootID    string           `json:"rootId"`
+	NodeID    string           `json:"nodeId"`
+	Files     FileMetaInfoList `json:"files"`
+	Duration  float64          `json:"duration,string,omitempty"`
+	Dubs      FSubDubList      `json:"dubs,omitempty"`
+	Subtitles FSubDubList      `json:"subtitles,omitempty"`
+	Config    *sys.Config      `json:"-"`
 }
 
 type DQMessage struct {
-	SessionId   string `json:"sessionId"`
-	SavePath    string `json:"savePath"`
-	DownloadURL string `json:"downloadUrl"`
+	SessionId   string         `json:"sessionId"`
+	FileType    FileSourceType `json:"fileType"`
+	SavePath    string         `json:"savePath"`
+	DownloadURL string         `json:"downloadUrl"`
 }
 
 type SQMessage struct {

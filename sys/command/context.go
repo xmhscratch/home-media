@@ -25,6 +25,8 @@ type CommandFrags struct {
 	DownloadURL string `json:"downloadUrl"`
 	BaseURL     string `json:"baseURL"`
 	RootDir     string `json:"rootDir"`
+	StreamIndex string `json:"streamIndex"`
+	LangCode    string `json:"langCode"`
 }
 
 type CommandReader struct {
