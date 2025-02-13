@@ -53,7 +53,7 @@ services:
     - tmp:/export/tmp/
     - data:/export/data/
     - root:/go/src/home-media/
-    working_dir: /go/src/home-media/streaming
+    working_dir: /go/src/home-media/cmd
     depends_on:
     - redis
     command:
@@ -79,7 +79,7 @@ services:
     - tmp:/export/tmp/
     - data:/export/data/
     - root:/go/src/home-media/
-    working_dir: /go/src/home-media/streaming
+    working_dir: /go/src/home-media/cmd
     depends_on:
     - redis
     command:
@@ -102,7 +102,7 @@ services:
     - tmp:/export/tmp/
     - data:/export/data/
     - root:/go/src/home-media/
-    working_dir: /go/src/home-media/streaming
+    working_dir: /go/src/home-media/cmd
     depends_on:
     - redis
     command:
@@ -125,7 +125,7 @@ services:
     - tmp:/export/tmp/
     - data:/export/data/
     - root:/go/src/home-media/
-    working_dir: /go/src/home-media/streaming
+    working_dir: /go/src/home-media/cmd
     depends_on:
     - redis
     command:
