@@ -56,7 +56,7 @@
 #     go get -d -v ./...; \
 #     go install -v ./...; \
 #     go mod vendor; \
-#     go build -mod=vendor -o /go/bin/home-media-streaming; \
+#     go build -mod=vendor -o /go/bin/hms; \
 #     # cleanup
 #     apk del .build-deps; \
 #     rm -rf /var/cache/apk/*; \
@@ -64,12 +64,12 @@
 
 # final stage
 FROM localhost:5000/sysenv:latest
+
 # WORKDIR /export/
 WORKDIR /go/src/home-media/
+
 ENV GO_ENV development
 ENV GIN_MODE debug
-# COPY --from=builder /go/bin/home-media-streaming /export/home-media-streaming
-# COPY ["conf/", "/export/conf/"]
 ENV CC=/usr/bin/gcc
 ENV CXX=/usr/bin/g++
 ENV CC=/usr/bin/clang
@@ -81,11 +81,15 @@ ENV CGO_LDFLAGS="-L/usr/lib64"
 ENV CGO_CFLAGS="-I/usr/include/ffmpeg"
 ENV PKG_CONFIG_PATH="/usr/lib64/pkgconfig:$PKG_CONFIG_PATH"
 
+# COPY --from=builder /go/bin/hms /export/hms
+COPY ["*.sh", "/bin/home-media/"]
+
 RUN \
     apk add --upgrade --no-cache --allow-untrusted --update-cache \
         --repository "http://dl-cdn.alpinelinux.org/alpine/edge/main" \
         --repository "http://dl-cdn.alpinelinux.org/alpine/edge/community" \
-        wget2; \
+        wget2 \
+        jq; \
     \
     apk add --virtual .build-deps \
         file \
@@ -120,8 +124,9 @@ RUN \
     \
     ldconfig -v; \
     pkg-config --cflags -- libavcodec libavdevice libavfilter libavformat libswresample libswscale libavutil; \
-    ffmpeg -version;
+    ffmpeg -version; \
+    chmod u+x /bin/home-media/*.sh;
 
 EXPOSE 4110 4150
 ENTRYPOINT [ "/bin/sh", "-c" ]
-# CMD [ "nohup" "/export/home-media-streaming > /var/log/home-media-streaming.log 2>&1 &"]
+# CMD [ "nohup" "/export/hms > /var/log/hms.log 2>&1 &"]

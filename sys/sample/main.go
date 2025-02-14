@@ -6,14 +6,14 @@ var SampleMagnetSource = "magnet:?xt=urn:btih:b5dac11259fe56c1e9fbf7f487b943b769
 var SampleRootID = "678bb472f4420b064e4ab471"
 var SampleNodeID = "678bb5a27e785308b9e937a3"
 var SampleSessionID = sys.GenerateID(sys.UUIDNamespace, SampleNodeID) //"2df240facfbf57d3afa6870490b905f5"
-var SampleFilePath = "[Erai-raws] Re Zero kara Hajimeru Isekai Seikatsu 3rd Season - 10 [1080p CR WEBRip HEVC EAC3][MultiSub][93760310].mkv"
+var SampleFilePath = "/[Erai-raws] Re Zero kara Hajimeru Isekai Seikatsu 3rd Season - 10 [1080p CR WEBRip HEVC EAC3][MultiSub][93760310].mkv"
 
 var SampleConfig *sys.Config
 
 func init() {
 	var err error
 
-	if SampleConfig, err = sys.NewConfig("/home/web/repos/home-media"); err != nil {
+	if SampleConfig, err = sys.NewConfig("/go/src/home-media"); err != nil {
 		panic(err)
 	}
 }

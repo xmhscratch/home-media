@@ -12,24 +12,25 @@ import (
 func UpdateDuration(cfg *sys.Config, msg *session.DQMessage) error {
 	var exitCode chan int = make(chan int)
 
-	reader := command.NewCommandReader()
-	writer := command.NewSessionWriter(cfg, msg.SessionId, "duration")
+	stdin := command.NewCommandReader()
+	stdout := command.NewSessionWriter(cfg, msg.SessionId, "duration")
+	stderr := command.NewNullWriter()
 
 	go func() {
 		shell := runtime.Shell{
 			PID: os.Getpid(),
 
-			Stdin:  reader,
-			Stdout: writer,
-			Stderr: os.Stderr,
+			Stdin:  stdin,
+			Stdout: stdout,
+			Stderr: stderr,
 
 			Args: os.Args,
 
 			Main: Main,
 		}
 
-		reader.WriteVar("ExecBin", filepath.Join(cfg.RootPath, "./ci/duration.sh"))
-		reader.WriteVar("Input", filepath.Join(cfg.RootPath, cfg.DataDir, msg.SavePath))
+		stdin.WriteVar("ExecBin", "/bin/home-media/duration.sh")
+		stdin.WriteVar("Input", filepath.Join(cfg.DataPath, msg.SavePath))
 
 		exitCode <- shell.Run()
 	}()
@@ -41,24 +42,25 @@ func UpdateDuration(cfg *sys.Config, msg *session.DQMessage) error {
 func UpdateSubtitles(cfg *sys.Config, msg *session.DQMessage) error {
 	var exitCode chan int = make(chan int)
 
-	reader := command.NewCommandReader()
-	writer := command.NewSessionWriter(cfg, msg.SessionId, "subtitles")
+	stdin := command.NewCommandReader()
+	stdout := command.NewSessionWriter(cfg, msg.SessionId, "subtitles")
+	stderr := command.NewNullWriter()
 
 	go func() {
 		shell := runtime.Shell{
 			PID: os.Getpid(),
 
-			Stdin:  reader,
-			Stdout: writer,
-			Stderr: os.Stderr,
+			Stdin:  stdin,
+			Stdout: stdout,
+			Stderr: stderr,
 
 			Args: os.Args,
 
 			Main: Main,
 		}
 
-		reader.WriteVar("ExecBin", filepath.Join(cfg.RootPath, "./ci/subtitle.sh"))
-		reader.WriteVar("Input", filepath.Join(cfg.RootPath, cfg.DataDir, msg.SavePath))
+		stdin.WriteVar("ExecBin", "/bin/home-media/subtitle.sh")
+		stdin.WriteVar("Input", filepath.Join(cfg.DataPath, msg.SavePath))
 
 		exitCode <- shell.Run()
 	}()
@@ -70,24 +72,25 @@ func UpdateSubtitles(cfg *sys.Config, msg *session.DQMessage) error {
 func UpdateDubs(cfg *sys.Config, msg *session.DQMessage) error {
 	var exitCode chan int = make(chan int)
 
-	reader := command.NewCommandReader()
-	writer := command.NewSessionWriter(cfg, msg.SessionId, "dubs")
+	stdin := command.NewCommandReader()
+	stdout := command.NewSessionWriter(cfg, msg.SessionId, "dubs")
+	stderr := command.NewNullWriter()
 
 	go func() {
 		shell := runtime.Shell{
 			PID: os.Getpid(),
 
-			Stdin:  reader,
-			Stdout: writer,
-			Stderr: os.Stderr,
+			Stdin:  stdin,
+			Stdout: stdout,
+			Stderr: stderr,
 
 			Args: os.Args,
 
 			Main: Main,
 		}
 
-		reader.WriteVar("ExecBin", filepath.Join(cfg.RootPath, "./ci/dub.sh"))
-		reader.WriteVar("Input", filepath.Join(cfg.RootPath, cfg.DataDir, msg.SavePath))
+		stdin.WriteVar("ExecBin", "/bin/home-media/dub.sh")
+		stdin.WriteVar("Input", filepath.Join(cfg.DataPath, msg.SavePath))
 
 		exitCode <- shell.Run()
 	}()

@@ -1,0 +1,50 @@
+version: "3.9"
+
+services:
+  master:
+    image: bitnami/redis:7.4
+    environment:
+      - REDIS_REPLICATION_MODE=master
+      - REDIS_PASSWORD=
+      - ALLOW_EMPTY_PASSWORD=true
+      - REDIS_TLS_ENABLED=no
+      - REDIS_TLS_PORT_NUMBER=6379
+      - REDIS_TLS_AUTH_CLIENTS=no
+    ports:
+      - 6379:6379
+    networks:
+      - backend
+    volumes:
+      - data:/bitnami/redis
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 1024M
+        reservations:
+          cpus: "0.1"
+          memory: 4M
+      update_config:
+        parallelism: 2
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 180s
+
+networks:
+  backend:
+    driver: overlay
+    attachable: true
+
+volumes:
+  data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: 'addr=${NFS_SERVER_ADDR},nfsvers=4,exec,nodev,noatime,nodiratime,soft,rsize=1048576,wsize=1048576'
+      device: ':/data/'

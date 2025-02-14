@@ -5,6 +5,7 @@ import (
 	"home-media/sys/session"
 
 	"github.com/gin-gonic/gin"
+	// "github.com/sanity-io/litter"
 )
 
 func (ctx *RouteContext) CreateSession() gin.HandlerFunc {
@@ -28,7 +29,7 @@ func (ctx *RouteContext) CreateSession() gin.HandlerFunc {
 				ctx.Config,
 				sessionId,
 				sourceURL,
-				nodeId, rootId, title,
+				rootId, nodeId, title,
 			); err != nil {
 				ctx.Error(200, err.Error())(ginCtx)
 				return
@@ -38,7 +39,7 @@ func (ctx *RouteContext) CreateSession() gin.HandlerFunc {
 				ctx.Config,
 				sessionId,
 				sourceURL,
-				nodeId, rootId, title,
+				rootId, nodeId, title,
 			); err != nil {
 				ctx.Error(200, err.Error())(ginCtx)
 				return
@@ -56,27 +57,27 @@ func (ctx *RouteContext) CreateSession() gin.HandlerFunc {
 	}
 }
 
-func (ctx *RouteContext) GetFiles() gin.HandlerFunc {
-	return func(ginCtx *gin.Context) {
-		var (
-			sessionId string = ginCtx.Param("ssid")
-			files     []string
-		)
+// func (ctx *RouteContext) GetFiles() gin.HandlerFunc {
+// 	return func(ginCtx *gin.Context) {
+// 		var (
+// 			sessionId string = ginCtx.Param("ssid")
+// 			files     []string
+// 		)
 
-		if result, err := session.GetFiles(ctx.Config, sessionId); err != nil {
-			ctx.Error(200, err.Error())(ginCtx)
-			return
-		} else {
-			for _, f := range result {
-				files = append(files, f)
-			}
-		}
+// 		if result, err := session.GetFiles(ctx.Config, sessionId); err != nil {
+// 			ctx.Error(200, err.Error())(ginCtx)
+// 			return
+// 		} else {
+// 			for _, f := range result {
+// 				files = append(files, f)
+// 			}
+// 		}
 
-		ginCtx.JSON(200, files)
-	}
-}
+// 		ginCtx.JSON(200, files)
+// 	}
+// }
 
-func (ctx *RouteContext) CheckProgress() gin.HandlerFunc {
+func (ctx *RouteContext) GetProgress() gin.HandlerFunc {
 	return func(ginCtx *gin.Context) {
 		var sessionId string
 		filePath := ginCtx.Param("filePath")
@@ -93,7 +94,10 @@ func (ctx *RouteContext) CheckProgress() gin.HandlerFunc {
 			return
 		}
 
-		ginCtx.JSON(200, gin.H{})
+		ginCtx.JSON(200, gin.H{
+			"SessionId": sessionId,
+			"FilePath":  filePath,
+		})
 	}
 }
 

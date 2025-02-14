@@ -18,14 +18,16 @@ func Join(cfg *sys.Config, keyId string, concatPaths []string) error {
 	var exitCode chan int = make(chan int)
 
 	go func() {
-		reader := command.NewCommandReader()
+		stdin := command.NewCommandReader()
+		stdout := command.NewNullWriter()
+		stderr := command.NewNullWriter()
 
 		shell := runtime.Shell{
 			PID: os.Getpid(),
 
-			Stdin:  reader,
-			Stdout: os.Stdout,
-			Stderr: os.Stderr,
+			Stdin:  stdin,
+			Stdout: stdout,
+			Stderr: stderr,
 
 			Args: os.Args,
 
@@ -37,9 +39,9 @@ func Join(cfg *sys.Config, keyId string, concatPaths []string) error {
 			exitCode <- 9
 		}
 
-		reader.WriteVar("ExecBin", filepath.Join(cfg.RootPath, "./ci/concat.sh"))
-		reader.WriteVar("Input", filepath.Join(filepath.Dir(concatPaths[0]), "segments.txt"))
-		reader.WriteVar("Output", filepath.Join(
+		stdin.WriteVar("ExecBin", "/bin/home-media/concat.sh")
+		stdin.WriteVar("Input", filepath.Join(filepath.Dir(concatPaths[0]), "segments.txt"))
+		stdin.WriteVar("Output", filepath.Join(
 			filepath.Dir(concatPaths[0]),
 			sys.BuildString(keyId, filepath.Ext(concatPaths[0])),
 		))

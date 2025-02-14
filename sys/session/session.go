@@ -6,7 +6,7 @@ import (
 	"home-media/sys"
 	"os"
 	"path/filepath"
-	"strings"
+	// "github.com/sanity-io/litter"
 	// "mime"
 )
 
@@ -88,7 +88,6 @@ func InitDirect(
 ) (ctx *Session[FileSourceType], err error) {
 	var (
 		sourceURL string
-		savePaths []string
 		rootId    string
 		nodeId    string
 		setMode   bool = len(opts) >= 2
@@ -96,7 +95,6 @@ func InitDirect(
 	)
 	if setMode {
 		sourceURL = opts[0]
-		savePaths = opts[1:]
 		rootId = opts[1:2][0]
 		nodeId = opts[2:3][0]
 		sessionId = sys.GenerateID(sys.UUIDNamespace, nodeId)
@@ -132,7 +130,7 @@ func InitDirect(
 		if err := rds.HSet(sys.SessionContext, sys.BuildString(ctx.KeyName, ":info"), map[string]interface{}{
 			"rootId":      rootId,
 			"nodeId":      nodeId,
-			"savePath":    strings.Join(savePaths, string(os.PathSeparator)),
+			"savePath":    filepath.Join(ctx.NodeID),
 			"sourceURL":   ctx.File.SourceURL,
 			"sourceType":  ctx.File.SourceType.String(),
 			"sourceReady": ctx.File.SourceReady,
@@ -152,7 +150,6 @@ func InitTorrent(
 ) (ctx *Session[FileSourceType], err error) {
 	var (
 		magnetURI string
-		savePaths []string
 		rootId    string
 		nodeId    string
 		setMode   bool = len(opts) >= 2
@@ -160,7 +157,6 @@ func InitTorrent(
 	)
 	if setMode {
 		magnetURI = opts[0]
-		savePaths = opts[1:]
 		rootId = opts[1:2][0]
 		nodeId = opts[2:3][0]
 		sessionId = sys.GenerateID(sys.UUIDNamespace, nodeId)
@@ -173,12 +169,19 @@ func InitTorrent(
 		return nil, err
 	}
 
-	if !setMode && isCreated {
+	if setMode || !isCreated {
+		ctx.RootID = rootId
+		ctx.NodeID = nodeId
+		ctx.File.NodeID = nodeId
+		ctx.File.SourceURL = magnetURI
+	}
+
+	if isCreated {
 		var (
 			err      error
 			b        []byte
 			rawFiles map[string]string
-			files    map[string]*FileMetaInfo
+			files    map[string]FileMetaInfo
 		)
 
 		if rawFiles, err = rds.HGetAll(sys.SessionContext, sys.BuildString(ctx.KeyName, ":files")).Result(); err != nil {
@@ -190,16 +193,10 @@ func InitTorrent(
 		if err = json.Unmarshal(b, &files); err != nil {
 			return nil, err
 		}
+		ctx.Files = files
 	}
 
-	if setMode || !isCreated {
-		ctx.RootID = rootId
-		ctx.NodeID = nodeId
-		ctx.File.NodeID = nodeId
-		ctx.File.SourceURL = magnetURI
-	}
-
-	if err = os.MkdirAll(filepath.Join(cfg.RootPath, cfg.DataDir, ctx.NodeID), 0755); err != nil {
+	if err = os.MkdirAll(filepath.Join(cfg.DataPath, ctx.NodeID), 0755); err != nil {
 		return nil, err
 	}
 	if _, err = ctx.File.InitTorrent(); err != nil {
@@ -212,7 +209,7 @@ func InitTorrent(
 			"torrentName": ctx.File.TorrentName,
 			"rootId":      rootId,
 			"nodeId":      nodeId,
-			"savePath":    strings.Join(savePaths, string(os.PathSeparator)),
+			"savePath":    filepath.Join(ctx.NodeID),
 			"sourceUrl":   ctx.File.SourceURL,
 			"sourceType":  ctx.File.SourceType.String(),
 			"sourceReady": ctx.File.SourceReady,
@@ -301,7 +298,7 @@ func CreateDownload(
 	}
 
 	var msg *DQMessage = BuildDQMessage(ctx.NodeID, sessionId, sourceType, filePath)
-
+	// litter.D(msg)
 	msgJSON, err := json.Marshal(msg)
 	if err != nil {
 		return err

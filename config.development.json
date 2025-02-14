@@ -2,10 +2,10 @@
     "debug": false,
     "port": "4110",
     "hostName": "streaming.home-media.me",
-    "streamApiUrl": "http://192.168.56.55:4110",
+    "streamApiUrl": "http://hms_api:4110",
     "redis": {
         "db": "0",
-        "host": "192.168.56.55",
+        "host": "redis_master",
         "port": "6379",
         "password": ""
     },
@@ -13,6 +13,6 @@
         "path": "/export/data"
     },
     "tmpPath": "/export/tmp",
-    "rootPath": "/home/web/repos/home-media",
-    "dataDir": "./public"
+    "rootPath": "/go/src/home-media",
+    "dataPath": "/export/data/"
 }

@@ -34,9 +34,8 @@ func (ctx *RouteContext) Init(router *gin.Engine) {
 	router.OPTIONS("/*all", ctx.Ping())
 
 	router.PUT("/*filePath", ctx.CreateSession())
-	// router.POST("/:ssid/*filePath", ctx.Download())
-	router.HEAD("/:ssid/*filePath", ctx.CheckProgress())
-	router.GET("/:ssid/files", ctx.GetFiles())
+	router.POST("/:ssid/*filePath", ctx.GetProgress())
+	// router.GET("/:ssid/files", ctx.GetFiles())
 	router.GET("/:ssid/1/*filePath", ctx.DownloadDirect())
 	router.GET("/:ssid/2/*filePath", ctx.DownloadTorrent())
 

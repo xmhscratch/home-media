@@ -15,7 +15,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/juju/ratelimit v1.0.2
 	github.com/redis/go-redis/v9 v9.7.0
-	github.com/sanity-io/litter v1.5.6
+	github.com/sanity-io/litter v1.5.7
 	golang.org/x/time v0.10.0
 	gorm.io/gorm v1.25.12
 )

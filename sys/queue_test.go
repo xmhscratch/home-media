@@ -10,7 +10,7 @@ func TestQueue(t *testing.T) {
 	q := NewQueue(QueueOptions{
 		Capacity:  2,
 		TickDelay: 1000 * 1,
-		LoopDelay: 1,
+		LoopDelay: 500,
 		// OnInit:    func() {},
 		PeriodicPush: func(queue map[string]interface{}) (item interface{}, key string, err error) {
 			rd := Random(1, 2)

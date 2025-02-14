@@ -6,8 +6,8 @@ import (
 	"home-media/sys"
 	"net/url"
 	"os"
+	"path/filepath"
 	"regexp"
-	"strings"
 	"time"
 
 	"github.com/anacrolix/torrent"
@@ -59,21 +59,8 @@ func BuildDQMessage(
 	filePath string,
 ) *DQMessage {
 	var (
-		savePath string = strings.Join(
-			[]string{
-				nodeId,
-				filePath,
-			},
-			string(os.PathSeparator),
-		)
-		downloadUrl string = strings.Join(
-			[]string{
-				sessionId,
-				sourceType.String(),
-				filePath,
-			},
-			string(os.PathSeparator),
-		)
+		savePath    string = filepath.Join(nodeId, filePath)
+		downloadUrl string = filepath.Join(sessionId, sourceType.String(), filePath)
 	)
 
 	return &DQMessage{
@@ -121,7 +108,7 @@ func torrentConfig() (config *torrent.ClientConfig) {
 	config.PeriodicallyAnnounceTorrentsToDht = true
 	config.MaxUnverifiedBytes = 0
 
-	config.ListenPort = 42104
+	config.ListenPort = 42105
 	// config.NoDefaultPortForwarding = true
 	// config.NoUpload = true
 	config.Seed = false

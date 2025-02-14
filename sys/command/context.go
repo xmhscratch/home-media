@@ -8,6 +8,10 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+type NullWriter struct {
+	io.Writer
+}
+
 type SessionWriter struct {
 	io.Writer
 	SessionId string

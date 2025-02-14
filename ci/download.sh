@@ -20,7 +20,7 @@ cmd=(
   "--no-check-certificate"
   "--quiet"
   "--method GET"
-  "--timeout=30"
+  "--timeout=0"
   "--header 'Content-Type: text/plain'"
   "--output-document '$ROOT_DIR/$OUTPUT_DIR'"
   "'$BASE_URL/$DOWNLOAD_URL'"

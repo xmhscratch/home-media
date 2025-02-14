@@ -16,8 +16,8 @@ import {
   IFileListItem,
 } from './storage.d'
 
-const ENDPOINT_STORAGE_API = 'http://192.168.56.55:4100'
-const ENDPOINT_STREAMING_API = 'http://192.168.56.55:4110'
+const ENDPOINT_STORAGE_API = 'http://hms_backend:4100'
+const ENDPOINT_STREAMING_API = 'http://hms_api:4110'
 
 @Injectable({
   providedIn: 'root'

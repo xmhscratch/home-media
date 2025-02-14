@@ -2,6 +2,7 @@ package session
 
 import (
 	"crypto/sha1"
+	"errors"
 	"fmt"
 	"home-media/sys"
 	"io"
@@ -12,6 +13,7 @@ import (
 	"github.com/anacrolix/torrent/metainfo"
 	"github.com/anacrolix/torrent/storage"
 	"github.com/gin-gonic/gin"
+	"github.com/sanity-io/litter"
 )
 
 var client *torrent.Client
@@ -62,7 +64,6 @@ func (ctx *File[FileTorrent]) InitTorrent() (*torrent.Torrent, error) {
 // GetTorrent comment
 func (ctx *File[FileTorrent]) DownloadTorrent(ginCtx *gin.Context, filePath string) (err error) {
 	var (
-		// fileSize     int64
 		selectedFile *torrent.File
 		reader       torrent.Reader // = ctx.Torrent.NewReader()
 		mytor        *torrent.Torrent
@@ -72,24 +73,41 @@ func (ctx *File[FileTorrent]) DownloadTorrent(ginCtx *gin.Context, filePath stri
 	if mytor, err = ctx.InitTorrent(); err != nil {
 		return err
 	}
-	fp := fmt.Sprintf("%s/%s", ctx.TorrentName, filePath)
 	defer mytor.Drop()
 
-	for _, file := range mytor.Files() {
-		if file.Path() != fp {
-			continue
-		}
-		selectedFile = file
-	}
-	// fileSize = selectedFile.Length()
+	litter.D("download requested:", filePath)
 
 	stats := mytor.Stats()
 	if stats.ChunksWritten.Int64() > 0 {
+		litter.D("verify chunk..")
 		mytor.VerifyData()
+	}
+
+fileSelected:
+	for _, file := range mytor.Files() {
+		var parts []string
+		if mytor.Info().BestName() != metainfo.NoName {
+			parts = append(parts, mytor.Info().BestName())
+		}
+		fullFilePath := filepath.Join(append(parts, file.FileInfo().PathUtf8...)...)
+
+		if fullFilePath != filepath.Join("./", filePath) {
+			continue
+		}
+		selectedFile = file
+		litter.D("selected for download:", filePath)
+		break fileSelected
+	}
+	// litter.D(ctx, filePath)
+
+	if selectedFile == nil {
+		return errors.New("file doesnt exist")
 	}
 
 	if ginCtx.Request.Header.Get("Range") == "" {
 		selectedFile.Download()
+
+		litter.D("starting download..", filePath)
 
 		reader = selectedFile.NewReader()
 		defer reader.Close()
@@ -99,9 +117,11 @@ func (ctx *File[FileTorrent]) DownloadTorrent(ginCtx *gin.Context, filePath stri
 	}
 
 	if ok := client.WaitAll(); ok {
+		litter.D("file downloaded:", filePath)
 		ctx.notify(filePath)
 	}
 
+	// ===============================================
 	// ginCtx.Header("Accept-Ranges", "bytes")
 	// ginCtx.Header("Cache-Control", "no-cache")
 
@@ -138,9 +158,6 @@ func (ctx *File[FileTorrent]) DownloadTorrent(ginCtx *gin.Context, filePath stri
 
 	// 	io.Copy(ginCtx.Writer, reader)
 	// }
-
-	// fmt.Println("start downloading:", filePath)
-	// ctx.Torrent.DownloadAll()
 
 	return err
 }

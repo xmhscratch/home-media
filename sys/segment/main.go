@@ -8,7 +8,6 @@ import (
 	"home-media/sys/runtime"
 	"home-media/sys/session"
 	"os"
-	"path/filepath"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/sanity-io/litter"
@@ -17,26 +16,28 @@ import (
 func Encode(cfg *sys.Config, sm *session.SQMessage) error {
 	var exitCode chan int = make(chan int)
 
-	reader := command.NewCommandReader()
+	stdin := command.NewCommandReader()
+	stdout := command.NewNullWriter()
+	stderr := command.NewNullWriter()
 
 	go func() {
 		shell := runtime.Shell{
 			PID: os.Getpid(),
 
-			Stdin:  reader,
-			Stdout: os.Stdout,
-			Stderr: os.Stderr,
+			Stdin:  stdin,
+			Stdout: stdout,
+			Stderr: stderr,
 
 			Args: os.Args,
 
 			Main: Main,
 		}
 
-		reader.WriteVar("ExecBin", filepath.Join(cfg.RootPath, "./ci/segment.sh"))
-		reader.WriteVar("Input", sm.Source)
-		reader.WriteVar("Start", sm.Start)       //"00:00:00.0000"
-		reader.WriteVar("Duration", sm.Duration) //"00:00:03.0000"
-		reader.WriteVar("Output", sm.Output)     //"./test_000.mp4"
+		stdin.WriteVar("ExecBin", "/bin/home-media/segment.sh")
+		stdin.WriteVar("Input", sm.Source)
+		stdin.WriteVar("Start", sm.Start)       //"00:00:00.0000"
+		stdin.WriteVar("Duration", sm.Duration) //"00:00:03.0000"
+		stdin.WriteVar("Output", sm.Output)     //"./test_000.mp4"
 
 		exitCode <- shell.Run()
 	}()
@@ -62,6 +63,7 @@ func PeriodicPushHandler(cfg *sys.Config, rds *redis.Client) sys.PeriodicPushFun
 			err = json.Unmarshal([]byte(qItem.Member.(string)), &sm)
 		}
 
+		// litter.D(sm, sm.KeyId)
 		return sm, sm.KeyId, err
 	}
 }
@@ -70,15 +72,13 @@ func OnPushedHandler(cfg *sys.Config, rds *redis.Client) sys.OnPushedFunc {
 	return func(item interface{}, key string) {
 		var sm *session.SQMessage = item.(*session.SQMessage)
 
-		// go func() error {
-		// 	Encode(cfg, sm)
+		Encode(cfg, sm)
 
-		// 	return rds.RPush(
-		// 		sys.SessionContext,
-		// 		session.GetKeyName("segment", ":done"),
-		// 		[]string{sm.KeyId, sm.Output},
-		// 	).Err()
-		// }()
+		litter.D(rds.RPush(
+			sys.SessionContext,
+			session.GetKeyName("segment", ":done"),
+			[]string{sm.KeyId, sm.Output},
+		).Err())
 
 		litter.D("item pushed", sm)
 	}

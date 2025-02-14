@@ -4,7 +4,7 @@ import { Subject, Observable, Subscription } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 export const apiInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> => {
-  const endpoint = req.headers.get('endpoint') || 'http://192.168.56.55:4100'
+  const endpoint = req.headers.get('endpoint') || 'http://hms_backend:4100'
   const apiReq = req.clone({ url: new URL(req.url, endpoint).toString() });
   return next(apiReq);
 

@@ -25,7 +25,7 @@ func main() {
 	sys.NewQueue(sys.QueueOptions{
 		Capacity:       1,
 		TickDelay:      1000 * 1,
-		LoopDelay:      1,
+		LoopDelay:      500,
 		PeriodicPush:   segment.PeriodicPushHandler(cfg, rds),
 		OnPushed:       segment.OnPushedHandler(cfg, rds),
 		PeriodicRemove: segment.PeriodicRemoveHandler(cfg, rds),

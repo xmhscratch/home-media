@@ -2,7 +2,6 @@ package download
 
 import (
 	"encoding/json"
-	"fmt"
 	"home-media/sys"
 	"home-media/sys/command"
 	"home-media/sys/extract"
@@ -13,31 +12,34 @@ import (
 	"path/filepath"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/sanity-io/litter"
 )
 
 func Start(cfg *sys.Config, msg *session.DQMessage) error {
 	var exitCode chan int = make(chan int)
 
 	go func() {
-		reader := command.NewCommandReader()
+		stdin := command.NewCommandReader()
+		stdout := command.NewNullWriter()
+		stderr := command.NewNullWriter()
 
 		shell := runtime.Shell{
 			PID: os.Getpid(),
 
-			Stdin:  reader,
-			Stdout: os.Stdout,
-			Stderr: os.Stderr,
+			Stdin:  stdin,
+			Stdout: stdout,
+			Stderr: stderr,
 
 			Args: os.Args,
 
 			Main: Main,
 		}
 
-		reader.WriteVar("ExecBin", filepath.Join(cfg.RootPath, "./ci/download.sh"))
-		reader.WriteVar("DownloadURL", msg.DownloadURL)
-		reader.WriteVar("Output", msg.SavePath)
-		reader.WriteVar("BaseURL", cfg.StreamApiURL)
-		reader.WriteVar("RootDir", filepath.Join(cfg.RootPath, cfg.DataDir))
+		stdin.WriteVar("ExecBin", "/bin/home-media/download.sh")
+		stdin.WriteVar("DownloadURL", msg.DownloadURL)
+		stdin.WriteVar("Output", msg.SavePath)
+		stdin.WriteVar("BaseURL", cfg.StreamApiURL)
+		stdin.WriteVar("RootDir", filepath.Join(cfg.DataPath))
 
 		exitCode <- shell.Run()
 	}()
@@ -64,21 +66,23 @@ func PeriodicPushHandler(cfg *sys.Config, rds *redis.Client) sys.PeriodicPushFun
 				return nil, "", err
 			}
 		}
-		return dm, dm.SavePath, err
+
+		// litter.D(dm, session.GetFileKeyName(dm.SavePath))
+		return dm, session.GetFileKeyName(dm.SavePath), err
 	}
 }
 
 func OnPushedHandler(cfg *sys.Config, rds *redis.Client) sys.OnPushedFunc {
-	return func(item interface{}, key string) {
+	return func(item interface{}, keyId string) {
 		var dm *session.DQMessage = item.(*session.DQMessage)
-		// none blocking download
-		go func() {
-			Start(cfg, dm)
-			metadata.UpdateDuration(cfg, dm)
-			metadata.UpdateSubtitles(cfg, dm)
-			metadata.UpdateDubs(cfg, dm)
-		}()
-		// litter.D("item pushed", dm)
+
+		Start(cfg, dm)
+
+		metadata.UpdateDuration(cfg, dm)
+		metadata.UpdateSubtitles(cfg, dm)
+		metadata.UpdateDubs(cfg, dm)
+
+		litter.D("item pushed", keyId)
 	}
 }
 
@@ -101,29 +105,31 @@ func PeriodicRemoveHandler(cfg *sys.Config, rds *redis.Client) sys.PeriodicRemov
 			}
 		}
 
-		return dm.SavePath, err
+		// litter.D("item removing", session.GetFileKeyName(dm.SavePath))
+		return session.GetFileKeyName(dm.SavePath), err
 	}
 }
 
 func OnRemovedHandler(cfg *sys.Config, rds *redis.Client) sys.OnRemovedFunc {
 	return func(item interface{}, keyId string) {
+		litter.D("item removed", keyId)
+
 		dm := item.(*session.DQMessage)
 
-		go func() {
-			sm := session.SQSegmentInfo{DQMessage: dm}
-			sm.Init(cfg)
+		sm := session.SQSegmentInfo{DQMessage: dm}
+		sm.Init(cfg)
+		// litter.D(dm, sm)
 
-			if err := sm.PushQueue(); err != nil {
-				fmt.Println(err)
-			}
-		}()
+		if err := sm.PushQueue(); err != nil {
+			litter.D(err)
+		}
 
 		if err := extract.ExtractSubtitles(cfg, dm); err != nil {
-			fmt.Println(err)
+			litter.D(err)
 		}
 
 		if err := extract.ExtractDubs(cfg, dm); err != nil {
-			fmt.Println(err)
+			litter.D(err)
 		}
 	}
 }

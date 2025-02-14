@@ -43,4 +43,4 @@ cmd1=(
 );
 
 echo ${cmd1[@]};
-# echo ${cmd1[@]} | sh;
+echo ${cmd1[@]} | sh;

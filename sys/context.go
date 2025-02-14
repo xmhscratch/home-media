@@ -35,7 +35,7 @@ type ConfigFile struct {
 	Redis        RedisConnectionConfig  `json:"redis"`
 	TmpPath      string                 `json:"tmpPath"`
 	RootPath     string                 `json:"rootPath"`
-	DataDir      string                 `json:"dataDir"`
+	DataPath     string                 `json:"dataPath"`
 }
 
 // Config comment

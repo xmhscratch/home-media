@@ -28,26 +28,28 @@ func ExtractSubtitles(cfg *sys.Config, msg *session.DQMessage) error {
 			defer close(exitCode)
 
 			go func() {
-				reader := command.NewCommandReader()
+				stdin := command.NewCommandReader()
+				stdout := command.NewNullWriter()
+				stderr := command.NewNullWriter()
 
 				shell := runtime.Shell{
 					PID: os.Getpid(),
 
-					Stdin:  reader,
-					Stdout: os.Stdout,
-					Stderr: os.Stderr,
+					Stdin:  stdin,
+					Stdout: stdout,
+					Stderr: stderr,
 
 					Args: os.Args,
 
 					Main: Main,
 				}
 
-				reader.WriteVar("ExecBin", filepath.Join(cfg.RootPath, "./ci/extract-sub.sh"))
-				reader.WriteVar("Input", filepath.Join(cfg.RootPath, cfg.DataDir, msg.SavePath))
-				reader.WriteVar("StreamIndex", strconv.FormatInt(sub.StreamIndex, 5<<1))
-				reader.WriteVar("LangCode", sys.BuildString(sub.LangCode, strconv.FormatInt(sub.StreamIndex, 5<<1)))
-				reader.WriteVar("Output", filepath.Join(
-					cfg.RootPath, cfg.DataDir,
+				stdin.WriteVar("ExecBin", "/bin/home-media/extract-sub.sh")
+				stdin.WriteVar("Input", filepath.Join(cfg.DataPath, msg.SavePath))
+				stdin.WriteVar("StreamIndex", strconv.FormatInt(sub.StreamIndex, 5<<1))
+				stdin.WriteVar("LangCode", sys.BuildString(sub.LangCode, strconv.FormatInt(sub.StreamIndex, 5<<1)))
+				stdin.WriteVar("Output", filepath.Join(
+					cfg.DataPath,
 					filepath.Dir(msg.SavePath),
 					session.GetFileKeyName(msg.SavePath),
 				))
@@ -79,26 +81,28 @@ func ExtractDubs(cfg *sys.Config, msg *session.DQMessage) error {
 			defer close(exitCode)
 
 			go func() {
-				reader := command.NewCommandReader()
+				stdin := command.NewCommandReader()
+				stdout := command.NewNullWriter()
+				stderr := command.NewNullWriter()
 
 				shell := runtime.Shell{
 					PID: os.Getpid(),
 
-					Stdin:  reader,
-					Stdout: os.Stdout,
-					Stderr: os.Stderr,
+					Stdin:  stdin,
+					Stdout: stdout,
+					Stderr: stderr,
 
 					Args: os.Args,
 
 					Main: Main,
 				}
 
-				reader.WriteVar("ExecBin", filepath.Join(cfg.RootPath, "./ci/extract-dub.sh"))
-				reader.WriteVar("Input", filepath.Join(cfg.RootPath, cfg.DataDir, msg.SavePath))
-				reader.WriteVar("StreamIndex", strconv.FormatInt(dub.StreamIndex, 5<<1))
-				reader.WriteVar("LangCode", sys.BuildString(dub.LangCode, strconv.FormatInt(dub.StreamIndex, 5<<1)))
-				reader.WriteVar("Output", filepath.Join(
-					cfg.RootPath, cfg.DataDir,
+				stdin.WriteVar("ExecBin", "/bin/home-media/extract-dub.sh")
+				stdin.WriteVar("Input", filepath.Join(cfg.DataPath, msg.SavePath))
+				stdin.WriteVar("StreamIndex", strconv.FormatInt(dub.StreamIndex, 5<<1))
+				stdin.WriteVar("LangCode", sys.BuildString(dub.LangCode, strconv.FormatInt(dub.StreamIndex, 5<<1)))
+				stdin.WriteVar("Output", filepath.Join(
+					cfg.DataPath,
 					filepath.Dir(msg.SavePath),
 					session.GetFileKeyName(msg.SavePath),
 				))
