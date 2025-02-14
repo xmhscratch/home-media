@@ -35,7 +35,7 @@ func Start(cfg *sys.Config, msg *session.DQMessage) error {
 			Main: Main,
 		}
 
-		stdin.WriteVar("ExecBin", "/bin/home-media/download.sh")
+		stdin.WriteVar("ExecBin", "/export/bin/download.sh")
 		stdin.WriteVar("DownloadURL", msg.DownloadURL)
 		stdin.WriteVar("Output", msg.SavePath)
 		stdin.WriteVar("BaseURL", cfg.StreamApiURL)

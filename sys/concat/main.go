@@ -39,7 +39,7 @@ func Join(cfg *sys.Config, keyId string, concatPaths []string) error {
 			exitCode <- 9
 		}
 
-		stdin.WriteVar("ExecBin", "/bin/home-media/concat.sh")
+		stdin.WriteVar("ExecBin", "/export/bin/concat.sh")
 		stdin.WriteVar("Input", filepath.Join(filepath.Dir(concatPaths[0]), "segments.txt"))
 		stdin.WriteVar("Output", filepath.Join(
 			filepath.Dir(concatPaths[0]),

@@ -82,7 +82,7 @@ ENV CGO_CFLAGS="-I/usr/include/ffmpeg"
 ENV PKG_CONFIG_PATH="/usr/lib64/pkgconfig:$PKG_CONFIG_PATH"
 
 # COPY --from=builder /go/bin/hms /export/hms
-COPY ["*.sh", "/bin/home-media/"]
+COPY ["*.sh", "/export/bin/"]
 
 RUN \
     apk add --upgrade --no-cache --allow-untrusted --update-cache \
@@ -125,7 +125,7 @@ RUN \
     ldconfig -v; \
     pkg-config --cflags -- libavcodec libavdevice libavfilter libavformat libswresample libswscale libavutil; \
     ffmpeg -version; \
-    chmod u+x /bin/home-media/*.sh;
+    chmod u+x /export/bin/*.sh;
 
 EXPOSE 4110 4150
 ENTRYPOINT [ "/bin/sh", "-c" ]

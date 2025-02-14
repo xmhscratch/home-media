@@ -33,7 +33,7 @@ func Encode(cfg *sys.Config, sm *session.SQMessage) error {
 			Main: Main,
 		}
 
-		stdin.WriteVar("ExecBin", "/bin/home-media/segment.sh")
+		stdin.WriteVar("ExecBin", "/export/bin/segment.sh")
 		stdin.WriteVar("Input", sm.Source)
 		stdin.WriteVar("Start", sm.Start)       //"00:00:00.0000"
 		stdin.WriteVar("Duration", sm.Duration) //"00:00:03.0000"

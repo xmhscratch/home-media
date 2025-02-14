@@ -44,7 +44,7 @@ func ExtractSubtitles(cfg *sys.Config, msg *session.DQMessage) error {
 					Main: Main,
 				}
 
-				stdin.WriteVar("ExecBin", "/bin/home-media/extract-sub.sh")
+				stdin.WriteVar("ExecBin", "/export/bin/extract-sub.sh")
 				stdin.WriteVar("Input", filepath.Join(cfg.DataPath, msg.SavePath))
 				stdin.WriteVar("StreamIndex", strconv.FormatInt(sub.StreamIndex, 5<<1))
 				stdin.WriteVar("LangCode", sys.BuildString(sub.LangCode, strconv.FormatInt(sub.StreamIndex, 5<<1)))
@@ -97,7 +97,7 @@ func ExtractDubs(cfg *sys.Config, msg *session.DQMessage) error {
 					Main: Main,
 				}
 
-				stdin.WriteVar("ExecBin", "/bin/home-media/extract-dub.sh")
+				stdin.WriteVar("ExecBin", "/export/bin/extract-dub.sh")
 				stdin.WriteVar("Input", filepath.Join(cfg.DataPath, msg.SavePath))
 				stdin.WriteVar("StreamIndex", strconv.FormatInt(dub.StreamIndex, 5<<1))
 				stdin.WriteVar("LangCode", sys.BuildString(dub.LangCode, strconv.FormatInt(dub.StreamIndex, 5<<1)))
