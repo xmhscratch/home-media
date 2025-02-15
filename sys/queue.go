@@ -1,39 +1,35 @@
 package sys
 
 import (
+	"fmt"
 	"time"
 )
 
-type PeriodicPushFunc func(queue map[string]interface{}) (interface{}, string, error)
-type OnPushedFunc func(item interface{}, key string)
-type PeriodicRemoveFunc func(queue map[string]interface{}) (string, error)
-type OnRemovedFunc func(item interface{}, key string)
+type PeriodicPushFunc[I QItem] func(queue *QueueStack[I]) (I, error)
+type OnPushedFunc[I QItem] func(item I)
+type OnRemovedFunc[I QItem] func(item I)
+type OnTickFunc[I QItem] func(queue *QueueStack[I])
 type OnErrorFunc func(err error)
-type OnTickFunc func(queue map[string]interface{})
 
-type QueueOptions struct {
-	Capacity       int
-	TickDelay      int64
-	LoopDelay      int64
-	OnInit         func()
-	PeriodicPush   PeriodicPushFunc
-	OnPushed       OnPushedFunc
-	PeriodicRemove PeriodicRemoveFunc
-	OnRemoved      OnRemovedFunc
-	OnDrained      func()
-	OnError        OnErrorFunc
-	OnTick         OnTickFunc
+type QueueOptions[I QItem] struct {
+	Capacity     int
+	LoopDelay    int64
+	OnInit       func()
+	PeriodicPush PeriodicPushFunc[I]
+	OnPushed     OnPushedFunc[I]
+	OnRemoved    OnRemovedFunc[I]
+	OnTick       OnTickFunc[I]
+	OnError      OnErrorFunc
 }
 
-type Queue struct {
-	*QueueOptions
-	// IsPaused  bool
+type Queue[I QItem] struct {
+	*QueueOptions[I]
 	loopDelay time.Duration
-	tickDelay time.Duration
-	queue     map[string]interface{}
+	items     *QueueStack[I]
+	queue     chan I
 }
 
-func NewQueue(opts QueueOptions) *Queue {
+func NewQueue[I QItem](opts QueueOptions[I]) *Queue[I] {
 	if opts.Capacity < 1 {
 		opts.Capacity = 1
 	}
@@ -42,131 +38,101 @@ func NewQueue(opts QueueOptions) *Queue {
 		opts.OnInit = func() {}
 	}
 	if opts.OnPushed == nil {
-		opts.OnPushed = func(interface{}, string) {}
+		opts.OnPushed = func(I) {}
 	}
 	if opts.OnRemoved == nil {
-		opts.OnRemoved = func(interface{}, string) {}
-	}
-	if opts.OnDrained == nil {
-		opts.OnDrained = func() {}
+		opts.OnRemoved = func(I) {}
 	}
 	if opts.OnError == nil {
 		opts.OnError = func(error) {}
 	}
 	if opts.OnTick == nil {
-		opts.OnTick = func(map[string]interface{}) {}
+		opts.OnTick = func(*QueueStack[I]) {}
 	}
 
-	q := &Queue{
+	q := &Queue[I]{
 		QueueOptions: &opts,
 	}
 
 	q.loopDelay = time.Duration(q.LoopDelay) * time.Nanosecond
-	q.tickDelay = time.Duration(q.TickDelay) * time.Millisecond
-	q.queue = make(map[string]interface{}, q.Capacity)
+	q.items = NewQueueStack[I]()
+	q.queue = make(chan I, q.Capacity)
 
 	return q
 }
 
-func (q *Queue) Start() {
+func (q *Queue[I]) Start() {
 	var (
-		readyRemoving chan struct{} = make(chan struct{})
-		readyTicking  chan struct{} = make(chan struct{})
-		readyPushing  chan struct{} = make(chan struct{})
+		waitRemoval chan struct{} = make(chan struct{})
+		waitOnEmpty chan struct{} = make(chan struct{}, 1)
 	)
 
-	defer close(readyRemoving)
-	defer close(readyTicking)
-	defer close(readyPushing)
-
-	go func() {
-		readyRemoving <- struct{}{}
-		time.Sleep(q.loopDelay)
-		readyTicking <- struct{}{}
-		time.Sleep(q.loopDelay)
-		readyPushing <- struct{}{}
-
-		q.OnInit()
-	}()
+	defer close(q.queue)
+	defer close(waitRemoval)
+	defer close(waitOnEmpty)
 
 	go func() {
 		for {
-			q._watchRemoving()
+			var (
+				err  error
+				item I
+			)
+
+			if len(q.queue) >= q.Capacity {
+				return
+			}
+
+			if item, err = q.PeriodicPush(q.items); err != nil {
+				q.OnError(err)
+				return
+			}
+			if q.items.Len() == 0 {
+				waitOnEmpty <- struct{}{}
+			}
+			q.items.Push(item)
+
 			time.Sleep(q.loopDelay)
 		}
 	}()
-	<-readyRemoving
 
-	go func() {
-		for {
-			q._startTicking()
-			time.Sleep(q.tickDelay)
-		}
-	}()
-	<-readyTicking
+	fmt.Println("start queue...")
 
-	go func() {
-		for {
-			q._startPushing()
+	for {
+		time.Sleep(q.loopDelay)
+
+		// lock on empty queue
+		<-waitOnEmpty
+
+	queueBlocking:
+		for i := 0; i < q.Capacity; i++ {
 			time.Sleep(q.loopDelay)
+
+			if s := func() int {
+				if q.items.Len() > 0 {
+					item := q.items.Pop().(I)
+					q.queue <- item
+					q.OnPushed(item)
+				}
+				return len(q.queue)
+			}(); s >= q.items.Len() {
+				go func() {
+					item := <-q.queue
+					q.OnRemoved(item)
+					waitRemoval <- struct{}{}
+				}()
+
+				if q.items.Len() == 0 && s > 0 {
+					continue
+				} else {
+					break queueBlocking
+				}
+			} else {
+				continue
+			}
 		}
-	}()
-	<-readyPushing
-
-	select {}
-}
-
-func (q *Queue) _startPushing() {
-	var (
-		err  error
-		key  string
-		item interface{}
-	)
-
-	if len(q.queue) >= q.Capacity {
-		return
-	}
-	if item, key, err = q.PeriodicPush(q.queue); err != nil {
-		q.OnError(err)
-		return
-	}
-	if item == nil {
-		return
-	}
-
-	q.queue[key] = item
-	q.OnPushed(item, key)
-}
-
-func (q *Queue) _watchRemoving() {
-	var (
-		err error
-		key string
-	)
-	if len(q.queue) == 0 {
-		q.OnDrained()
-		return
-	}
-	if key, err = q.PeriodicRemove(q.queue); err != nil {
-		q.OnError(err)
-		return
-	}
-	item := q.queue[key]
-	if item == nil {
-		return
-	}
-	delete(q.queue, key)
-	q.OnRemoved(item, key)
-}
-
-func (q *Queue) _startTicking() {
-	q.OnTick(q.queue)
-}
-
-func (q *Queue) Drain() {
-	for key := range q.queue {
-		delete(q.queue, key)
+		<-waitRemoval
+		// litter.D("report:", q.queue, len(*q.items))
 	}
 }
 
-func (q *Queue) Stop() {}
+func (q *Queue[I]) Stop() {}

@@ -13,7 +13,7 @@ var SampleConfig *sys.Config
 func init() {
 	var err error
 
-	if SampleConfig, err = sys.NewConfig("/go/src/home-media"); err != nil {
+	if SampleConfig, err = sys.NewConfig("/home/web/repos/home-media"); err != nil {
 		panic(err)
 	}
 }

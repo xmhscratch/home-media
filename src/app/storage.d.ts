@@ -19,13 +19,19 @@ export type ITreeRootNode = {
     label: string
 }
 
+export type FileMetaInfo = {
+    path: string
+    size: number
+}
+
 export type SessionInfo = {
     id: string
     rootId: string
     nodeId: string
+    files: FileMetaInfo[]
 }
 
-export type IFileListItem = {
+export type IFileListItem = FileMetaInfo & {
     path: string
-    channel: string
+    sessionId: string
 }

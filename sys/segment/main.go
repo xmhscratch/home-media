@@ -8,10 +8,25 @@ import (
 	"home-media/sys/runtime"
 	"home-media/sys/session"
 	"os"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/sanity-io/litter"
 )
+
+type SQItem struct {
+	sys.QItem
+	sm *session.SQMessage
+}
+
+func (ctx SQItem) Index() int {
+	now := time.Now()
+	return int(now.Unix())
+}
+
+func (ctx SQItem) Key() string {
+	return ctx.sm.KeyId
+}
 
 func Encode(cfg *sys.Config, sm *session.SQMessage) error {
 	var exitCode chan int = make(chan int)
@@ -46,8 +61,8 @@ func Encode(cfg *sys.Config, sm *session.SQMessage) error {
 	return nil
 }
 
-func PeriodicPushHandler(cfg *sys.Config, rds *redis.Client) sys.PeriodicPushFunc {
-	return func(queue map[string]interface{}) (interface{}, string, error) {
+func PeriodicPushHandler(cfg *sys.Config, rds *redis.Client) sys.PeriodicPushFunc[SQItem] {
+	return func(queue *sys.QueueStack[SQItem]) (SQItem, error) {
 		var (
 			err   error
 			qItem *redis.ZWithKey
@@ -58,60 +73,50 @@ func PeriodicPushHandler(cfg *sys.Config, rds *redis.Client) sys.PeriodicPushFun
 			sys.SessionContext, 0,
 			session.GetKeyName("segment", ":queue"),
 		).Result(); err != nil {
-			return nil, "", err
+			return SQItem{sm: sm}, err
 		} else {
 			err = json.Unmarshal([]byte(qItem.Member.(string)), &sm)
 		}
 
 		// litter.D(sm, sm.KeyId)
-		return sm, sm.KeyId, err
+		return SQItem{sm: sm}, err
 	}
 }
 
-func OnPushedHandler(cfg *sys.Config, rds *redis.Client) sys.OnPushedFunc {
-	return func(item interface{}, key string) {
-		var sm *session.SQMessage = item.(*session.SQMessage)
+func OnPushedHandler(cfg *sys.Config, rds *redis.Client) sys.OnPushedFunc[SQItem] {
+	return func(item SQItem) {
+		Encode(cfg, item.sm)
 
-		Encode(cfg, sm)
+		// litter.D(rds.RPush(
+		// 	sys.SessionContext,
+		// 	session.GetKeyName("segment", ":done"),
+		// 	[]string{item.sm.KeyId, item.sm.Output},
+		// ).Err())
 
-		litter.D(rds.RPush(
-			sys.SessionContext,
-			session.GetKeyName("segment", ":done"),
-			[]string{sm.KeyId, sm.Output},
-		).Err())
-
-		litter.D("item pushed", sm)
+		litter.D("item pushed", item.sm)
 	}
 }
 
-func PeriodicRemoveHandler(cfg *sys.Config, rds *redis.Client) sys.PeriodicRemoveFunc {
-	return func(queue map[string]interface{}) (string, error) {
+func OnRemovedHandler(cfg *sys.Config, rds *redis.Client) sys.OnRemovedFunc[SQItem] {
+	return func(item SQItem) {
 		var (
-			err   error
-			qItem []string = make([]string, 2)
-			keyId string
+			err error
+			// qItem []string = make([]string, 2)
+			// keyId string
 		)
 
-		if qItem, err = rds.BLPop(
-			sys.SessionContext, 0,
-			session.GetKeyName("segment", ":done"),
-		).Result(); err != nil {
-			return "", err
-		}
-		keyId = qItem[0]
+		// if qItem, err = rds.BLPop(
+		// 	sys.SessionContext, 0,
+		// 	session.GetKeyName("segment", ":done"),
+		// ).Result(); err != nil {
+		// 	return
+		// }
+		// keyId = qItem[0]
 
-		return keyId, err
-	}
-}
-
-func OnRemovedHandler(cfg *sys.Config, rds *redis.Client) sys.OnRemovedFunc {
-	return func(item interface{}, keyId string) {
-		var sm *session.SQMessage = item.(*session.SQMessage)
-
-		err := rds.SAdd(
+		err = rds.SAdd(
 			sys.SessionContext,
-			session.GetKeyName("concat:ready", ":", keyId),
-			sm.Output,
+			session.GetKeyName("concat:ready", ":", item.sm.KeyId),
+			item.sm.Output,
 		).Err()
 
 		if err != nil {

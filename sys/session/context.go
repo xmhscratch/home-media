@@ -65,8 +65,8 @@ type FileTorrent struct {
 	Files       FileMetaInfoList `json:"-"`
 }
 
-type FSubDubList []FSubDub
-type FSubDub struct {
+type FStreamInfoList []FStreamInfo
+type FStreamInfo struct {
 	StreamIndex int64  `json:"stream_index,string"`
 	CodecName   string `json:"codec_name"`
 	LangCode    string `json:"lang_code"`
@@ -81,8 +81,8 @@ type Session[T FileSourceType] struct {
 	NodeID    string           `json:"nodeId"`
 	Files     FileMetaInfoList `json:"files"`
 	Duration  float64          `json:"duration,string,omitempty"`
-	Dubs      FSubDubList      `json:"dubs,omitempty"`
-	Subtitles FSubDubList      `json:"subtitles,omitempty"`
+	Dubs      FStreamInfoList  `json:"dubs,omitempty"`
+	Subtitles FStreamInfoList  `json:"subtitles,omitempty"`
 	Config    *sys.Config      `json:"-"`
 }
 

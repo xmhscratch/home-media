@@ -22,13 +22,11 @@ func main() {
 	rds := sys.NewClient(cfg)
 	defer rds.Close()
 
-	sys.NewQueue(sys.QueueOptions{
-		Capacity:       2,
-		TickDelay:      1000 * 1,
-		LoopDelay:      500,
-		PeriodicPush:   download.PeriodicPushHandler(cfg, rds),
-		OnPushed:       download.OnPushedHandler(cfg, rds),
-		PeriodicRemove: download.PeriodicRemoveHandler(cfg, rds),
-		OnRemoved:      download.OnRemovedHandler(cfg, rds),
+	sys.NewQueue(sys.QueueOptions[download.DQItem]{
+		Capacity:     2,
+		LoopDelay:    500,
+		PeriodicPush: download.PeriodicPushHandler(cfg, rds),
+		OnPushed:     download.OnPushedHandler(cfg, rds),
+		OnRemoved:    download.OnRemovedHandler(cfg, rds),
 	}).Start()
 }

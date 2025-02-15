@@ -10,9 +10,25 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 )
+
+type CQItem struct {
+	sys.QItem
+	ConcatPaths []string
+	KeyId       string
+}
+
+func (ctx CQItem) Index() int {
+	now := time.Now()
+	return int(now.Unix())
+}
+
+func (ctx CQItem) Key() string {
+	return ctx.KeyId
+}
 
 func Join(cfg *sys.Config, keyId string, concatPaths []string) error {
 	var exitCode chan int = make(chan int)
@@ -74,8 +90,8 @@ errorLoop:
 	return err
 }
 
-func PeriodicPushHandler(cfg *sys.Config, rds *redis.Client) sys.PeriodicPushFunc {
-	return func(queue map[string]interface{}) (interface{}, string, error) {
+func PeriodicPushHandler(cfg *sys.Config, rds *redis.Client) sys.PeriodicPushFunc[CQItem] {
+	return func(queue *sys.QueueStack[CQItem]) (CQItem, error) {
 		var (
 			err         error
 			concatPaths chan []string = make(chan []string)
@@ -130,41 +146,22 @@ func PeriodicPushHandler(cfg *sys.Config, rds *redis.Client) sys.PeriodicPushFun
 			return err
 		}()
 
-		return <-concatPaths, <-foundKeyId, err
+		return CQItem{ConcatPaths: <-concatPaths, KeyId: <-foundKeyId}, err
 	}
 }
 
-func OnPushedHandler(cfg *sys.Config, rds *redis.Client) sys.OnPushedFunc {
-	return func(item interface{}, keyId string) {
-		var concatPaths []string = item.([]string)
-
-		go func() error {
-			return Join(cfg, keyId, concatPaths)
-		}()
+func OnPushedHandler(cfg *sys.Config, rds *redis.Client) sys.OnPushedFunc[CQItem] {
+	return func(item CQItem) {
+		Join(cfg, item.Key(), item.ConcatPaths)
 	}
 }
 
-func PeriodicRemoveHandler(cfg *sys.Config, rds *redis.Client) sys.PeriodicRemoveFunc {
-	return func(queue map[string]interface{}) (string, error) {
-		var (
-			err   error
-			keyId string
-		)
-		for keyId = range queue {
-			break
-		}
-		return keyId, err
-	}
-}
-
-func OnRemovedHandler(cfg *sys.Config, rds *redis.Client) sys.OnRemovedFunc {
-	return func(item interface{}, keyId string) {
-		var concatPaths []string = item.([]string)
-
+func OnRemovedHandler(cfg *sys.Config, rds *redis.Client) sys.OnRemovedFunc[CQItem] {
+	return func(item CQItem) {
 		err := rds.SPopN(
 			sys.SessionContext,
-			session.GetKeyName("concat:ready", ":", keyId),
-			int64(len(concatPaths)),
+			session.GetKeyName("concat:ready", ":", item.Key()),
+			int64(len(item.ConcatPaths)),
 		).Err()
 
 		if err != nil {

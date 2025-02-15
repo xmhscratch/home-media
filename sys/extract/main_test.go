@@ -17,6 +17,10 @@ var SampleDQMessage *session.DQMessage = &session.DQMessage{
 	DownloadURL: filepath.Join(sample.SampleSessionID, "2", sample.SampleFilePath),
 }
 
+func TestExtractVideo(t *testing.T) {
+	litter.D(ExtractVideo(sample.SampleConfig, SampleDQMessage))
+}
+
 func TestExtractSubtitles(t *testing.T) {
 	litter.D(ExtractSubtitles(sample.SampleConfig, SampleDQMessage))
 }

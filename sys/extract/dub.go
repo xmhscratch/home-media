@@ -10,59 +10,6 @@ import (
 	"strconv"
 )
 
-func ExtractSubtitles(cfg *sys.Config, msg *session.DQMessage) error {
-	var (
-		err error
-		ss  *session.Session[session.FileSourceType]
-	)
-
-	if ss, _, err = msg.FileType.InitSession(
-		cfg,
-		msg.SessionId,
-	); err != nil {
-		return err
-	}
-
-	for _, sub := range ss.Subtitles {
-		func(exitCode chan int) int {
-			defer close(exitCode)
-
-			go func() {
-				stdin := command.NewCommandReader()
-				stdout := command.NewNullWriter()
-				stderr := command.NewNullWriter()
-
-				shell := runtime.Shell{
-					PID: os.Getpid(),
-
-					Stdin:  stdin,
-					Stdout: stdout,
-					Stderr: stderr,
-
-					Args: os.Args,
-
-					Main: Main,
-				}
-
-				stdin.WriteVar("ExecBin", "/export/bin/extract-sub.sh")
-				stdin.WriteVar("Input", filepath.Join(cfg.DataPath, msg.SavePath))
-				stdin.WriteVar("StreamIndex", strconv.FormatInt(sub.StreamIndex, 5<<1))
-				stdin.WriteVar("LangCode", sys.BuildString(sub.LangCode, strconv.FormatInt(sub.StreamIndex, 5<<1)))
-				stdin.WriteVar("Output", filepath.Join(
-					cfg.DataPath,
-					filepath.Dir(msg.SavePath),
-					session.GetFileKeyName(msg.SavePath),
-				))
-
-				exitCode <- shell.Run()
-			}()
-			return <-exitCode
-		}(make(chan int))
-	}
-
-	return nil
-}
-
 func ExtractDubs(cfg *sys.Config, msg *session.DQMessage) error {
 	var (
 		err error

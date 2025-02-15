@@ -176,7 +176,7 @@ func InitTorrent(
 		ctx.File.SourceURL = magnetURI
 	}
 
-	if isCreated {
+	{
 		var (
 			err      error
 			b        []byte

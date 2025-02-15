@@ -10,10 +10,25 @@ import (
 	"home-media/sys/session"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/sanity-io/litter"
 )
+
+type DQItem struct {
+	sys.QItem
+	dm *session.DQMessage
+}
+
+func (ctx DQItem) Index() int {
+	now := time.Now()
+	return int(now.Unix())
+}
+
+func (ctx DQItem) Key() string {
+	return session.GetFileKeyName(ctx.dm.SavePath)
+}
 
 func Start(cfg *sys.Config, msg *session.DQMessage) error {
 	var exitCode chan int = make(chan int)
@@ -48,8 +63,8 @@ func Start(cfg *sys.Config, msg *session.DQMessage) error {
 	return nil
 }
 
-func PeriodicPushHandler(cfg *sys.Config, rds *redis.Client) sys.PeriodicPushFunc {
-	return func(queue map[string]interface{}) (interface{}, string, error) {
+func PeriodicPushHandler(cfg *sys.Config, rds *redis.Client) sys.PeriodicPushFunc[DQItem] {
+	return func(queue *sys.QueueStack[DQItem]) (DQItem, error) {
 		var (
 			err   error
 			qItem string
@@ -60,63 +75,52 @@ func PeriodicPushHandler(cfg *sys.Config, rds *redis.Client) sys.PeriodicPushFun
 			sys.SessionContext,
 			session.GetKeyName("download", ":queue"),
 		).Result(); err != nil {
-			return nil, "", err
+			return DQItem{dm: dm}, err
 		} else {
 			if err = json.Unmarshal([]byte(qItem), &dm); err != nil {
-				return nil, "", err
+				return DQItem{dm: dm}, err
 			}
 		}
 
 		// litter.D(dm, session.GetFileKeyName(dm.SavePath))
-		return dm, session.GetFileKeyName(dm.SavePath), err
+		return DQItem{dm: dm}, err
 	}
 }
 
-func OnPushedHandler(cfg *sys.Config, rds *redis.Client) sys.OnPushedFunc {
-	return func(item interface{}, keyId string) {
-		var dm *session.DQMessage = item.(*session.DQMessage)
+func OnPushedHandler(cfg *sys.Config, rds *redis.Client) sys.OnPushedFunc[DQItem] {
+	return func(item DQItem) {
+		Start(cfg, item.dm)
 
-		Start(cfg, dm)
+		metadata.UpdateDuration(cfg, item.dm)
+		metadata.UpdateSubtitles(cfg, item.dm)
+		metadata.UpdateDubs(cfg, item.dm)
 
-		metadata.UpdateDuration(cfg, dm)
-		metadata.UpdateSubtitles(cfg, dm)
-		metadata.UpdateDubs(cfg, dm)
-
-		litter.D("item pushed", keyId)
+		litter.D("item pushed", item.Key())
 	}
 }
 
-func PeriodicRemoveHandler(cfg *sys.Config, rds *redis.Client) sys.PeriodicRemoveFunc {
-	return func(queue map[string]interface{}) (string, error) {
-		var (
-			err   error
-			qItem string
-			dm    *session.DQMessage
-		)
+func OnRemovedHandler(cfg *sys.Config, rds *redis.Client) sys.OnRemovedFunc[DQItem] {
+	return func(item DQItem) {
+		// var (
+		// 	err   error
+		// 	qItem string
+		// 	dm    *session.DQMessage
+		// )
 
-		if qItem, err = rds.SPop(
-			sys.SessionContext,
-			session.GetKeyName("download", ":done"),
-		).Result(); err != nil {
-			return "", err
-		} else {
-			if err = json.Unmarshal([]byte(qItem), &dm); err != nil {
-				return "", err
-			}
-		}
+		// if qItem, err = rds.SPop(
+		// 	sys.SessionContext,
+		// 	session.GetKeyName("download", ":done"),
+		// ).Result(); err != nil {
+		// 	return
+		// } else {
+		// 	if err = json.Unmarshal([]byte(qItem), &dm); err != nil {
+		// 		return
+		// 	}
+		// }
 
-		// litter.D("item removing", session.GetFileKeyName(dm.SavePath))
-		return session.GetFileKeyName(dm.SavePath), err
-	}
-}
+		litter.D("item removed", item.Key())
 
-func OnRemovedHandler(cfg *sys.Config, rds *redis.Client) sys.OnRemovedFunc {
-	return func(item interface{}, keyId string) {
-		litter.D("item removed", keyId)
-
-		dm := item.(*session.DQMessage)
-
-		sm := session.SQSegmentInfo{DQMessage: dm}
+		sm := session.SQSegmentInfo{DQMessage: item.dm}
 		sm.Init(cfg)
 		// litter.D(dm, sm)
 
@@ -124,11 +128,11 @@ func OnRemovedHandler(cfg *sys.Config, rds *redis.Client) sys.OnRemovedFunc {
 			litter.D(err)
 		}
 
-		if err := extract.ExtractSubtitles(cfg, dm); err != nil {
+		if err := extract.ExtractSubtitles(cfg, item.dm); err != nil {
 			litter.D(err)
 		}
 
-		if err := extract.ExtractDubs(cfg, dm); err != nil {
+		if err := extract.ExtractDubs(cfg, item.dm); err != nil {
 			litter.D(err)
 		}
 	}

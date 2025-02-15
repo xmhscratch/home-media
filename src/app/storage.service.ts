@@ -5,19 +5,22 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, Subject, zip, combineLatest, of, concat } from 'rxjs';
 import { switchMap, map, tap } from 'rxjs/operators';
 
-import { map as ldMap } from 'lodash-es'
+import { map as ldMap, pickBy as ldPickBy } from 'lodash-es'
 // import { DynamicDialogRef } from 'primeng/dynamicdialog';
 // import { forEach } from 'lodash-es';
 
 import {
   IINode,
   ITreeRootNode,
+  FileMetaInfo,
   SessionInfo,
   IFileListItem,
 } from './storage.d'
 
-const ENDPOINT_STORAGE_API = 'http://hms_backend:4100'
-const ENDPOINT_STREAMING_API = 'http://hms_api:4110'
+import {
+  ENDPOINT_STORAGE_API,
+  ENDPOINT_STREAMING_API,
+} from './environment'
 
 @Injectable({
   providedIn: 'root'
@@ -162,43 +165,29 @@ export class StorageService {
         // observe: "body",
       })
       .pipe(
-        map((data: SessionInfo) => data),
-        switchMap((ss) => this.getFiles(ss.id).pipe(
-          map((filePaths: string[]) => ldMap(filePaths, (v, k) => (
+        map((ss: SessionInfo) => {
+          return ldMap(ss.files, (v, k) => (
             <IFileListItem>{
-              path: v,
-              channel: `${ENDPOINT_STREAMING_API}/${ss.id}`,
+              path: v.path,
+              size: v.size,
+              sessionId: ss.id,
             }
-          )))
-        )),
+          ))
+        }),
         // tap((v) => console.log(v)),
       )
   }
 
-  getFiles(sessionId: string): Observable<string[]> {
-    const headers = new HttpHeaders({
-      'enctype': 'multipart/form-data',
-      'endpoint': ENDPOINT_STREAMING_API,
-    });
-
-    return this.http
-      .get<string[]>(`/${sessionId}/files`, {
-        headers,
-        // observe: "body",
-      })
-      .pipe(
-        map((data: string[]) => data),
-      )
-  }
-
   fetchSource(sessionId: string, filePath: string): Observable<any> {
+    const formData = new FormData();
+
     const headers = new HttpHeaders({
       'enctype': 'multipart/form-data',
       'endpoint': ENDPOINT_STREAMING_API,
     });
 
     return this.http
-      .head<any>(`/${sessionId}/${filePath}`, {
+      .post<any>(`/${sessionId}/${filePath}`, formData, {
         headers,
         // observe: "body",
       })

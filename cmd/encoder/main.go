@@ -22,13 +22,11 @@ func main() {
 	rds := sys.NewClient(cfg)
 	defer rds.Close()
 
-	sys.NewQueue(sys.QueueOptions{
-		Capacity:       1,
-		TickDelay:      1000 * 1,
-		LoopDelay:      500,
-		PeriodicPush:   segment.PeriodicPushHandler(cfg, rds),
-		OnPushed:       segment.OnPushedHandler(cfg, rds),
-		PeriodicRemove: segment.PeriodicRemoveHandler(cfg, rds),
-		OnRemoved:      segment.OnRemovedHandler(cfg, rds),
+	sys.NewQueue(sys.QueueOptions[segment.SQItem]{
+		Capacity:     1,
+		LoopDelay:    500,
+		PeriodicPush: segment.PeriodicPushHandler(cfg, rds),
+		OnPushed:     segment.OnPushedHandler(cfg, rds),
+		OnRemoved:    segment.OnRemovedHandler(cfg, rds),
 	}).Start()
 }
