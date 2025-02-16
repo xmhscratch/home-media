@@ -25,13 +25,11 @@ const (
 
 const SEGMENT_CAPACITY int64 = 6
 
-var fileSourceTypeName = map[FileSourceType]string{
-	FILE_SOURCE_TYPE_DIRECT:  "1",
-	FILE_SOURCE_TYPE_TORRENT: "2",
-}
-
 func (name FileSourceType) String() string {
-	return fileSourceTypeName[name]
+	return map[FileSourceType]string{
+		FILE_SOURCE_TYPE_DIRECT:  "1",
+		FILE_SOURCE_TYPE_TORRENT: "2",
+	}[name]
 }
 
 func (name FileSourceType) IsEqual(target string) bool {

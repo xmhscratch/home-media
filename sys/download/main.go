@@ -1,6 +1,7 @@
 package download
 
 import (
+	"context"
 	"encoding/json"
 	"home-media/sys"
 	"home-media/sys/command"
@@ -17,13 +18,12 @@ import (
 )
 
 type DQItem struct {
-	sys.QItem
+	sys.QItem[DQItem]
 	dm *session.DQMessage
 }
 
 func (ctx DQItem) Index() int {
-	now := time.Now()
-	return int(now.Unix())
+	return int(time.Now().Unix())
 }
 
 func (ctx DQItem) Key() string {
@@ -50,7 +50,7 @@ func Start(cfg *sys.Config, msg *session.DQMessage) error {
 			Main: Main,
 		}
 
-		stdin.WriteVar("ExecBin", "/export/bin/download.sh")
+		stdin.WriteVar("ExecBin", filepath.Join(cfg.BinPath, "./download.sh"))
 		stdin.WriteVar("DownloadURL", msg.DownloadURL)
 		stdin.WriteVar("Output", msg.SavePath)
 		stdin.WriteVar("BaseURL", cfg.StreamApiURL)
@@ -63,44 +63,62 @@ func Start(cfg *sys.Config, msg *session.DQMessage) error {
 	return nil
 }
 
-func PeriodicPushHandler(cfg *sys.Config, rds *redis.Client) sys.PeriodicPushFunc[DQItem] {
-	return func(queue *sys.QueueStack[DQItem]) (DQItem, error) {
+func PeriodicHandler(cfg *sys.Config, rds *redis.Client) sys.PeriodicFunc[DQItem] {
+	return func(queue *sys.QueueStack[DQItem]) (*DQItem, error) {
+		// return &DQItem{dm: nil}, nil
 		var (
-			err   error
-			qItem string
-			dm    *session.DQMessage
+			err    error
+			qItem  string
+			dm     *session.DQMessage
+			hasKey int64 = 0
 		)
 
+		rdsKeyName := session.GetKeyName("download", ":queue")
+		if hasKey, err = rds.Exists(context.TODO(), rdsKeyName).Result(); err != nil || hasKey == 0 {
+			return nil, nil
+		}
+		// litter.D(rdsKeyName, hasKey)
 		if qItem, err = rds.SPop(
-			sys.SessionContext,
-			session.GetKeyName("download", ":queue"),
+			context.TODO(),
+			rdsKeyName,
 		).Result(); err != nil {
-			return DQItem{dm: dm}, err
+			// litter.D(qItem, err)
+			return nil, nil
 		} else {
 			if err = json.Unmarshal([]byte(qItem), &dm); err != nil {
-				return DQItem{dm: dm}, err
+				return &DQItem{dm: dm}, err
 			}
 		}
 
-		// litter.D(dm, session.GetFileKeyName(dm.SavePath))
-		return DQItem{dm: dm}, err
+		// litter.D(dm)
+		return &DQItem{dm: dm}, err
 	}
 }
 
-func OnPushedHandler(cfg *sys.Config, rds *redis.Client) sys.OnPushedFunc[DQItem] {
-	return func(item DQItem) {
-		Start(cfg, item.dm)
+func ConsumeHandler(cfg *sys.Config, rds *redis.Client) sys.ConsumeFunc[DQItem] {
+	return func(queue *sys.QueueStack[DQItem], item *DQItem) error {
+		var err error
+		// litter.D(item)
+		if err = Start(cfg, item.dm); err != nil {
+			return err
+		}
+		if err = metadata.UpdateDuration(cfg, item.dm); err != nil {
+			return err
+		}
+		if err = metadata.UpdateSubtitles(cfg, item.dm); err != nil {
+			return err
+		}
+		if err = metadata.UpdateDubs(cfg, item.dm); err != nil {
+			return err
+		}
 
-		metadata.UpdateDuration(cfg, item.dm)
-		metadata.UpdateSubtitles(cfg, item.dm)
-		metadata.UpdateDubs(cfg, item.dm)
-
-		litter.D("item pushed", item.Key())
+		// litter.D("item pushed", item.Key())
+		return err
 	}
 }
 
-func OnRemovedHandler(cfg *sys.Config, rds *redis.Client) sys.OnRemovedFunc[DQItem] {
-	return func(item DQItem) {
+func OnConsumedHandler(cfg *sys.Config, rds *redis.Client) sys.OnConsumedFunc[DQItem] {
+	return func(item *DQItem) {
 		// var (
 		// 	err   error
 		// 	qItem string
@@ -117,22 +135,26 @@ func OnRemovedHandler(cfg *sys.Config, rds *redis.Client) sys.OnRemovedFunc[DQIt
 		// 		return
 		// 	}
 		// }
-
-		litter.D("item removed", item.Key())
+		// =======================
+		// litter.D("item removed", item.Key())
 
 		sm := session.SQSegmentInfo{DQMessage: item.dm}
 		sm.Init(cfg)
-		// litter.D(dm, sm)
+		// litter.D(item.dm, sm)
 
 		if err := sm.PushQueue(); err != nil {
 			litter.D(err)
 		}
 
-		if err := extract.ExtractSubtitles(cfg, item.dm); err != nil {
+		if err := extract.ExtractVideo(cfg, item.dm); err != nil {
 			litter.D(err)
 		}
 
 		if err := extract.ExtractDubs(cfg, item.dm); err != nil {
+			litter.D(err)
+		}
+
+		if err := extract.ExtractSubtitles(cfg, item.dm); err != nil {
 			litter.D(err)
 		}
 	}

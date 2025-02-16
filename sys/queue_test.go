@@ -1,69 +1,75 @@
 package sys
 
 import (
-	"strconv"
 	"testing"
 	"time"
 )
 
-type IFruit interface{}
+type TFruitName (string)
+
+const (
+	_                 = iota
+	Apple  TFruitName = "Apple"
+	Banana TFruitName = "Banana"
+	Cherry TFruitName = "Cherry"
+	Grape  TFruitName = "Grape"
+	Mango  TFruitName = "Mango"
+	Orange TFruitName = "Orange"
+)
+
+func (f TFruitName) String() string {
+	return map[TFruitName]string{
+		Apple:  "Apple",
+		Banana: "Banana",
+		Cherry: "Cherry",
+		Grape:  "Grape",
+		Mango:  "Mango",
+		Orange: "Orange",
+	}[f]
+}
 
 type Fruit struct {
-	QItem
-	IFruit
+	QItem[Fruit]
+	T TFruitName
 }
 
 func (ctx Fruit) Index() int {
-	now := time.Now()
-	return int(now.Unix())
+	return int(time.Now().Unix())
 }
 
 func (ctx Fruit) Key() string {
-	return strconv.FormatInt(int64(ctx.Index()), 5<<1)
+	return ctx.T.String()
 }
 
 func TestQueue(t *testing.T) {
-	// q := NewQueue(QueueOptions{
-	// 	Capacity:  2,
-	// 	TickDelay: 1000 * 1,
-	// 	LoopDelay: 500,
-	// 	// OnInit:    func() {},
-	// 	PeriodicPush: func(queue map[string]interface{}) (item interface{}, key string, err error) {
-	// 		rd := Random(1, 2)
-	// 		time.Sleep(time.Duration(rd) * time.Second)
-	// 		return []string{"test", "test"}, strconv.Itoa(len(queue) + 1), err
-	// 	},
-	// 	OnPushed: func(item interface{}, key string) {
-	// 		t.Log("item pushed", item)
-	// 	},
-	// 	PeriodicRemove: func(queue map[string]interface{}) (string, error) {
-	// 		time.Sleep(time.Duration(Random(3, 4)) * time.Second)
-	// 		return strconv.Itoa(len(queue)), nil
-	// 	},
-	// 	OnRemoved: func(item interface{}, key string) {
-	// 		t.Log("item removed", item, key)
-	// 	},
-	// 	OnError: func(err error) {
-	// 		t.Fatal(err)
-	// 	},
-	// 	OnTick: func(queue map[string]interface{}) {
-	// 		t.Log(len(queue))
-	// 	},
-	// })
-
 	q := NewQueue(QueueOptions[Fruit]{
-		Capacity:  2,
-		LoopDelay: 500,
-		OnInit:    func() {},
-		PeriodicPush: func(queue *QueueStack[Fruit]) (item Fruit, err error) {
-			time.Sleep(time.Duration(1) * time.Second)
-			return Fruit{}, err
+		Capacity: 3,
+		Throttle: 1,
+		OnInit: func(queue *QueueStack[Fruit]) error {
+			queue.Push(&Fruit{T: "Apple"})
+			queue.Push(&Fruit{T: "Banana"})
+			queue.Push(&Fruit{T: "Cherry"})
+			queue.Push(&Fruit{T: "Grape"})
+			queue.Push(&Fruit{T: "Mango"})
+			queue.Push(&Fruit{T: "Orange"})
+
+			return nil
 		},
-		OnPushed: func(item Fruit) {
-			t.Log("item pushed", item.Key())
+		Periodic: func(queue *QueueStack[Fruit]) (item *Fruit, err error) {
+			queue.Push(&Fruit{T: "Banana"})
+			queue.Push(&Fruit{T: "Mango"})
+
+			return nil, err
 		},
-		OnRemoved: func(item Fruit) {
-			t.Log("item removed", item, item.Key())
+		Consume: func(queue *QueueStack[Fruit], item *Fruit) error {
+			time.Sleep(time.Duration(2) * time.Second)
+			return nil
+		},
+		OnPushed: func(item *Fruit) {
+			t.Log("Item pushed", item.Key())
+		},
+		OnConsumed: func(item *Fruit) {
+			t.Log("Item consumed", item.Key())
 		},
 		OnError: func(err error) {
 			t.Fatal(err)

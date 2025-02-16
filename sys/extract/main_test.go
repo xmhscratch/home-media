@@ -1,13 +1,12 @@
 package extract
 
 import (
+	"fmt"
 	"testing"
 
 	"home-media/sys/sample"
 	"home-media/sys/session"
 	"path/filepath"
-
-	"github.com/sanity-io/litter"
 )
 
 var SampleDQMessage *session.DQMessage = &session.DQMessage{
@@ -18,13 +17,13 @@ var SampleDQMessage *session.DQMessage = &session.DQMessage{
 }
 
 func TestExtractVideo(t *testing.T) {
-	litter.D(ExtractVideo(sample.SampleConfig, SampleDQMessage))
-}
-
-func TestExtractSubtitles(t *testing.T) {
-	litter.D(ExtractSubtitles(sample.SampleConfig, SampleDQMessage))
+	fmt.Println(ExtractVideo(sample.SampleConfig, SampleDQMessage))
 }
 
 func TestExtractDubs(t *testing.T) {
-	litter.D(ExtractDubs(sample.SampleConfig, SampleDQMessage))
+	fmt.Println(ExtractDubs(sample.SampleConfig, SampleDQMessage))
+}
+
+func TestExtractSubtitles(t *testing.T) {
+	fmt.Println(ExtractSubtitles(sample.SampleConfig, SampleDQMessage))
 }

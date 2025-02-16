@@ -4,6 +4,8 @@ import (
 	"home-media/sys"
 	"home-media/sys/download"
 	"log"
+
+	"github.com/sanity-io/litter"
 )
 
 func main() {
@@ -14,7 +16,8 @@ func main() {
 		}
 	}()
 
-	cfg, err := sys.NewConfig("../")
+	// cfg, err := sys.NewConfig("../")
+	cfg, err := sys.NewConfig("./")
 	if err != nil {
 		panic(err)
 	}
@@ -23,10 +26,13 @@ func main() {
 	defer rds.Close()
 
 	sys.NewQueue(sys.QueueOptions[download.DQItem]{
-		Capacity:     2,
-		LoopDelay:    500,
-		PeriodicPush: download.PeriodicPushHandler(cfg, rds),
-		OnPushed:     download.OnPushedHandler(cfg, rds),
-		OnRemoved:    download.OnRemovedHandler(cfg, rds),
+		Capacity:   2,
+		Throttle:   500,
+		Periodic:   download.PeriodicHandler(cfg, rds),
+		Consume:    download.ConsumeHandler(cfg, rds),
+		OnConsumed: download.OnConsumedHandler(cfg, rds),
+		OnError: func(err error) {
+			litter.D(err)
+		},
 	}).Start()
 }

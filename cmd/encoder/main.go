@@ -23,10 +23,10 @@ func main() {
 	defer rds.Close()
 
 	sys.NewQueue(sys.QueueOptions[segment.SQItem]{
-		Capacity:     1,
-		LoopDelay:    500,
-		PeriodicPush: segment.PeriodicPushHandler(cfg, rds),
-		OnPushed:     segment.OnPushedHandler(cfg, rds),
-		OnRemoved:    segment.OnRemovedHandler(cfg, rds),
+		Capacity:   1,
+		Throttle:   500,
+		Periodic:   segment.PeriodicHandler(cfg, rds),
+		Consume:    segment.ConsumeHandler(cfg, rds),
+		OnConsumed: segment.OnConsumedHandler(cfg, rds),
 	}).Start()
 }

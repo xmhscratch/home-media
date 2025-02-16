@@ -33,6 +33,7 @@ type ConfigFile struct {
 	StreamApiURL string                 `json:"streamApiUrl"`
 	SQLite       SQLiteConnectionConfig `json:"sqlite"`
 	Redis        RedisConnectionConfig  `json:"redis"`
+	BinPath      string                 `json:"binPath"`
 	TmpPath      string                 `json:"tmpPath"`
 	RootPath     string                 `json:"rootPath"`
 	DataPath     string                 `json:"dataPath"`

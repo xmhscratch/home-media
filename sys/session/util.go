@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"home-media/sys"
+	"math/rand"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -89,6 +90,10 @@ func GetMimeType(filePath string) string {
 	}
 }
 
+func RandomInt() int {
+	return rand.New(rand.NewSource(time.Now().UnixNano())).Intn(999) + 1
+}
+
 func minToSec(min float64) float64 {
 	return min * 60
 }
@@ -108,7 +113,7 @@ func torrentConfig() (config *torrent.ClientConfig) {
 	config.PeriodicallyAnnounceTorrentsToDht = true
 	config.MaxUnverifiedBytes = 0
 
-	config.ListenPort = 42105
+	config.ListenPort = RandomInt() + 42000
 	// config.NoDefaultPortForwarding = true
 	// config.NoUpload = true
 	config.Seed = false

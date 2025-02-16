@@ -5,6 +5,11 @@ STREAM_INDEX=$2
 LANG_CODE=$3
 FFMPEG_OUTPUT_FILE=$(echo $4 | sed "s/^['\"]//; s/['\"]$//")
 
+# echo $FFMPEG_INPUT_FILE
+# echo $STREAM_INDEX
+# echo $LANG_CODE
+# echo $FFMPEG_OUTPUT_FILE
+
 # ../ci/extract-vid.sh "$FFMPEG_INPUT_FILE" "$FFMPEG_OUTPUT_FILE";
 
 cmd1=(

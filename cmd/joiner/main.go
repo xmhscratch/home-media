@@ -23,10 +23,10 @@ func main() {
 	defer rds.Close()
 
 	sys.NewQueue(sys.QueueOptions[concat.CQItem]{
-		Capacity:     1,
-		LoopDelay:    500,
-		PeriodicPush: concat.PeriodicPushHandler(cfg, rds),
-		OnPushed:     concat.OnPushedHandler(cfg, rds),
-		OnRemoved:    concat.OnRemovedHandler(cfg, rds),
+		Capacity:   2,
+		Throttle:   500,
+		Periodic:   concat.PeriodicHandler(cfg, rds),
+		Consume:    concat.ConsumeHandler(cfg, rds),
+		OnConsumed: concat.OnConsumedHandler(cfg, rds),
 	}).Start()
 }

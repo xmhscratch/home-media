@@ -2,17 +2,18 @@
     "debug": false,
     "port": "4110",
     "hostName": "streaming.home-media.me",
-    "streamApiUrl": "http://hms_api:4110",
+    "streamApiUrl": "http://192.168.56.55:4110",
     "redis": {
         "db": "0",
-        "host": "redis_master",
+        "host": "192.168.56.55",
         "port": "6379",
         "password": ""
     },
     "sqlite": {
-        "path": "/export/data"
+        "path": "/home/data"
     },
-    "tmpPath": "/export/tmp",
-    "rootPath": "/go/src/home-media",
-    "dataPath": "/export/data/"
+    "binPath": "/home/web/repos/home-media/ci",
+    "tmpPath": "/home/tmp",
+    "rootPath": "/home/web/repos/home-media",
+    "dataPath": "/home/data/"
 }

@@ -16,7 +16,7 @@ import (
 )
 
 type CQItem struct {
-	sys.QItem
+	sys.QItem[CQItem]
 	ConcatPaths []string
 	KeyId       string
 }
@@ -55,7 +55,7 @@ func Join(cfg *sys.Config, keyId string, concatPaths []string) error {
 			exitCode <- 9
 		}
 
-		stdin.WriteVar("ExecBin", "/export/bin/concat.sh")
+		stdin.WriteVar("ExecBin", filepath.Join(cfg.BinPath, "./concat.sh"))
 		stdin.WriteVar("Input", filepath.Join(filepath.Dir(concatPaths[0]), "segments.txt"))
 		stdin.WriteVar("Output", filepath.Join(
 			filepath.Dir(concatPaths[0]),
@@ -90,8 +90,8 @@ errorLoop:
 	return err
 }
 
-func PeriodicPushHandler(cfg *sys.Config, rds *redis.Client) sys.PeriodicPushFunc[CQItem] {
-	return func(queue *sys.QueueStack[CQItem]) (CQItem, error) {
+func PeriodicHandler(cfg *sys.Config, rds *redis.Client) sys.PeriodicFunc[CQItem] {
+	return func(queue *sys.QueueStack[CQItem]) (*CQItem, error) {
 		var (
 			err         error
 			concatPaths chan []string = make(chan []string)
@@ -146,18 +146,18 @@ func PeriodicPushHandler(cfg *sys.Config, rds *redis.Client) sys.PeriodicPushFun
 			return err
 		}()
 
-		return CQItem{ConcatPaths: <-concatPaths, KeyId: <-foundKeyId}, err
+		return &CQItem{ConcatPaths: <-concatPaths, KeyId: <-foundKeyId}, err
 	}
 }
 
-func OnPushedHandler(cfg *sys.Config, rds *redis.Client) sys.OnPushedFunc[CQItem] {
-	return func(item CQItem) {
-		Join(cfg, item.Key(), item.ConcatPaths)
+func ConsumeHandler(cfg *sys.Config, rds *redis.Client) sys.ConsumeFunc[CQItem] {
+	return func(queue *sys.QueueStack[CQItem], item *CQItem) error {
+		return Join(cfg, item.Key(), item.ConcatPaths)
 	}
 }
 
-func OnRemovedHandler(cfg *sys.Config, rds *redis.Client) sys.OnRemovedFunc[CQItem] {
-	return func(item CQItem) {
+func OnConsumedHandler(cfg *sys.Config, rds *redis.Client) sys.OnConsumedFunc[CQItem] {
+	return func(item *CQItem) {
 		err := rds.SPopN(
 			sys.SessionContext,
 			session.GetKeyName("concat:ready", ":", item.Key()),

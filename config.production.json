@@ -1,0 +1,19 @@
+{
+    "debug": false,
+    "port": "4110",
+    "hostName": "streaming.home-media.me",
+    "streamApiUrl": "http://hms_api:4110",
+    "redis": {
+        "db": "0",
+        "host": "redis_master",
+        "port": "6379",
+        "password": ""
+    },
+    "sqlite": {
+        "path": "/export/data"
+    },
+    "binPath": "/export/bin",
+    "tmpPath": "/export/tmp",
+    "rootPath": "/go/src/home-media",
+    "dataPath": "/export/data/"
+}

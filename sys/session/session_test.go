@@ -1,6 +1,7 @@
 package session
 
 import (
+	"encoding/json"
 	"home-media/sys/sample"
 	"testing"
 
@@ -22,7 +23,13 @@ func TestCreateSession(t *testing.T) {
 		t.Fatal(err)
 		return
 	}
-	litter.Dump(ss)
+
+	if result, err := json.Marshal(ss); err != nil {
+		t.Fatal(err)
+		return
+	} else {
+		litter.Dump(string(result))
+	}
 }
 
 func TestInitSession(t *testing.T) {
@@ -90,5 +97,5 @@ func TestNotifyDownloaded(t *testing.T) {
 		return
 	}
 	ss.NotifyDownloaded(SampleDQMessage)
-	// download.Start(sample.SampleConfig, )
+	// download.Start(sample.SampleConfig)
 }

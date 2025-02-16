@@ -29,7 +29,7 @@ func UpdateDuration(cfg *sys.Config, msg *session.DQMessage) error {
 			Main: Main,
 		}
 
-		stdin.WriteVar("ExecBin", "/export/bin/duration.sh")
+		stdin.WriteVar("ExecBin", filepath.Join(cfg.BinPath, "./duration.sh"))
 		stdin.WriteVar("Input", filepath.Join(cfg.DataPath, msg.SavePath))
 
 		exitCode <- shell.Run()
@@ -59,7 +59,7 @@ func UpdateSubtitles(cfg *sys.Config, msg *session.DQMessage) error {
 			Main: Main,
 		}
 
-		stdin.WriteVar("ExecBin", "/export/bin/subtitle.sh")
+		stdin.WriteVar("ExecBin", filepath.Join(cfg.BinPath, "./subtitle.sh"))
 		stdin.WriteVar("Input", filepath.Join(cfg.DataPath, msg.SavePath))
 
 		exitCode <- shell.Run()
@@ -89,7 +89,7 @@ func UpdateDubs(cfg *sys.Config, msg *session.DQMessage) error {
 			Main: Main,
 		}
 
-		stdin.WriteVar("ExecBin", "/export/bin/dub.sh")
+		stdin.WriteVar("ExecBin", filepath.Join(cfg.BinPath, "./dub.sh"))
 		stdin.WriteVar("Input", filepath.Join(cfg.DataPath, msg.SavePath))
 
 		exitCode <- shell.Run()

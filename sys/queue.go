@@ -1,50 +1,53 @@
 package sys
 
 import (
-	"fmt"
+	"log"
+	"sync"
 	"time"
 )
 
-type PeriodicPushFunc[I QItem] func(queue *QueueStack[I]) (I, error)
-type OnPushedFunc[I QItem] func(item I)
-type OnRemovedFunc[I QItem] func(item I)
-type OnTickFunc[I QItem] func(queue *QueueStack[I])
+type OnInitFunc[I QItem[I]] func(queue *QueueStack[I]) error
+type PeriodicFunc[I QItem[I]] func(queue *QueueStack[I]) (*I, error)
+type ConsumeFunc[I QItem[I]] func(queue *QueueStack[I], item *I) error
+type OnPushedFunc[I QItem[I]] func(item *I)
+type OnConsumedFunc[I QItem[I]] func(item *I)
+type OnTickFunc[I QItem[I]] func(queue *QueueStack[I])
 type OnErrorFunc func(err error)
 
-type QueueOptions[I QItem] struct {
-	Capacity     int
-	LoopDelay    int64
-	OnInit       func()
-	PeriodicPush PeriodicPushFunc[I]
-	OnPushed     OnPushedFunc[I]
-	OnRemoved    OnRemovedFunc[I]
-	OnTick       OnTickFunc[I]
-	OnError      OnErrorFunc
+type QueueOptions[I QItem[I]] struct {
+	Capacity   int
+	Throttle   int64
+	OnInit     OnInitFunc[I]
+	Periodic   PeriodicFunc[I]
+	Consume    ConsumeFunc[I]
+	OnPushed   OnPushedFunc[I]
+	OnConsumed OnConsumedFunc[I]
+	OnTick     OnTickFunc[I]
+	OnError    OnErrorFunc
 }
 
-type Queue[I QItem] struct {
+type Queue[I QItem[I]] struct {
 	*QueueOptions[I]
-	loopDelay time.Duration
-	items     *QueueStack[I]
-	queue     chan I
+	items *QueueStack[I]
+	queue chan *I
 }
 
-func NewQueue[I QItem](opts QueueOptions[I]) *Queue[I] {
+func NewQueue[I QItem[I]](opts QueueOptions[I]) *Queue[I] {
 	if opts.Capacity < 1 {
 		opts.Capacity = 1
 	}
 
+	if opts.OnError == nil {
+		opts.OnError = func(err error) { log.Panic(err) }
+	}
 	if opts.OnInit == nil {
-		opts.OnInit = func() {}
+		opts.OnInit = func(*QueueStack[I]) error { return nil }
 	}
 	if opts.OnPushed == nil {
-		opts.OnPushed = func(I) {}
+		opts.OnPushed = func(*I) {}
 	}
-	if opts.OnRemoved == nil {
-		opts.OnRemoved = func(I) {}
-	}
-	if opts.OnError == nil {
-		opts.OnError = func(error) {}
+	if opts.OnConsumed == nil {
+		opts.OnConsumed = func(*I) {}
 	}
 	if opts.OnTick == nil {
 		opts.OnTick = func(*QueueStack[I]) {}
@@ -54,84 +57,79 @@ func NewQueue[I QItem](opts QueueOptions[I]) *Queue[I] {
 		QueueOptions: &opts,
 	}
 
-	q.loopDelay = time.Duration(q.LoopDelay) * time.Nanosecond
 	q.items = NewQueueStack[I]()
-	q.queue = make(chan I, q.Capacity)
+	q.queue = make(chan *I, q.Capacity)
 
 	return q
 }
 
 func (q *Queue[I]) Start() {
 	var (
-		waitRemoval chan struct{} = make(chan struct{})
-		waitOnEmpty chan struct{} = make(chan struct{}, 1)
+		mu sync.Mutex
 	)
 
 	defer close(q.queue)
-	defer close(waitRemoval)
-	defer close(waitOnEmpty)
+
+	q.OnInit(q.items)
 
 	go func() {
+	exitQueue:
 		for {
-			var (
-				err  error
-				item I
-			)
+			time.Sleep(time.Duration(q.Throttle) * time.Millisecond)
 
-			if len(q.queue) >= q.Capacity {
-				return
-			}
-
-			if item, err = q.PeriodicPush(q.items); err != nil {
+			if item, err := q.Periodic(q.items); err != nil {
 				q.OnError(err)
-				return
+				break exitQueue
+			} else {
+				if item == nil {
+					continue
+				}
+				q.items.Push(item)
 			}
-			if q.items.Len() == 0 {
-				waitOnEmpty <- struct{}{}
-			}
-			q.items.Push(item)
-
-			time.Sleep(q.loopDelay)
 		}
 	}()
 
-	fmt.Println("start queue...")
-
 	for {
-		time.Sleep(q.loopDelay)
+		time.Sleep(time.Duration(q.Throttle) * time.Millisecond)
 
-		// lock on empty queue
-		<-waitOnEmpty
+		// 1-turn filling + 1-turn consume
+		loopCircle := q.Capacity + q.Capacity
 
-	queueBlocking:
-		for i := 0; i < q.Capacity; i++ {
-			time.Sleep(q.loopDelay)
+	exitFilling:
+		for i := 0; i < loopCircle; i++ {
+			time.Sleep(time.Duration(q.Throttle) * time.Millisecond)
 
+			// continue popping item until queue reach its capacity
 			if s := func() int {
 				if q.items.Len() > 0 {
 					item := q.items.Pop().(I)
-					q.queue <- item
-					q.OnPushed(item)
+					q.queue <- &item
+					q.OnPushed(&item)
 				}
 				return len(q.queue)
-			}(); s >= q.items.Len() {
+			}(); s >= q.Capacity {
 				go func() {
+					mu.Lock()
+					defer mu.Unlock()
 					item := <-q.queue
-					q.OnRemoved(item)
-					waitRemoval <- struct{}{}
+					if err := q.Consume(q.items, item); err != nil {
+						// put back item to the queue
+						q.queue <- item
+						q.OnError(err)
+						return
+					}
+					go q.OnConsumed(item)
 				}()
-
+				// consume leftover items on the queue
 				if q.items.Len() == 0 && s > 0 {
 					continue
-				} else {
-					break queueBlocking
 				}
+				break exitFilling
 			} else {
+				// continue filling up the queue
 				continue
 			}
 		}
-		<-waitRemoval
-		// litter.D("report:", q.queue, len(*q.items))
 	}
 }
 

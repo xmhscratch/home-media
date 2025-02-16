@@ -41,7 +41,9 @@
     "hms:api": "dotenvx run -- docker service update --force hms_api",
     "hms:downloader": "dotenvx run -- docker service update --force hms_downloader",
     "hms:encoder": "dotenvx run -- docker service update --force hms_encoder",
-    "hms:joiner": "dotenvx run -- docker service update --force hms_joiner"
+    "hms:joiner": "dotenvx run -- docker service update --force hms_joiner",
+    "hms:stop:api": "dotenvx run -- docker service update --replicas 0 hms_api",
+    "hms:stop:downloader": "dotenvx run -- docker service update --replicas 0 hms_downloader"
   },
   "private": true,
   "dependencies": {

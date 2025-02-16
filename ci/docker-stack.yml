@@ -12,7 +12,7 @@ services:
     - redis_backend
     environment:
     - APP_NAME=hms_backend
-    - NODE_ENV=development
+    - NODE_ENV=production
     volumes:
     - tmp:/export/tmp/
     - data:/export/data/
@@ -45,7 +45,7 @@ services:
   #   - redis_backend
   #   environment:
   #   - APP_NAME=hms_frontend
-  #   - NODE_ENV=development
+  #   - NODE_ENV=production
   #   volumes:
   #   - tmp:/export/tmp/
   #   - data:/export/data/
@@ -78,7 +78,7 @@ services:
     - redis_backend
     environment:
     - APP_NAME=hms_file
-    - GO_ENV=development
+    - GO_ENV=production
     volumes:
     - tmp:/export/tmp/
     - data:/export/data/
@@ -104,7 +104,7 @@ services:
     - redis_backend
     environment:
     - APP_NAME=hms_api
-    - GO_ENV=development
+    - GO_ENV=production
     volumes:
     - tmp:/export/tmp/
     - data:/export/data/
@@ -118,28 +118,28 @@ services:
         constraints:
         - node.role == manager
 
-  # downloader:
-  #   image: localhost:5000/hms:latest
-  #   container_name: hms_downloader_app
-  #   networks:
-  #   - backend
-  #   - logstash_backend
-  #   - redis_backend
-  #   environment:
-  #   - APP_NAME=hms_downloader
-  #   - GO_ENV=development
-  #   volumes:
-  #   - tmp:/export/tmp/
-  #   - data:/export/data/
-  #   - root:/go/src/home-media/
-  #   working_dir: /go/src/home-media/cmd
-  #   command:
-  #   - go run ./downloader/main.go
-  #   deploy:
-  #     replicas: 1
-  #     placement:
-  #       constraints:
-  #       - node.role != manager
+  downloader:
+    image: localhost:5000/hms:latest
+    container_name: hms_downloader_app
+    networks:
+    - backend
+    - logstash_backend
+    - redis_backend
+    environment:
+    - APP_NAME=hms_downloader
+    - GO_ENV=production
+    volumes:
+    - tmp:/export/tmp/
+    - data:/export/data/
+    - root:/go/src/home-media/
+    working_dir: /go/src/home-media/cmd
+    command:
+    - go run ./downloader/main.go
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+        - node.role == manager
 
   # encoder:
   #   image: localhost:5000/hms:latest
@@ -150,7 +150,7 @@ services:
   #   - redis_backend
   #   environment:
   #   - APP_NAME=hms_encoder
-  #   - GO_ENV=development
+  #   - GO_ENV=production
   #   volumes:
   #   - tmp:/export/tmp/
   #   - data:/export/data/
@@ -173,7 +173,7 @@ services:
   #   - redis_backend
   #   environment:
   #   - APP_NAME=hms_joiner
-  #   - GO_ENV=development
+  #   - GO_ENV=production
   #   volumes:
   #   - tmp:/export/tmp/
   #   - data:/export/data/

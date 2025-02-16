@@ -69,7 +69,11 @@ func (cfg *Config) Init(scopeName string) (err error) {
 		scopeName = "development"
 	}
 
-	err = cfg.GroupCache.Get(context.TODO(), scopeName, groupcache.AllocatingByteSliceSink(&data))
+	err = cfg.GroupCache.Get(
+		context.TODO(),
+		scopeName,
+		groupcache.AllocatingByteSliceSink(&data),
+	)
 
 	if err != nil {
 		return err
@@ -96,8 +100,7 @@ func (cfg *Config) Load(key string) (data []byte, err error) {
 	defer configFile.Close()
 
 	jsonParser := json.NewDecoder(configFile)
-	err = jsonParser.Decode(&cfg)
-	if err != nil {
+	if err = jsonParser.Decode(&cfg); err != nil {
 		return nil, err
 	}
 	return json.Marshal(cfg)

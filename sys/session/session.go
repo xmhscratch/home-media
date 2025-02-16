@@ -73,6 +73,10 @@ func (T FileSourceType) InitSession(
 		return nil, true, err
 	}
 
+	if err = os.MkdirAll(filepath.Join(cfg.DataPath, ctx.NodeID), 0755); err != nil {
+		return nil, true, err
+	}
+
 	ctx.File.notify = func(filePath string) error {
 		var msg *DQMessage = BuildDQMessage(ctx.NodeID, sessionId, ctx.File.SourceType, filePath)
 		return ctx.NotifyDownloaded(msg)
@@ -176,29 +180,6 @@ func InitTorrent(
 		ctx.File.SourceURL = magnetURI
 	}
 
-	{
-		var (
-			err      error
-			b        []byte
-			rawFiles map[string]string
-			files    map[string]FileMetaInfo
-		)
-
-		if rawFiles, err = rds.HGetAll(sys.SessionContext, sys.BuildString(ctx.KeyName, ":files")).Result(); err != nil {
-			return nil, err
-		}
-		if b, err = json.Marshal(rawFiles); err != nil {
-			return nil, err
-		}
-		if err = json.Unmarshal(b, &files); err != nil {
-			return nil, err
-		}
-		ctx.Files = files
-	}
-
-	if err = os.MkdirAll(filepath.Join(cfg.DataPath, ctx.NodeID), 0755); err != nil {
-		return nil, err
-	}
 	if _, err = ctx.File.InitTorrent(); err != nil {
 		return nil, err
 	}
@@ -226,6 +207,28 @@ func InitTorrent(
 		).Err(); err != nil {
 			return nil, err
 		}
+	}
+
+	if ctx.Files, err = func() (map[string]FileMetaInfo, error) {
+		var (
+			err      error
+			b        []byte
+			rawFiles map[string]string
+			files    map[string]FileMetaInfo
+		)
+
+		if rawFiles, err = rds.HGetAll(sys.SessionContext, sys.BuildString(ctx.KeyName, ":files")).Result(); err != nil {
+			return nil, err
+		}
+		if b, err = json.Marshal(rawFiles); err != nil {
+			return nil, err
+		}
+		if err = json.Unmarshal(b, &files); err != nil {
+			return nil, err
+		}
+		return files, err
+	}(); err != nil {
+		return nil, err
 	}
 
 	return ctx, err

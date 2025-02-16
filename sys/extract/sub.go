@@ -44,7 +44,7 @@ func ExtractSubtitles(cfg *sys.Config, msg *session.DQMessage) error {
 					Main: Main,
 				}
 
-				stdin.WriteVar("ExecBin", "/export/bin/extract-sub.sh")
+				stdin.WriteVar("ExecBin", filepath.Join(cfg.BinPath, "./extract-sub.sh"))
 				stdin.WriteVar("Input", filepath.Join(cfg.DataPath, msg.SavePath))
 				stdin.WriteVar("StreamIndex", strconv.FormatInt(sub.StreamIndex, 5<<1))
 				stdin.WriteVar("LangCode", sys.BuildString(sub.LangCode, strconv.FormatInt(sub.StreamIndex, 5<<1)))

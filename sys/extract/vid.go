@@ -30,7 +30,7 @@ func ExtractVideo(cfg *sys.Config, msg *session.DQMessage) error {
 				Main: Main,
 			}
 
-			stdin.WriteVar("ExecBin", "/export/bin/extract-vid.sh")
+			stdin.WriteVar("ExecBin", filepath.Join(cfg.BinPath, "./extract-vid.sh"))
 			stdin.WriteVar("Input", filepath.Join(cfg.DataPath, msg.SavePath))
 			stdin.WriteVar("StreamIndex", "0")
 			stdin.WriteVar("LangCode", "default")

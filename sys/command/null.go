@@ -9,6 +9,7 @@ func (ctx NullWriter) Read(p []byte) (int, error) {
 }
 
 func (ctx NullWriter) Write(p []byte) (int, error) {
+	// fmt.Println(string(p))
 	return len(p), nil
 }
 
