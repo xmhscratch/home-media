@@ -1,4 +1,5 @@
-import { Component, Input, OnInit, WritableSignal, signal, inject, OnDestroy, computed } from '@angular/core';
+import { Component, Input, WritableSignal, signal, inject } from '@angular/core';
+import { OnInit, OnDestroy } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 
 import { CardModule } from 'primeng/card';
@@ -20,6 +21,7 @@ import { sortBy } from 'lodash-es';
 import { IINode } from '@/storage.d'
 import { StorageService } from '@/storage.service'
 import { CItem } from './item/item.component';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-gridview',
@@ -46,32 +48,40 @@ export class CGridview implements OnInit, OnDestroy {
 
   loaded: WritableSignal<boolean> = signal<boolean>(false);
 
+  destroy$: Subscription = new Subscription();
+
   constructor(
     private storage: StorageService,
     private router: Router,
   ) { }
 
   ngOnInit() {
-    this.route.paramMap
+    this.destroy$.add(
+      this.route.paramMap
       .pipe(
         tap(() => {
-          this.rootId$.subscribe()
-          this.nodeId$.subscribe()
+          this.destroy$.add(this.rootId$.subscribe())
+          this.destroy$.add(this.nodeId$.subscribe())
         }),
       )
       .subscribe((a) => {
-        this.storage
-          .switchNode(this.rootId(), this.nodeId())
-          .pipe(
-            tap(() => this.loaded.set(true)),
-            map(({ nodes }) => ({ nodes: sortBy(nodes, (i) => (~new Date(i.created_date as string))) })),
-          )
-          .subscribe(({ nodes }) => this.nodes.set(nodes));
+        this.destroy$.add(
+          this.storage
+            .switchNode(this.rootId(), this.nodeId())
+            .pipe(
+              tap(() => this.loaded.set(true)),
+              map(({ nodes }) => ({
+                nodes: sortBy(nodes, (i) => (~new Date(i.created_date as string)))
+              })),
+            )
+            .subscribe(({ nodes }) => this.nodes.set(nodes))
+        )
       })
+    )
   }
 
   ngOnDestroy(): void {
-    // console.log(7485653)
+    if (this.destroy$) { this.destroy$.unsubscribe() }
   }
 
   selectItemHandler = ($event: Event, item: IINode) => {

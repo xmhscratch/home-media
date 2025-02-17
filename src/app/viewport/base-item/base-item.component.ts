@@ -11,6 +11,8 @@ import { StorageService } from '@/storage.service'
 import { CContent } from './content/content.component';
 import { CFooter } from './footer/footer.component';
 import { CHeader } from './header/header.component';
+import { Subscription } from 'rxjs';
+import { ConsoleLogger } from '@nestjs/common';
 
 @Component({
   selector: 'app-base-item',
@@ -44,6 +46,8 @@ export class CBaseItem implements OnInit, OnDestroy {
   messageService: MessageService;
   storage: StorageService;
 
+  destroy$: Subscription = new Subscription();
+
   constructor(
     protected injectors: Injector,
   ) {
@@ -56,6 +60,7 @@ export class CBaseItem implements OnInit, OnDestroy {
   ngOnInit(): void { }
 
   ngOnDestroy(): void {
+    if (this.destroy$) { this.destroy$.unsubscribe() }
     if (this.ref) { this.ref.close(); }
   }
 
@@ -68,15 +73,17 @@ export class CBaseItem implements OnInit, OnDestroy {
       this.router.navigate(['storage', rootId, nodeId]);
     }
     else {
-      this.storage
-        .switchNode(rootId, nodeId)
-        .subscribe(() => this.show())
+      this.destroy$.add(
+        this.storage
+          .switchNode(rootId, nodeId)
+          .subscribe(() => this.show())
+      )
     }
   }
 
   show() {
     this.ref = this.dialogService.open(CContent, {
-      width: '50vw',
+      width: '75vw',
       modal: true,
       contentStyle: { overflow: 'hidden' },
       breakpoints: {
@@ -90,9 +97,13 @@ export class CBaseItem implements OnInit, OnDestroy {
       },
     });
 
-    this.ref.onClose.subscribe((data: any) => {
-      this.ref = undefined
-    });
-    this.ref.onMaximize.subscribe((value) => { });
+    this.destroy$.add(
+      this.ref.onClose.subscribe((data: any) => {
+        this.ref = undefined
+      })
+    )
+    this.destroy$.add(
+      this.ref.onMaximize.subscribe((value) => { })
+    )
   }
 }

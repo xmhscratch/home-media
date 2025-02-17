@@ -78,8 +78,7 @@ func (T FileSourceType) InitSession(
 	}
 
 	ctx.File.notify = func(filePath string) error {
-		var msg *DQMessage = BuildDQMessage(ctx.NodeID, sessionId, ctx.File.SourceType, filePath)
-		return ctx.NotifyDownloaded(msg)
+		return ctx.NotifyDownloaded()
 	}
 
 	return ctx, true, err
@@ -234,28 +233,28 @@ func InitTorrent(
 	return ctx, err
 }
 
-func GetFiles(
-	cfg *sys.Config,
-	sessionId string,
-) (map[string]string, error) {
-	var (
-		err     error
-		files   map[string]string
-		keyName string = GetKeyName(sessionId)
-	)
+// func GetFiles(
+// 	cfg *sys.Config,
+// 	sessionId string,
+// ) (map[string]string, error) {
+// 	var (
+// 		err     error
+// 		files   map[string]string
+// 		keyName string = GetKeyName(sessionId)
+// 	)
 
-	rds := sys.NewClient(cfg)
-	defer rds.Close()
+// 	rds := sys.NewClient(cfg)
+// 	defer rds.Close()
 
-	if files, err = rds.HGetAll(
-		sys.SessionContext,
-		sys.BuildString(keyName, ":files"),
-	).Result(); err != nil {
-		return nil, err
-	}
+// 	if files, err = rds.HGetAll(
+// 		sys.SessionContext,
+// 		sys.BuildString(keyName, ":files"),
+// 	).Result(); err != nil {
+// 		return nil, err
+// 	}
 
-	return files, err
-}
+// 	return files, err
+// }
 
 func CreateDownload(
 	cfg *sys.Config,
@@ -282,8 +281,21 @@ func CreateDownload(
 		}
 	}
 
-	if ctx, _, err = sourceType.InitSession(cfg, sessionId); err != nil {
-		return err
+	switch sourceType {
+	case FILE_SOURCE_TYPE_DIRECT:
+		{
+			if ctx, err = InitDirect(cfg, sessionId); err != nil {
+				return err
+			}
+			break
+		}
+	case FILE_SOURCE_TYPE_TORRENT:
+		{
+			if ctx, err = InitTorrent(cfg, sessionId); err != nil {
+				return err
+			}
+			break
+		}
 	}
 
 	sourceReady = (ctx.File.SourceReady == 1)
@@ -291,28 +303,25 @@ func CreateDownload(
 		return err
 	}
 
-	if filePath == "" || filePath == "/" {
-		// get first file founded
-		for key := range ctx.Files {
-			meta := ctx.Files.GetValue(key)
-			filePath = meta.Path
-			break
+	var dm *DQMessage
+	for fileKey, v := range ctx.Files {
+		fileMeta := FileMetaInfo(v)
+		if filepath.Join("./", filePath) != filepath.Join("./", fileMeta.Path) {
+			continue
 		}
+		dm = BuildDQMessage(ctx.NodeID, sessionId, sourceType, fileKey, &fileMeta)
 	}
 
-	var msg *DQMessage = BuildDQMessage(ctx.NodeID, sessionId, sourceType, filePath)
-	// litter.D(msg)
-	msgJSON, err := json.Marshal(msg)
-	if err != nil {
+	if dmJSON, err := json.Marshal(dm); err != nil {
 		return err
-	}
-
-	if err = rds.SAdd(
-		sys.SessionContext,
-		GetKeyName("download", ":queue"),
-		string(msgJSON),
-	).Err(); err != nil {
-		return err
+	} else {
+		if err = rds.SAdd(
+			sys.SessionContext,
+			GetKeyName("download", ":queue"),
+			string(dmJSON),
+		).Err(); err != nil {
+			return err
+		}
 	}
 
 	return err
@@ -323,20 +332,6 @@ func (ctx *Session[I]) IsDownloadable() bool {
 	return true
 }
 
-func (ctx *Session[I]) NotifyDownloaded(msg *DQMessage) error {
-	rds := sys.NewClient(ctx.Config)
-	defer rds.Close()
-
-	msgJSON, err := json.Marshal(msg)
-	if err != nil {
-		return err
-	}
-
-	// litter.D("item downloaded: ", msg)
-
-	return rds.SAdd(
-		sys.SessionContext,
-		GetKeyName("download", ":done"),
-		string(msgJSON),
-	).Err()
+func (ctx *Session[I]) NotifyDownloaded() error {
+	return nil
 }

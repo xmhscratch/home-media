@@ -1,4 +1,4 @@
-package concat
+package download
 
 import (
 	"bufio"
@@ -7,7 +7,7 @@ import (
 	"home-media/sys/runtime"
 )
 
-func Main(shell *runtime.Shell, streamManager *runtime.StreamManager) {
+func MetadataShell(shell *runtime.Shell, streamManager *runtime.StreamManager) {
 	var cmdFrag *command.CommandFrags = &command.CommandFrags{}
 
 	if stream, err := streamManager.Get(`0`); err != nil {
@@ -25,15 +25,13 @@ func Main(shell *runtime.Shell, streamManager *runtime.StreamManager) {
 	shell.ExitCode = 0
 	shell.SetVar("EXECUTOR", cmdFrag.ExecBin)
 	shell.ExitCode = 0
-	shell.SetVar("INPUT", cmdFrag.Input)
-	shell.ExitCode = 0
-	shell.SetVar("OUTPUT", cmdFrag.Output)
+	shell.SetVar("FFMPEG_INPUT_FILE", cmdFrag.Input)
 
 	func() {
-		var commandName = shell.ReadVar("EXECUTOR") // `../ci/concat.sh`
+		var commandName = shell.ReadVar("EXECUTOR")
 		var arguments []string
-		arguments = append(arguments, shell.ReadVar("INPUT"))
-		arguments = append(arguments, shell.ReadVar("OUTPUT"))
+		arguments = append(arguments, shell.ReadVar("FFMPEG_INPUT_FILE"))
+		// fmt.Println(commandName, arguments)
 		var command = shell.Command(commandName, arguments...)
 		streamManager := streamManager.Clone()
 		defer streamManager.Destroy()

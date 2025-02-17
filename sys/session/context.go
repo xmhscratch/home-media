@@ -51,13 +51,6 @@ type FileDirect struct {
 	FileSize int64  `json:"fileSize,string"`
 }
 
-type FileMetaInfoList map[string]FileMetaInfo
-
-type FileMetaInfo struct {
-	Path string `json:"path"`
-	Size int64  `json:"size,string"`
-}
-
 type FileTorrent struct {
 	TorrentName string           `json:"torrentName"`
 	Files       FileMetaInfoList `json:"-"`
@@ -71,21 +64,30 @@ type FStreamInfo struct {
 	LangTitle   string `json:"lang_title"`
 }
 
+type FileMetaInfoList map[string]FileMetaInfo
+
+type FileMetaInfo struct {
+	Path      string          `json:"path"`
+	Size      int64           `json:"size,string"`
+	Dubs      FStreamInfoList `json:"dubs,omitempty"`
+	Subtitles FStreamInfoList `json:"subtitles,omitempty"`
+}
+
 type Session[T FileSourceType] struct {
-	*File[T]  `json:"-"`
-	ID        string           `json:"id"`
-	KeyName   string           `json:"-"`
-	RootID    string           `json:"rootId"`
-	NodeID    string           `json:"nodeId"`
-	Files     FileMetaInfoList `json:"files"`
-	Duration  float64          `json:"duration,string,omitempty"`
-	Dubs      FStreamInfoList  `json:"dubs,omitempty"`
-	Subtitles FStreamInfoList  `json:"subtitles,omitempty"`
-	Config    *sys.Config      `json:"-"`
+	*File[T] `json:"-"`
+	ID       string           `json:"id"`
+	KeyName  string           `json:"-"`
+	RootID   string           `json:"rootId"`
+	NodeID   string           `json:"nodeId"`
+	Files    FileMetaInfoList `json:"files"`
+	Duration float64          `json:"duration,string,omitempty"`
+	Config   *sys.Config      `json:"-"`
 }
 
 type DQMessage struct {
 	SessionId   string         `json:"sessionId"`
+	FileKey     string         `json:"fileKey"`
+	FileMeta    *FileMetaInfo  `json:"fileMeta"`
 	FileType    FileSourceType `json:"fileType"`
 	SavePath    string         `json:"savePath"`
 	DownloadURL string         `json:"downloadUrl"`

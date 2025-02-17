@@ -22,7 +22,7 @@ func NewRoute(cfg *sys.Config) (ctx *RouteContext, err error) {
 
 // Init comment
 func (ctx *RouteContext) Init(router *gin.Engine) {
-	router.Use(gin.Logger())
+	// router.Use(gin.Logger())
 	router.Use(gin.CustomRecovery(func(ginCtx *gin.Context, recovered interface{}) {
 		if err, ok := recovered.(string); ok {
 			ginCtx.String(http.StatusInternalServerError, fmt.Sprintf("error: %s", err))

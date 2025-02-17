@@ -7,7 +7,7 @@ import (
 	"home-media/sys/runtime"
 )
 
-func Main(shell *runtime.Shell, streamManager *runtime.StreamManager) {
+func SegmentShell(shell *runtime.Shell, streamManager *runtime.StreamManager) {
 	var cmdFrag *command.CommandFrags = &command.CommandFrags{}
 
 	if stream, err := streamManager.Get(`0`); err != nil {

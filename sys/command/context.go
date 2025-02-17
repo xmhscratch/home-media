@@ -4,20 +4,26 @@ import (
 	"bytes"
 	"home-media/sys"
 	"io"
-
-	"github.com/redis/go-redis/v9"
 )
 
 type NullWriter struct {
 	io.Writer
 }
 
-type SessionWriter struct {
+type sessionWriterAbstract struct {
 	io.Writer
 	SessionId string
 	AttrName  string
 	Config    *sys.Config
-	redis     *redis.Client
+}
+
+type SessionInfoWriter struct {
+	*sessionWriterAbstract
+}
+
+type SessionFileWriter struct {
+	*sessionWriterAbstract
+	FileKey string
 }
 
 type CommandFrags struct {

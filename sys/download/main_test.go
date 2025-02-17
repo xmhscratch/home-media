@@ -4,7 +4,6 @@ import (
 	"home-media/sys/sample"
 	"home-media/sys/session"
 	"path/filepath"
-	"testing"
 )
 
 var SampleDQMessage *session.DQMessage = &session.DQMessage{
@@ -14,9 +13,33 @@ var SampleDQMessage *session.DQMessage = &session.DQMessage{
 	DownloadURL: filepath.Join(sample.SampleSessionID, "2", sample.SampleFilePath),
 }
 
-func TestDownload(t *testing.T) {
-	Start(sample.SampleConfig, SampleDQMessage)
-}
+// func TestDownload(t *testing.T) {
+// 	Start(sample.SampleConfig, SampleDQMessage)
+// }
+
+// func TestDuration(t *testing.T) {
+// 	UpdateDuration(sample.SampleConfig, SampleDQMessage)
+// }
+
+// func TestSubtitle(t *testing.T) {
+// 	UpdateSubtitles(sample.SampleConfig, SampleDQMessage)
+// }
+
+// func TestDub(t *testing.T) {
+// 	UpdateDubs(sample.SampleConfig, SampleDQMessage)
+// }
+
+// func TestExtractVideo(t *testing.T) {
+// 	fmt.Println(ExtractVideo(sample.SampleConfig, SampleDQMessage))
+// }
+
+// func TestExtractDubs(t *testing.T) {
+// 	fmt.Println(ExtractDubs(sample.SampleConfig, SampleDQMessage))
+// }
+
+// func TestExtractSubtitles(t *testing.T) {
+// 	fmt.Println(ExtractSubtitles(sample.SampleConfig, SampleDQMessage))
+// }
 
 // func TestTest(t *testing.T) {
 // 	// var exitCode int = 0

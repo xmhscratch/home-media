@@ -34,38 +34,38 @@ services:
         max_attempts: 3
         window: 180s
 
-  # frontend:
-  #   image: localhost:5000/hms:latest
-  #   container_name: hms_frontend_app
-  #   ports:
-  #   - 4200:4200
-  #   networks:
-  #   - backend
-  #   - logstash_backend
-  #   - redis_backend
-  #   environment:
-  #   - APP_NAME=hms_frontend
-  #   - NODE_ENV=production
-  #   volumes:
-  #   - tmp:/export/tmp/
-  #   - data:/export/data/
-  #   - root:/go/src/home-media/
-  #   working_dir: /go/src/home-media/
-  #   command:
-  #   - npm run client:start
-  #   deploy:
-  #     replicas: 1
-  #     placement:
-  #       constraints:
-  #       - node.role == manager
-  #     update_config:
-  #       parallelism: 2
-  #       delay: 30s
-  #     restart_policy:
-  #       condition: on-failure
-  #       delay: 30s
-  #       max_attempts: 3
-  #       window: 180s
+  frontend:
+    image: localhost:5000/hms:latest
+    container_name: hms_frontend_app
+    ports:
+    - 4200:4200
+    networks:
+    - backend
+    - logstash_backend
+    - redis_backend
+    environment:
+    - APP_NAME=hms_frontend
+    - NODE_ENV=production
+    volumes:
+    - tmp:/export/tmp/
+    - data:/export/data/
+    - root:/go/src/home-media/
+    working_dir: /go/src/home-media/
+    command:
+    - npm run client:start
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+        - node.role == manager
+      update_config:
+        parallelism: 2
+        delay: 30s
+      restart_policy:
+        condition: on-failure
+        delay: 30s
+        max_attempts: 3
+        window: 180s
 
   file:
     image: localhost:5000/hms:latest
@@ -163,29 +163,6 @@ services:
   #     placement:
   #       constraints:
   #       - node.role != manager
-
-  # joiner:
-  #   image: localhost:5000/hms:latest
-  #   container_name: hms_joiner_app
-  #   networks:
-  #   - backend
-  #   - logstash_backend
-  #   - redis_backend
-  #   environment:
-  #   - APP_NAME=hms_joiner
-  #   - GO_ENV=production
-  #   volumes:
-  #   - tmp:/export/tmp/
-  #   - data:/export/data/
-  #   - root:/go/src/home-media/
-  #   working_dir: /go/src/home-media/cmd
-  #   command:
-  #   - go run ./joiner/main.go
-  #   deploy:
-  #     replicas: 1
-  #     placement:
-  #       constraints:
-  #       - node.role == manager
 
 networks:
   backend:

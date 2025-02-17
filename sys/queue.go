@@ -2,6 +2,7 @@ package sys
 
 import (
 	"log"
+	"runtime"
 	"sync"
 	"time"
 )
@@ -65,71 +66,97 @@ func NewQueue[I QItem[I]](opts QueueOptions[I]) *Queue[I] {
 
 func (q *Queue[I]) Start() {
 	var (
-		mu sync.Mutex
+		stopSignal bool = false
+		mu         sync.Mutex
+		wg         *sync.WaitGroup = &sync.WaitGroup{}
 	)
 
 	defer close(q.queue)
 
 	q.OnInit(q.items)
 
-	go func() {
-	exitQueue:
-		for {
-			time.Sleep(time.Duration(q.Throttle) * time.Millisecond)
+	defer wg.Wait()
+	runtime.GOMAXPROCS(runtime.NumCPU())
 
-			if item, err := q.Periodic(q.items); err != nil {
-				q.OnError(err)
-				break exitQueue
-			} else {
-				if item == nil {
-					continue
-				}
-				q.items.Push(item)
-			}
-		}
-	}()
+	for cpu := 1; cpu <= runtime.NumCPU(); cpu++ {
+		wg.Add(1)
 
-	for {
-		time.Sleep(time.Duration(q.Throttle) * time.Millisecond)
+		runtime.LockOSThread()
+		go func(cpu int) {
+			defer wg.Done()
 
-		// 1-turn filling + 1-turn consume
-		loopCircle := q.Capacity + q.Capacity
+		exitLoop:
+			for {
+				time.Sleep(time.Duration(q.Throttle) * time.Millisecond)
 
-	exitFilling:
-		for i := 0; i < loopCircle; i++ {
-			time.Sleep(time.Duration(q.Throttle) * time.Millisecond)
-
-			// continue popping item until queue reach its capacity
-			if s := func() int {
-				if q.items.Len() > 0 {
-					item := q.items.Pop().(I)
-					q.queue <- &item
-					q.OnPushed(&item)
-				}
-				return len(q.queue)
-			}(); s >= q.Capacity {
-				go func() {
-					mu.Lock()
-					defer mu.Unlock()
-					item := <-q.queue
-					if err := q.Consume(q.items, item); err != nil {
-						// put back item to the queue
-						q.queue <- item
-						q.OnError(err)
-						return
+				switch true {
+				case cpu == 1:
+					{
+						if item, err := q.Periodic(q.items); err != nil {
+							q.OnError(err)
+							break exitLoop
+						} else {
+							if item == nil {
+								continue
+							}
+							// litter.D(item)
+							q.items.Push(item)
+						}
+						break
 					}
-					go q.OnConsumed(item)
-				}()
-				// consume leftover items on the queue
-				if q.items.Len() == 0 && s > 0 {
-					continue
+				case cpu == 2:
+					{
+					exitFillCap:
+						for i := 0; i < q.Capacity; i++ {
+							time.Sleep(time.Duration(q.Throttle) * time.Millisecond)
+
+							// continue popping item until queue reach its capacity
+							if s := func() int {
+								if q.items.Len() > 0 {
+									item := q.items.Pop().(I)
+									q.queue <- &item
+									q.OnPushed(&item)
+								}
+								return len(q.queue)
+							}(); s >= q.Capacity {
+								// waiting for queue empty slot
+								break exitFillCap
+							} else {
+								// continue filling up the queue
+								continue
+							}
+						}
+						break
+					}
+				default:
+					{
+						s := len(q.queue)
+						// consume leftover items on the queue
+						if q.items.Len() == 0 && s > 0 {
+							continue
+						}
+						mu.Lock()
+						item := <-q.queue
+						if err := q.Consume(q.items, item); err != nil {
+							// put back item to the queue
+							q.queue <- item
+							mu.Unlock()
+
+							q.OnError(err)
+							continue
+						}
+						mu.Unlock()
+
+						go q.OnConsumed(item)
+						break
+					}
 				}
-				break exitFilling
-			} else {
-				// continue filling up the queue
-				continue
+				if stopSignal {
+					break exitLoop
+				}
 			}
-		}
+		}(cpu)
+		runtime.UnlockOSThread()
 	}
 }
 

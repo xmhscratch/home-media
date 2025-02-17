@@ -2,7 +2,7 @@ import { Injectable, signal, WritableSignal, inject } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 
-import { Observable, Subject, zip, combineLatest, of, concat } from 'rxjs';
+import { Observable, Subject, zip, combineLatest, of, Subscription } from 'rxjs';
 import { switchMap, map, tap } from 'rxjs/operators';
 
 import { map as ldMap, pickBy as ldPickBy } from 'lodash-es'
@@ -53,6 +53,7 @@ export class StorageService {
   )
 
   onchange = new Subject<any>();
+  switchNode$: Subscription = new Subscription();
 
   constructor(private http: HttpClient) { }
 
@@ -64,6 +65,8 @@ export class StorageService {
   }
 
   switchNode(rootId?: string, nodeId?: string) {
+    this.switchNode$.unsubscribe()
+
     if (rootId) {
       if (this.rootId() == '') {
         this.rootId.set(rootId)
@@ -83,10 +86,10 @@ export class StorageService {
         map(([root, active, paths, nodes]) => ({ root, active, paths, nodes })),
         tap((v) => { this.onchange.next(v) }),
         tap(() => {
-          this.root$.subscribe()
-          this.active$.subscribe()
-          this.paths$.subscribe()
-          this.nodes$.subscribe()
+          this.switchNode$.add(this.root$.subscribe())
+          this.switchNode$.add(this.active$.subscribe())
+          this.switchNode$.add(this.paths$.subscribe())
+          this.switchNode$.add(this.nodes$.subscribe())
         }),
         // tap(({ root, active, paths, nodes }) => {
         //   console.log({ root, active, paths, nodes })
@@ -152,7 +155,8 @@ export class StorageService {
         map(([key, val]) => formData.append(key, <string | Blob>(val))),
         // tap((v) => { console.log(v) }),
       )
-      .subscribe();
+      .subscribe()
+      .unsubscribe();
 
     const headers = new HttpHeaders({
       'enctype': 'multipart/form-data',

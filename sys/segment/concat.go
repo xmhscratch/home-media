@@ -1,4 +1,4 @@
-package extract
+package segment
 
 import (
 	"bufio"
@@ -7,7 +7,7 @@ import (
 	"home-media/sys/runtime"
 )
 
-func Main(shell *runtime.Shell, streamManager *runtime.StreamManager) {
+func ConcatShell(shell *runtime.Shell, streamManager *runtime.StreamManager) {
 	var cmdFrag *command.CommandFrags = &command.CommandFrags{}
 
 	if stream, err := streamManager.Get(`0`); err != nil {
@@ -25,22 +25,15 @@ func Main(shell *runtime.Shell, streamManager *runtime.StreamManager) {
 	shell.ExitCode = 0
 	shell.SetVar("EXECUTOR", cmdFrag.ExecBin)
 	shell.ExitCode = 0
-	shell.SetVar("FFMPEG_INPUT_FILE", cmdFrag.Input)
+	shell.SetVar("INPUT", cmdFrag.Input)
 	shell.ExitCode = 0
-	shell.SetVar("STREAM_INDEX", cmdFrag.StreamIndex)
-	shell.ExitCode = 0
-	shell.SetVar("LANG_CODE", cmdFrag.LangCode)
-	shell.ExitCode = 0
-	shell.SetVar("FFMPEG_OUTPUT_FILE", cmdFrag.Output)
+	shell.SetVar("OUTPUT", cmdFrag.Output)
 
 	func() {
-		var commandName = shell.ReadVar("EXECUTOR")
+		var commandName = shell.ReadVar("EXECUTOR") // `../ci/concat.sh`
 		var arguments []string
-		arguments = append(arguments, `'`+shell.ReadVar("FFMPEG_INPUT_FILE")+`'`)
-		arguments = append(arguments, shell.ReadVar("STREAM_INDEX"))
-		arguments = append(arguments, shell.ReadVar("LANG_CODE"))
-		arguments = append(arguments, `'`+shell.ReadVar("FFMPEG_OUTPUT_FILE")+`'`)
-		// fmt.Println(commandName, arguments)
+		arguments = append(arguments, shell.ReadVar("INPUT"))
+		arguments = append(arguments, shell.ReadVar("OUTPUT"))
 		var command = shell.Command(commandName, arguments...)
 		streamManager := streamManager.Clone()
 		defer streamManager.Destroy()

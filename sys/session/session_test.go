@@ -59,7 +59,7 @@ func TestGetSession(t *testing.T) {
 	if ss, err = InitTorrent(
 		sample.SampleConfig,
 		sample.SampleSessionID,
-		sample.SampleMagnetSource,
+		// sample.SampleMagnetSource,
 	); err != nil {
 		t.Fatal(err)
 		return
@@ -96,6 +96,6 @@ func TestNotifyDownloaded(t *testing.T) {
 		t.Fatal(err)
 		return
 	}
-	ss.NotifyDownloaded(SampleDQMessage)
+	ss.NotifyDownloaded()
 	// download.Start(sample.SampleConfig)
 }

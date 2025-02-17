@@ -4,7 +4,7 @@ import { OnInit } from '@angular/core';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ButtonModule } from 'primeng/button';
 import { MenuItem } from 'primeng/api';
-import { Menubar } from 'primeng/menubar';
+// import { Menubar } from 'primeng/menubar';
 import { BadgeModule } from 'primeng/badge';
 import { AvatarModule } from 'primeng/avatar';
 import { InputTextModule } from 'primeng/inputtext';
@@ -13,7 +13,10 @@ import { CommonModule } from '@angular/common';
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [ButtonModule, Menubar, BadgeModule, AvatarModule, InputTextModule, CommonModule],
+  imports: [
+    // Menubar,
+    ButtonModule, BadgeModule, AvatarModule, InputTextModule, CommonModule,
+  ],
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss'
 })
@@ -28,18 +31,6 @@ export class CHeader implements OnInit {
         label: 'Home',
         icon: 'pi pi-home'
       },
-      {
-        label: 'Features',
-        icon: 'pi pi-star'
-      },
-      {
-        label: 'Projects',
-        icon: 'pi pi-search'
-      },
-      {
-        label: 'Contact',
-        icon: 'pi pi-envelope'
-      }
     ]
   }
 

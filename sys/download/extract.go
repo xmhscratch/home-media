@@ -7,7 +7,7 @@ import (
 	"home-media/sys/runtime"
 )
 
-func Main(shell *runtime.Shell, streamManager *runtime.StreamManager) {
+func ExtractShell(shell *runtime.Shell, streamManager *runtime.StreamManager) {
 	var cmdFrag *command.CommandFrags = &command.CommandFrags{}
 
 	if stream, err := streamManager.Get(`0`); err != nil {
@@ -25,23 +25,23 @@ func Main(shell *runtime.Shell, streamManager *runtime.StreamManager) {
 	shell.ExitCode = 0
 	shell.SetVar("EXECUTOR", cmdFrag.ExecBin)
 	shell.ExitCode = 0
-	shell.SetVar("DOWNLOAD_URL", cmdFrag.DownloadURL)
+	shell.SetVar("FFMPEG_INPUT_FILE", cmdFrag.Input)
 	shell.ExitCode = 0
-	shell.SetVar("OUTPUT_DIR", cmdFrag.Output)
+	shell.SetVar("STREAM_INDEX", cmdFrag.StreamIndex)
 	shell.ExitCode = 0
-	shell.SetVar("BASE_URL", cmdFrag.BaseURL)
+	shell.SetVar("LANG_CODE", cmdFrag.LangCode)
 	shell.ExitCode = 0
-	shell.SetVar("ROOT_DIR", cmdFrag.RootDir)
+	shell.SetVar("FFMPEG_OUTPUT_FILE", cmdFrag.Output)
 
 	func() {
-		var commandName = shell.ReadVar("EXECUTOR") // `../ci/download.sh`
+		var commandName = shell.ReadVar("EXECUTOR")
 		var arguments []string
-		arguments = append(arguments, shell.ReadVar("DOWNLOAD_URL"))
-		arguments = append(arguments, shell.ReadVar("OUTPUT_DIR"))
-		arguments = append(arguments, shell.ReadVar("BASE_URL"))
-		arguments = append(arguments, shell.ReadVar("ROOT_DIR"))
-		var command = shell.Command(commandName, arguments...)
+		arguments = append(arguments, `'`+shell.ReadVar("FFMPEG_INPUT_FILE")+`'`)
+		arguments = append(arguments, shell.ReadVar("STREAM_INDEX"))
+		arguments = append(arguments, shell.ReadVar("LANG_CODE"))
+		arguments = append(arguments, `'`+shell.ReadVar("FFMPEG_OUTPUT_FILE")+`'`)
 		// fmt.Println(commandName, arguments)
+		var command = shell.Command(commandName, arguments...)
 		streamManager := streamManager.Clone()
 		defer streamManager.Destroy()
 		if stream, err := streamManager.Get(`0`); err != nil {

@@ -36,14 +36,9 @@
     "redis": "dotenvx run -- docker stack deploy --prune --resolve-image always -c ./ci/redis/docker-stack.yml redis",
     "logstash": "dotenvx run -- docker stack deploy --prune --resolve-image always -c ./ci/logstash/docker-stack.yml logstash",
     "hms": "dotenvx run -- docker stack deploy --prune --resolve-image always -c ./ci/docker-stack.yml hms",
-    "hms:backend": "dotenvx run -- docker service update --force hms_backend",
-    "hms:file": "dotenvx run -- docker service update --force hms_file",
-    "hms:api": "dotenvx run -- docker service update --force hms_api",
-    "hms:downloader": "dotenvx run -- docker service update --force hms_downloader",
-    "hms:encoder": "dotenvx run -- docker service update --force hms_encoder",
-    "hms:joiner": "dotenvx run -- docker service update --force hms_joiner",
-    "hms:stop:api": "dotenvx run -- docker service update --replicas 0 hms_api",
-    "hms:stop:downloader": "dotenvx run -- docker service update --replicas 0 hms_downloader"
+    "hms:update": "dotenvx run -- docker service update --force $@",
+    "hms:up": "dotenvx run -- docker service update --replicas 1 $@",
+    "hms:down": "dotenvx run -- docker service update --replicas 0 $@"
   },
   "private": true,
   "dependencies": {

@@ -57,15 +57,18 @@ func BuildDQMessage(
 	nodeId string,
 	sessionId string,
 	sourceType FileSourceType,
-	filePath string,
+	fileKey string,
+	fileMeta *FileMetaInfo,
 ) *DQMessage {
 	var (
-		savePath    string = filepath.Join(nodeId, filePath)
-		downloadUrl string = filepath.Join(sessionId, sourceType.String(), filePath)
+		savePath    string = filepath.Join(nodeId, fileMeta.Path)
+		downloadUrl string = filepath.Join(sessionId, sourceType.String(), fileMeta.Path)
 	)
 
 	return &DQMessage{
 		SessionId:   sessionId,
+		FileKey:     fileKey,
+		FileMeta:    fileMeta,
 		FileType:    sourceType,
 		SavePath:    savePath,
 		DownloadURL: downloadUrl,

@@ -21,7 +21,7 @@ export class CFooter implements OnInit {
 
   ngOnInit(): void { }
 
-  closeDialog(data: any) {
-    this.ref.close(data);
-  }
+  // closeDialog(data: any) {
+  //   this.ref.close(data);
+  // }
 }
