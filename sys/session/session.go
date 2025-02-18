@@ -26,9 +26,8 @@ func (T FileSourceType) InitSession(
 			KeyName: keyName,
 			Config:  cfg,
 			File: &File[FileSourceType]{
-				SourceType:  FILE_SOURCE_TYPE_DIRECT,
-				SourceReady: 0,
-				FileDirect:  &FileDirect{},
+				SourceType: FILE_SOURCE_TYPE_DIRECT,
+				FileDirect: &FileDirect{},
 			},
 		}
 	case FILE_SOURCE_TYPE_TORRENT.String():
@@ -38,7 +37,6 @@ func (T FileSourceType) InitSession(
 			Config:  cfg,
 			File: &File[FileSourceType]{
 				SourceType:  FILE_SOURCE_TYPE_TORRENT,
-				SourceReady: 0,
 				FileTorrent: &FileTorrent{},
 			},
 		}
@@ -131,12 +129,11 @@ func InitDirect(
 
 	if setMode || !isCreated {
 		if err := rds.HSet(sys.SessionContext, sys.BuildString(ctx.KeyName, ":info"), map[string]interface{}{
-			"rootId":      rootId,
-			"nodeId":      nodeId,
-			"savePath":    filepath.Join(ctx.NodeID),
-			"sourceURL":   ctx.File.SourceURL,
-			"sourceType":  ctx.File.SourceType.String(),
-			"sourceReady": ctx.File.SourceReady,
+			"rootId":     rootId,
+			"nodeId":     nodeId,
+			"savePath":   filepath.Join(ctx.NodeID),
+			"sourceURL":  ctx.File.SourceURL,
+			"sourceType": ctx.File.SourceType.String(),
 			// "duration":    ctx.Duration,
 		}).Err(); err != nil {
 			return nil, err
@@ -192,7 +189,6 @@ func InitTorrent(
 			"savePath":    filepath.Join(ctx.NodeID),
 			"sourceUrl":   ctx.File.SourceURL,
 			"sourceType":  ctx.File.SourceType.String(),
-			"sourceReady": ctx.File.SourceReady,
 			// "duration":    ctx.Duration,
 		}).Err(); err != nil {
 			// litter.D(err)
@@ -233,40 +229,16 @@ func InitTorrent(
 	return ctx, err
 }
 
-// func GetFiles(
-// 	cfg *sys.Config,
-// 	sessionId string,
-// ) (map[string]string, error) {
-// 	var (
-// 		err     error
-// 		files   map[string]string
-// 		keyName string = GetKeyName(sessionId)
-// 	)
-
-// 	rds := sys.NewClient(cfg)
-// 	defer rds.Close()
-
-// 	if files, err = rds.HGetAll(
-// 		sys.SessionContext,
-// 		sys.BuildString(keyName, ":files"),
-// 	).Result(); err != nil {
-// 		return nil, err
-// 	}
-
-// 	return files, err
-// }
-
 func CreateDownload(
 	cfg *sys.Config,
 	sessionId string,
 	filePath string,
 ) error {
 	var (
-		err         error
-		keyName     string = GetKeyName(sessionId)
-		sourceReady bool   = false
-		sourceType  FileSourceType
-		ctx         *Session[FileSourceType]
+		err        error
+		keyName    string = GetKeyName(sessionId)
+		sourceType FileSourceType
+		ctx        *Session[FileSourceType]
 		// isCreated   bool
 	)
 
@@ -298,18 +270,20 @@ func CreateDownload(
 		}
 	}
 
-	sourceReady = (ctx.File.SourceReady == 1)
-	if sourceReady {
-		return err
-	}
-
 	var dm *DQMessage
 	for fileKey, v := range ctx.Files {
 		fileMeta := FileMetaInfo(v)
 		if filepath.Join("./", filePath) != filepath.Join("./", fileMeta.Path) {
 			continue
 		}
+		if fileMeta.SourceReady == 1 {
+			continue
+		}
 		dm = BuildDQMessage(ctx.NodeID, sessionId, sourceType, fileKey, &fileMeta)
+	}
+
+	if dm == nil {
+		return err
 	}
 
 	if dmJSON, err := json.Marshal(dm); err != nil {

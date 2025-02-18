@@ -3,6 +3,7 @@ package command
 import (
 	"bytes"
 	"home-media/sys"
+	"home-media/sys/session"
 	"io"
 )
 
@@ -23,7 +24,8 @@ type SessionInfoWriter struct {
 
 type SessionFileWriter struct {
 	*sessionWriterAbstract
-	FileKey string
+	FileKey  string
+	FileMeta *session.FileMetaInfo
 }
 
 type CommandFrags struct {

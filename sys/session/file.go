@@ -49,18 +49,22 @@ func ParseSourceType(s string) (FileSourceType, error) {
 
 // ================================================================================
 type fileMetaInfoAlias struct {
-	Path      string          `json:"path"`
-	Size      int64           `json:"size"`
-	Dubs      FStreamInfoList `json:"dubs,omitempty"`
-	Subtitles FStreamInfoList `json:"subtitles,omitempty"`
+	Path        string          `json:"path"`
+	Size        int64           `json:"size"`
+	Dubs        FStreamInfoList `json:"dubs,omitempty"`
+	Subtitles   FStreamInfoList `json:"subtitles,omitempty"`
+	Duration    float64         `json:"duration,string,omitempty"`
+	SourceReady int             `json:"sourceReady,string"`
 }
 
 func (ctx FileMetaInfo) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&fileMetaInfoAlias{
-		Path:      ctx.Path,
-		Size:      ctx.Size,
-		Dubs:      ctx.Dubs,
-		Subtitles: ctx.Subtitles,
+		Path:        ctx.Path,
+		Size:        ctx.Size,
+		Dubs:        ctx.Dubs,
+		Subtitles:   ctx.Subtitles,
+		Duration:    ctx.Duration,
+		SourceReady: ctx.SourceReady,
 	})
 }
 
@@ -105,16 +109,20 @@ doneParsing:
 
 	if ctx == nil {
 		ctx = &FileMetaInfo{
-			Path:      a.Path,
-			Size:      a.Size,
-			Dubs:      a.Dubs,
-			Subtitles: a.Subtitles,
+			Path:        a.Path,
+			Size:        a.Size,
+			Dubs:        a.Dubs,
+			Subtitles:   a.Subtitles,
+			Duration:    a.Duration,
+			SourceReady: a.SourceReady,
 		}
 	} else {
 		ctx.Path = a.Path
 		ctx.Size = a.Size
 		ctx.Dubs = a.Dubs
 		ctx.Subtitles = a.Subtitles
+		ctx.Duration = a.Duration
+		ctx.SourceReady = a.SourceReady
 	}
 
 	return ctx, err

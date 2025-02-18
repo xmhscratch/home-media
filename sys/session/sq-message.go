@@ -29,21 +29,13 @@ func (ctx *SQSegmentInfo) Init(cfg *sys.Config) error {
 	ctx.Config = cfg
 	defer rds.Close()
 
-	if length, err := rds.HGet(
-		sys.SessionContext,
-		GetKeyName(ctx.SessionId, ":info"),
-		"duration",
-	).Result(); err != nil {
-		return err
-	} else {
-		if ctx.TotalLength, err = strconv.ParseFloat(length, 64); err != nil {
-			return err
-		}
-	}
-
+	ctx.TotalLength = ctx.FileMeta.Duration
+	// fmt.Println(ctx.TotalLength, ctx.FileMeta.Duration)
 	best = ctx.bestSegmentValue()
 	ctx.BestSegmentLength = (time.Duration(best[0]) * time.Minute).Seconds()
 	ctx.BestSegmentCount = int64(best[1])
+
+	// litter.D(best)
 
 	ctx.Segments = map[string]string{}
 	for c := range ctx.BestSegmentCount {

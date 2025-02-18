@@ -16,8 +16,8 @@ func main() {
 		}
 	}()
 
-	cfg, err := sys.NewConfig("./")
-	// cfg, err := sys.NewConfig("../")
+	// cfg, err := sys.NewConfig("./")
+	cfg, err := sys.NewConfig("../")
 	if err != nil {
 		panic(err)
 	}

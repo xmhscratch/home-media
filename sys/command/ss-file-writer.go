@@ -8,14 +8,21 @@ import (
 	"strings"
 )
 
-func NewSessionFileWriter(cfg *sys.Config, sessionId string, fileKey string, attrName string) *SessionFileWriter {
+func NewSessionFileWriter(
+	cfg *sys.Config,
+	fileMeta *session.FileMetaInfo,
+	sessionId string,
+	fileKey string,
+	attrName string,
+) *SessionFileWriter {
 	return &SessionFileWriter{
 		sessionWriterAbstract: &sessionWriterAbstract{
 			SessionId: sessionId,
 			AttrName:  attrName,
 			Config:    cfg,
 		},
-		FileKey: fileKey,
+		FileKey:  fileKey,
+		FileMeta: fileMeta,
 	}
 }
 
@@ -25,8 +32,7 @@ func (ctx SessionFileWriter) Read(p []byte) (int, error) {
 
 func (ctx SessionFileWriter) Write(p []byte) (int, error) {
 	var (
-		err  error
-		meta *session.FileMetaInfo
+		err error
 	)
 
 	rds := sys.NewClient(ctx.Config)
@@ -39,31 +45,30 @@ func (ctx SessionFileWriter) Write(p []byte) (int, error) {
 	).Result(); err != nil {
 		return -1, err
 	} else {
-		if err := json.Unmarshal([]byte(fInfStr), &meta); err != nil {
+		if err := json.Unmarshal([]byte(fInfStr), &ctx.FileMeta); err != nil {
 			return -1, err
 		}
 	}
 
-	switch strings.ToLower(ctx.AttrName) {
+	var attrValue any
+	switch ctx.AttrName {
 	case "dubs":
-		{
-			if err = json.Unmarshal([]byte(strings.TrimSpace(string(p))), &meta.Dubs); err != nil {
-				return -1, err
-			}
-			break
-		}
+		attrValue = &ctx.FileMeta.Dubs
 	case "subtitles":
-		{
-			if err = json.Unmarshal([]byte(strings.TrimSpace(string(p))), &meta.Subtitles); err != nil {
-				return -1, err
-			}
-			break
-		}
+		attrValue = &ctx.FileMeta.Subtitles
+	case "duration":
+		attrValue = &ctx.FileMeta.Duration
+	case "sourceReady":
+		attrValue = &ctx.FileMeta.SourceReady
 	default:
 		break
 	}
 
-	if fInfByt, err := json.Marshal(meta); err != nil {
+	if err = json.Unmarshal([]byte(strings.TrimSpace(string(p))), attrValue); err != nil {
+		return -1, err
+	}
+
+	if fInfByt, err := json.Marshal(ctx.FileMeta); err != nil {
 		return -1, nil
 	} else {
 		if err = rds.HSet(

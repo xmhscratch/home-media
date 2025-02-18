@@ -42,7 +42,6 @@ type File[T FileSourceType | FileDirect | FileTorrent] struct {
 	NodeID       string             `json:"nodeId"`
 	SourceURL    string             `json:"sourceUrl"`
 	SourceType   FileSourceType     `json:"sourceType,string"`
-	SourceReady  int                `json:"sourceReady,string"`
 	notify       func(string) error `json:"-"`
 }
 
@@ -67,10 +66,12 @@ type FStreamInfo struct {
 type FileMetaInfoList map[string]FileMetaInfo
 
 type FileMetaInfo struct {
-	Path      string          `json:"path"`
-	Size      int64           `json:"size,string"`
-	Dubs      FStreamInfoList `json:"dubs,omitempty"`
-	Subtitles FStreamInfoList `json:"subtitles,omitempty"`
+	Path        string          `json:"path"`
+	Size        int64           `json:"size,string"`
+	Dubs        FStreamInfoList `json:"dubs,omitempty"`
+	Subtitles   FStreamInfoList `json:"subtitles,omitempty"`
+	Duration    float64         `json:"duration,string,omitempty"`
+	SourceReady int             `json:"sourceReady,string"`
 }
 
 type Session[T FileSourceType] struct {
@@ -80,7 +81,6 @@ type Session[T FileSourceType] struct {
 	RootID   string           `json:"rootId"`
 	NodeID   string           `json:"nodeId"`
 	Files    FileMetaInfoList `json:"files"`
-	Duration float64          `json:"duration,string,omitempty"`
 	Config   *sys.Config      `json:"-"`
 }
 
@@ -109,7 +109,6 @@ type SQSegmentInfo struct {
 	SegmentLength     float64           `json:"segmentLength"`
 	BestSegmentLength float64           `json:"bestSegmentLength"`
 	BestSegmentCount  int64             `json:"bestSegmentCount"`
-	Selected          *SQMessage        `json:"selected"`
 	Segments          map[string]string `json:"-"`
 	Config            *sys.Config       `json:"-"`
 }

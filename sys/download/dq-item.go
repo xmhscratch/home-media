@@ -1,6 +1,7 @@
 package download
 
 import (
+	"fmt"
 	"home-media/sys"
 	"home-media/sys/command"
 	"home-media/sys/runtime"
@@ -18,7 +19,7 @@ func (ctx DQItem) Index() int {
 }
 
 func (ctx DQItem) Key() string {
-	return session.GetFileKeyName(ctx.dm.SavePath)
+	return ctx.dm.FileKey
 }
 
 func (ctx *DQItem) StartDownload() error {
@@ -52,7 +53,9 @@ func (ctx *DQItem) StartDownload() error {
 		exitCode <- shell.Run()
 	}()
 	<-exitCode
+	close(exitCode)
 
+	litter.D("file downloaded!")
 	return nil
 }
 
@@ -62,7 +65,7 @@ func (ctx *DQItem) UpdateDuration() error {
 	var exitCode chan int = make(chan int)
 
 	stdin := command.NewCommandReader()
-	stdout := command.NewSessionInfoWriter(ctx.cfg, ctx.dm.SessionId, "duration")
+	stdout := command.NewSessionFileWriter(ctx.cfg, ctx.dm.FileMeta, ctx.dm.SessionId, ctx.dm.FileKey, "duration")
 	stderr := command.NewNullWriter()
 
 	go func() {
@@ -84,7 +87,9 @@ func (ctx *DQItem) UpdateDuration() error {
 		exitCode <- shell.Run()
 	}()
 	<-exitCode
+	close(exitCode)
 
+	litter.D("duration updated!")
 	return nil
 }
 
@@ -94,7 +99,7 @@ func (ctx *DQItem) UpdateSubtitles() error {
 	var exitCode chan int = make(chan int)
 
 	stdin := command.NewCommandReader()
-	stdout := command.NewSessionFileWriter(ctx.cfg, ctx.dm.SessionId, ctx.Key(), "subtitles")
+	stdout := command.NewSessionFileWriter(ctx.cfg, ctx.dm.FileMeta, ctx.dm.SessionId, ctx.dm.FileKey, "subtitles")
 	stderr := command.NewNullWriter()
 
 	go func() {
@@ -116,7 +121,9 @@ func (ctx *DQItem) UpdateSubtitles() error {
 		exitCode <- shell.Run()
 	}()
 	<-exitCode
+	close(exitCode)
 
+	litter.D("subtitle updated!")
 	return nil
 }
 
@@ -126,7 +133,7 @@ func (ctx *DQItem) UpdateDubs() error {
 	var exitCode chan int = make(chan int)
 
 	stdin := command.NewCommandReader()
-	stdout := command.NewSessionFileWriter(ctx.cfg, ctx.dm.SessionId, ctx.Key(), "dubs")
+	stdout := command.NewSessionFileWriter(ctx.cfg, ctx.dm.FileMeta, ctx.dm.SessionId, ctx.dm.FileKey, "dubs")
 	stderr := command.NewNullWriter()
 
 	go func() {
@@ -148,58 +155,79 @@ func (ctx *DQItem) UpdateDubs() error {
 		exitCode <- shell.Run()
 	}()
 	<-exitCode
+	close(exitCode)
 
+	litter.D("dub updated!")
 	return nil
 }
 
+func (ctx *DQItem) UpdateSourceReady(isReady bool) error {
+	litter.D("update source ready...")
+
+	var err error
+	writer := command.NewSessionFileWriter(
+		ctx.cfg,
+		ctx.dm.FileMeta,
+		ctx.dm.SessionId,
+		ctx.dm.FileKey,
+		"sourceReady",
+	)
+	_, err = writer.Write([]byte(map[bool]string{true: "1", false: "0"}[isReady]))
+
+	litter.D("source ready updated!")
+	return err
+}
+
 func (ctx *DQItem) ExtractVideo() error {
-	litter.D("extract video...")
+	litter.D("extracting video...")
 
-	func(exitCode chan int) int {
-		defer close(exitCode)
+	var exitCode chan int = make(chan int)
 
-		go func() {
-			stdin := command.NewCommandReader()
-			stdout := command.NewNullWriter()
-			stderr := command.NewNullWriter()
+	go func() {
+		stdin := command.NewCommandReader()
+		stdout := command.NewNullWriter()
+		stderr := command.NewNullWriter()
 
-			shell := runtime.Shell{
-				PID: os.Getpid(),
+		shell := runtime.Shell{
+			PID: os.Getpid(),
 
-				Stdin:  stdin,
-				Stdout: stdout,
-				Stderr: stderr,
+			Stdin:  stdin,
+			Stdout: stdout,
+			Stderr: stderr,
 
-				Args: os.Args,
+			Args: os.Args,
 
-				Main: ExtractShell,
-			}
+			Main: ExtractShell,
+		}
 
-			stdin.WriteVar("ExecBin", filepath.Join(ctx.cfg.BinPath, "./extract-vid.sh"))
-			stdin.WriteVar("Input", filepath.Join(ctx.cfg.DataPath, ctx.dm.SavePath))
-			stdin.WriteVar("StreamIndex", "0")
-			stdin.WriteVar("LangCode", "default")
-			stdin.WriteVar("Output", filepath.Join(
-				ctx.cfg.DataPath,
-				filepath.Dir(ctx.dm.SavePath),
-				session.GetFileKeyName(ctx.dm.SavePath),
-			))
+		stdin.WriteVar("ExecBin", filepath.Join(ctx.cfg.BinPath, "./extract-vid.sh"))
+		stdin.WriteVar("Input", filepath.Join(ctx.cfg.DataPath, ctx.dm.SavePath))
+		stdin.WriteVar("StreamIndex", "0")
+		stdin.WriteVar("LangCode", "default")
+		stdin.WriteVar("Output", filepath.Join(
+			ctx.cfg.DataPath,
+			filepath.Dir(ctx.dm.SavePath),
+			session.GetFileKeyName(ctx.dm.SavePath),
+		))
 
-			exitCode <- shell.Run()
-		}()
-		return <-exitCode
-	}(make(chan int))
+		exitCode <- shell.Run()
+	}()
+	<-exitCode
+	close(exitCode)
 
+	litter.D("video extracted!")
 	return nil
 }
 
 func (ctx *DQItem) ExtractDubs() error {
-	litter.D("extract audio...")
+	litter.D("extracting dub...")
+
+	var err error
 
 	for _, dub := range ctx.dm.FileMeta.Dubs {
-		func(exitCode chan int) int {
-			defer close(exitCode)
+		fmt.Println("extract audio: ", dub)
 
+		err = func(exitCode chan int) error {
 			go func() {
 				stdin := command.NewCommandReader()
 				stdout := command.NewNullWriter()
@@ -229,20 +257,26 @@ func (ctx *DQItem) ExtractDubs() error {
 
 				exitCode <- shell.Run()
 			}()
-			return <-exitCode
+			<-exitCode
+			close(exitCode)
+
+			return nil
 		}(make(chan int))
 	}
 
-	return nil
+	litter.D("dub extracted!")
+	return err
 }
 
 func (ctx *DQItem) ExtractSubtitles() error {
-	litter.D("extract subtitle...")
+	litter.D("extracting subtitles...")
+
+	var err error
 
 	for _, sub := range ctx.dm.FileMeta.Subtitles {
-		func(exitCode chan int) int {
-			defer close(exitCode)
+		fmt.Println("extract subtitle:", sub)
 
+		err = func(exitCode chan int) error {
 			go func() {
 				stdin := command.NewCommandReader()
 				stdout := command.NewNullWriter()
@@ -272,11 +306,15 @@ func (ctx *DQItem) ExtractSubtitles() error {
 
 				exitCode <- shell.Run()
 			}()
-			return <-exitCode
+			<-exitCode
+			close(exitCode)
+
+			return nil
 		}(make(chan int))
 	}
 
-	return nil
+	litter.D("subtitle extracted!")
+	return err
 }
 
 // func (ctx *DQItem) Complete(cfg *sys.Config) {

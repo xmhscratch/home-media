@@ -3,11 +3,12 @@ package download
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"home-media/sys"
 	"home-media/sys/session"
+	"sync"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/sanity-io/litter"
 )
 
 func PeriodicHandler(cfg *sys.Config, rds *redis.Client) sys.PeriodicFunc[DQItem] {
@@ -44,28 +45,51 @@ func PeriodicHandler(cfg *sys.Config, rds *redis.Client) sys.PeriodicFunc[DQItem
 func ConsumeHandler(cfg *sys.Config, rds *redis.Client) sys.ConsumeFunc[DQItem] {
 	return func(queue *sys.QueueStack[DQItem], item *DQItem) error {
 		// fmt.Println(item)
-		if err := item.StartDownload(); err != nil {
+		var (
+			err error
+			wg  *sync.WaitGroup = &sync.WaitGroup{}
+		)
+
+		if err = item.StartDownload(); err != nil {
 			return err
 		}
-		if err := item.UpdateDuration(); err != nil {
-			return err
+
+		wg.Add(1)
+		go func() {
+			err = item.UpdateDuration()
+			wg.Done()
+		}()
+
+		wg.Add(1)
+		go func() {
+			err = map[int]error{
+				0: item.UpdateSubtitles(),
+				1: item.ExtractSubtitles(),
+			}[0]
+			wg.Done()
+		}()
+
+		wg.Add(1)
+		go func() {
+			err = map[int]error{
+				0: item.UpdateDubs(),
+				1: item.ExtractDubs(),
+			}[0]
+			wg.Done()
+		}()
+
+		wg.Add(1)
+		go func() {
+			err = item.ExtractVideo()
+			wg.Done()
+		}()
+
+		wg.Wait()
+		if err == nil {
+			item.UpdateSourceReady(true)
 		}
-		if err := item.UpdateSubtitles(); err != nil {
-			return err
-		}
-		if err := item.UpdateDubs(); err != nil {
-			return err
-		}
-		if err := item.ExtractVideo(); err != nil {
-			return err
-		}
-		if err := item.ExtractDubs(); err != nil {
-			return err
-		}
-		if err := item.ExtractSubtitles(); err != nil {
-			return err
-		}
-		return nil
+
+		return err
 	}
 }
 
@@ -74,9 +98,9 @@ func OnConsumedHandler(cfg *sys.Config, rds *redis.Client) sys.OnConsumedFunc[DQ
 		sm := &session.SQSegmentInfo{DQMessage: item.dm}
 		sm.Init(cfg)
 
-		litter.D("queue completed:", item.dm, sm)
+		// litter.D("queue completed:", item.dm, sm)
 		if err := sm.PushQueue(); err != nil {
-			litter.D(err)
+			fmt.Println(err)
 		}
 	}
 }
