@@ -83,7 +83,7 @@ export class CBaseItem implements OnInit, OnDestroy {
 
   show() {
     this.ref = this.dialogService.open(CContent, {
-      width: '75vw',
+      width: '65vw',
       modal: true,
       contentStyle: { overflow: 'hidden' },
       breakpoints: {

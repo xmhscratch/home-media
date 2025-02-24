@@ -51,9 +51,11 @@ func (ctx *File[FileTorrent]) InitTorrent() (*torrent.Torrent, error) {
 	ctx.TorrentName = mytor.Name()
 	var files map[string]FileMetaInfo = map[string]FileMetaInfo{}
 	for _, file := range mytor.Files() {
-		files[sys.GenerateID(ctx.NodeID, file.Path())] = FileMetaInfo{
-			Path: file.Path(),
-			Size: file.Length(),
+		fileKey := sys.GenerateID(ctx.NodeID, file.Path())
+		files[fileKey] = FileMetaInfo{
+			Path:        file.Path(),
+			Size:        file.Length(),
+			SourceReady: 0,
 		}
 	}
 	ctx.Files = files

@@ -22,16 +22,31 @@ export type ITreeRootNode = {
 export type FileMetaInfo = {
     path: string
     size: number
+    subtitles?: Array<{ stream_index: number, codec_name: string, lang_code: string, lang_title: string }>
+    dubs?: Array<{ stream_index: number, codec_name: string, lang_code: string, lang_title: string }>
+    duration?: float
+    sourceReady?: boolean
 }
 
 export type SessionInfo = {
     id: string
     rootId: string
     nodeId: string
-    files: FileMetaInfo[]
+    files: { [fileKey: string]: FileMetaInfo }
+}
+
+export type ISocketMessage = {
+    event: number
+    payload?: string | { stage: number, message?: string | object }
 }
 
 export type IFileListItem = FileMetaInfo & {
     path: string
+    fileKey: string
     sessionId: string
+    nodeId: string
+    stage?: number
+    message?: string
+    isCompleted: boolean
+    isProgressing: boolean
 }

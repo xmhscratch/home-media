@@ -5,7 +5,6 @@ import (
 	"home-media/sys"
 	"home-media/sys/command"
 	"home-media/sys/runtime"
-	"home-media/sys/session"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -207,7 +206,8 @@ func (ctx *DQItem) ExtractVideo() error {
 		stdin.WriteVar("Output", filepath.Join(
 			ctx.cfg.DataPath,
 			filepath.Dir(ctx.dm.SavePath),
-			session.GetFileKeyName(ctx.dm.SavePath),
+			ctx.dm.FileKey,
+			// session.GetFileKeyName(ctx.dm.SavePath),
 		))
 
 		exitCode <- shell.Run()
@@ -252,7 +252,8 @@ func (ctx *DQItem) ExtractDubs() error {
 				stdin.WriteVar("Output", filepath.Join(
 					ctx.cfg.DataPath,
 					filepath.Dir(ctx.dm.SavePath),
-					session.GetFileKeyName(ctx.dm.SavePath),
+					ctx.dm.FileKey,
+					// session.GetFileKeyName(ctx.dm.SavePath),
 				))
 
 				exitCode <- shell.Run()
@@ -301,7 +302,8 @@ func (ctx *DQItem) ExtractSubtitles() error {
 				stdin.WriteVar("Output", filepath.Join(
 					ctx.cfg.DataPath,
 					filepath.Dir(ctx.dm.SavePath),
-					session.GetFileKeyName(ctx.dm.SavePath),
+					ctx.dm.FileKey,
+					// session.GetFileKeyName(ctx.dm.SavePath),
 				))
 
 				exitCode <- shell.Run()
@@ -316,16 +318,3 @@ func (ctx *DQItem) ExtractSubtitles() error {
 	litter.D("subtitle extracted!")
 	return err
 }
-
-// func (ctx *DQItem) Complete(cfg *sys.Config) {
-// 	rds := sys.NewClient(ctx.cfg)
-// 	defer rds.Close()
-
-// 	// _, err := rds.HSet(
-// 	// 	context.TODO(),
-// 	// 	GetKeyName(ctx.SessionId, ":files"),
-// 	// 	[]string{ctx.AttrName, strings.TrimSpace(string(p))},
-// 	// ).Result()
-
-// 	// return
-// }

@@ -1,65 +1,13 @@
-<!-- <div class="card">
-  <div class="card">
-    <app-player
-      [options]="{
-        autoplay: true,
-        controls: true,
-        fluid: true,
-        sources: [],
-      }"
-    ></app-player>
-  </div>
-</div> -->
-
 <p-scrollpanel class="" [style]="{ height: '600px' }">
   <ul class="m-0 p-0 list-none p-4 flex flex-col gap-2 w-full">
     <li
-      *ngFor="let file of files()"
+      *ngFor="let file of files() | keyvalue"
       class="p-2 hover:bg-surface-100 dark:hover:bg-surface-800 border border-transparent rounded transition-all transition-duration-200"
       [ngClass]="{
-        'bg-surface-100 dark:bg-surface-800': selected().path == file.path,
+        'bg-surface-100 dark:bg-surface-800': file.value.stage! > 0,
       }"
     >
-      <div class="flex flex-wrap p-2 items-center gap-4">
-        <div class="w-16 shrink-0 rounded">
-          <p-skeleton styleClass="mb-1" />
-          <p-skeleton height="0.5rem" width="4rem" styleClass="mb-1" />
-          <p-skeleton height="0.5rem" width="1.5rem" styleClass="mb-1" />
-          <p-skeleton height="0.5rem" styleClass="mb-1" />
-        </div>
-
-        <div class="flex-1 flex flex-col gap-1">
-          <span class="font-bold">{{ file.path }}</span>
-          <div class="bg-surface-100 dark:bg-surface-700 p-1">
-            <div class="flex items-start gap-2 justify-start py-1 px-2">
-              <i class="pi pi-file text-grey-500"></i>
-              <span
-                class="text-surface-900 dark:text-surface-0 font-medium text-sm"
-                >{{ file.size | filesize  }}</span
-              >
-            </div>
-          </div>
-        </div>
-
-        <span class="font-bold ml-8">
-          <p-button
-            type="button"
-            label="Download"
-            icon="pi pi-download"
-            [raised]="true"
-            [rounded]="true"
-            severity="secondary"
-            size="small"
-            (onClick)="handleItemSelect($event, file)"
-          />
-        </span>
-      </div>
-
-      <!-- <div class="flex flex-wrap gap-1 items-center">
-        <div class="card flex justify-start h-2 w-full">
-          <p-progressbar mode="indeterminate" [style]="{ height: '6px' }" />
-        </div>
-      </div> -->
+      <app-player [file]="file.value"></app-player>
     </li>
   </ul>
 </p-scrollpanel>

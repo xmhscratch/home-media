@@ -5,7 +5,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, Subject, zip, combineLatest, of, Subscription } from 'rxjs';
 import { switchMap, map, tap } from 'rxjs/operators';
 
-import { map as ldMap, pickBy as ldPickBy } from 'lodash-es'
+import { map as ldMap } from 'lodash-es'
 // import { DynamicDialogRef } from 'primeng/dynamicdialog';
 // import { forEach } from 'lodash-es';
 
@@ -100,7 +100,7 @@ export class StorageService {
       );
   }
 
-  getData() {
+  loadSession() {
     return zip(this.root$, this.active$, this.paths$, this.nodes$)
       .pipe(
         // tap((v) => { console.log(v) }),
@@ -169,15 +169,18 @@ export class StorageService {
         // observe: "body",
       })
       .pipe(
-        map((ss: SessionInfo) => {
-          return ldMap(ss.files, (v, k) => (
+        // tap((v) => console.log(v)),
+        map((ss: SessionInfo) => (
+          ldMap(ss.files, (v: FileMetaInfo, k: string) => (
             <IFileListItem>{
               path: v.path,
+              fileKey: k,
               size: v.size,
               sessionId: ss.id,
+              nodeId: ss.nodeId,
             }
           ))
-        }),
+        )),
         // tap((v) => console.log(v)),
       )
   }

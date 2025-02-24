@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"home-media/sys"
 	"home-media/sys/download"
 	"log"
@@ -16,7 +17,6 @@ func main() {
 		}
 	}()
 
-	// cfg, err := sys.NewConfig("./")
 	cfg, err := sys.NewConfig("../")
 	if err != nil {
 		panic(err)
@@ -25,6 +25,7 @@ func main() {
 	rds := sys.NewClient(cfg)
 	defer rds.Close()
 
+	fmt.Println("Running downloader...")
 	sys.NewQueue(sys.QueueOptions[download.DQItem]{
 		Capacity:   2,
 		Throttle:   500,

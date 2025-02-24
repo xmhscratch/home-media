@@ -95,3 +95,4 @@ conf/app.conf
 vendor/
 public/**/*
 package-lock.json
+**/tmp

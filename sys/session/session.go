@@ -179,7 +179,6 @@ func InitTorrent(
 	if _, err = ctx.File.InitTorrent(); err != nil {
 		return nil, err
 	}
-	// defer ctx.File.Client.Close()
 
 	if setMode || !isCreated {
 		if err := rds.HSet(context.TODO(), sys.BuildString(ctx.KeyName, ":info"), map[string]interface{}{
@@ -194,7 +193,9 @@ func InitTorrent(
 			// litter.D(err)
 			return nil, err
 		}
+	}
 
+	if !isCreated {
 		if err := rds.HSet(
 			sys.SessionContext,
 			sys.BuildString(ctx.KeyName, ":files"),

@@ -8,7 +8,11 @@ import (
 
 // GenerateID comment
 func GenerateID(rootId string, nodeId string) string {
-	uuid, _ := v5(fmt.Sprintf("%s/%s", rootId, nodeId), UUIDNamespace)
+	return GenerateV5(rootId, nodeId, UUIDNamespace)
+}
+
+func GenerateV5(str1 string, str2 string, space string) string {
+	uuid, _ := v5(fmt.Sprintf("%s/%s", str1, str2), space)
 	return uuid
 }
 

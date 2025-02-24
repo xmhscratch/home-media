@@ -2,7 +2,6 @@ import { Component, Input, WritableSignal, signal, inject } from '@angular/core'
 import { OnInit, OnDestroy } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 
-import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { PanelModule } from 'primeng/panel';
 import { AvatarModule } from 'primeng/avatar';
@@ -27,7 +26,7 @@ import { Subscription } from 'rxjs';
   selector: 'app-gridview',
   standalone: true,
   imports: [
-    CardModule, ButtonModule, PanelModule, AvatarModule, MenuModule, ProgressSpinner, Skeleton,
+    ButtonModule, PanelModule, AvatarModule, MenuModule, ProgressSpinner, Skeleton,
     CItem,
   ],
   templateUrl: './gridview.component.html',

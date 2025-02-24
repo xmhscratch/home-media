@@ -1,11 +1,11 @@
-root = "./"
+root = "../"
 testdata_dir = "./testdata"
 tmp_dir = "./tmp"
 
 [build]
   args_bin = []
-  bin = "./tmp/downloader"
-  cmd = "go build -o ./tmp/downloader ./cmd/downloader/main.go"
+  bin = "./tmp/file"
+  cmd = "go build -o ./tmp/file ./file/main.go"
   delay = 1000
   exclude_dir = ["server", "tmp", "vendor", "testdata", "node_modules", "src", "public", "ci", "dist", "channel", "db"]
   exclude_file = []

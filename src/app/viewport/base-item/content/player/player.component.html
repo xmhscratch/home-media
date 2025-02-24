@@ -1,17 +1,98 @@
-<video
-  #target
-  class="video-js vjs-default-skin"
-  controls
-  preload="none"
-  playsinline
-  data-setup='{ "html5" : { "nativeTextTracks" : false }, "fluid": true, "fill": true }'
->
-  <source src="http://hms_file:4150/678bb5a27e785308b9e937a3/9e4095203ae99f1efb34ddaf399671e78c485cd1.mp4" type="video/mp4" />
-  <track
-    kind="captions"
-    src="http://hms_file:4150/678bb5a27e785308b9e937a3/9e4095203ae99f1efb34ddaf399671e78c485cd1.eng.vtt"
-    srclang="en"
-    label="English"
-    default
-  />
-</video>
+<div class="flex flex-wrap p-2 items-center gap-4">
+  <div class="w-16 shrink-0 rounded">
+    <!-- <i class="pi pi-file text-grey-500"></i> -->
+    <p-skeleton styleClass="mb-1" />
+    <p-skeleton height="0.5rem" width="4rem" styleClass="mb-1" />
+    <p-skeleton height="0.5rem" width="1.5rem" styleClass="mb-1" />
+    <p-skeleton height="0.5rem" styleClass="mb-1" />
+  </div>
+
+  <div *ngIf="loaded() == true" class="flex-1 flex flex-col gap-1">
+    <p-panel toggler="icon" [collapsed]="!f().isCompleted" [toggleable]="true">
+      <ng-template pTemplate="header">
+        <div class="flex flex-wrap items-start gap-1">
+          <div class="flex-16 flex w-full">
+            <span class="font-bold">{{ f().path }}</span>
+          </div>
+
+          @if (!f().isCompleted) {
+            <div class="flex-16 flex justify-start w-full">
+              <span class="font-medium text-sm">
+                <p-button
+                  type="button"
+                  [label]="f().size || 0 | filesize"
+                  icon="pi pi-download"
+                  [raised]="true"
+                  [rounded]="true"
+                  severity="secondary"
+                  size="small"
+                  [loading]="f().stage! > 0"
+                  (onClick)="handleItemSelect($event, f())"
+                />
+              </span>
+            </div>
+          }
+        </div>
+      </ng-template>
+
+      <p-card [dt]="cardStyles" class="overflow-hidden">
+        <video
+          #videoEl
+          class="video-js vjs-default-skin"
+          controls
+          preload="auto"
+          playsinline
+          crossorigin="anonymous"
+        >
+          <source
+            src="http://192.168.56.55:4150/{{ f().nodeId }}/{{
+              f().fileKey
+            }}.mp4"
+            type="video/mp4"
+          />
+
+          <audio #audioEl controls>
+            @for (dub of f().dubs; track $index) {
+              <source
+                src="http://192.168.56.55:4150/{{ f().nodeId }}/{{
+                  f().fileKey
+                }}.{{ dub.lang_code }}{{ dub.stream_index }}.mp4"
+                type="audio/ogg"
+              />
+            }
+          </audio>
+
+          @for (sub of f().subtitles; track $index) {
+            <track
+              kind="captions"
+              src="http://192.168.56.55:4150/{{ f().nodeId }}/{{
+                f().fileKey
+              }}.{{ sub.lang_code }}{{ sub.stream_index }}.vtt"
+              srclang="{{ sub.lang_code }}"
+              label="{{ sub.lang_title }}"
+              [default]="sub.lang_code == 'eng'"
+            />
+          }
+        </video>
+      </p-card>
+    </p-panel>
+  </div>
+</div>
+
+@if (loaded() == true && f().isProgressing) {
+  <div class="flex flex-wrap gap-1 items-center pb-3">
+    <div class="card flex justify-start h-3 w-full">
+      <p-progressbar mode="indeterminate" [style]="{ height: '12px' }">
+        <ng-template pTemplate="content" let-value>
+          <span>{{ f().message }}</span>
+        </ng-template>
+      </p-progressbar>
+    </div>
+
+    <div class="flex justify-start h-2 w-full">
+      <p-message severity="secondary" size="small" variant="simple">
+        <span>{{ f().message }}</span>
+      </p-message>
+    </div>
+  </div>
+}
