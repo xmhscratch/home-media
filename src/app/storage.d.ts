@@ -47,6 +47,7 @@ export type IFileListItem = FileMetaInfo & {
     nodeId: string
     stage?: number
     message?: string
+    isDownloading: boolean
     isCompleted: boolean
     isProgressing: boolean
 }

@@ -1,10 +1,10 @@
 import { Component, Input, WritableSignal, ElementRef, ViewChild, ViewEncapsulation, ChangeDetectorRef } from '@angular/core';
 import { signal } from '@angular/core';
-import { NgIf } from '@angular/common';
+import { NgIf, PercentPipe } from '@angular/common';
 import { OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 
-import { MessageService } from 'primeng/api';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+// import { MessageService } from 'primeng/api';
+// import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ButtonModule } from 'primeng/button';
 import { ProgressBar } from 'primeng/progressbar';
 import { Skeleton } from 'primeng/skeleton';
@@ -13,16 +13,17 @@ import { CardModule } from 'primeng/card';
 import { Message } from 'primeng/message';
 import { PanelModule } from 'primeng/panel';
 
-import { Subscription, Subject, debounceTime, delay, of, takeUntil } from 'rxjs';
+import { clamp as ldClamp } from 'lodash-es';
+import { Subscription, Subject, debounceTime, delay, of, first } from 'rxjs';
 
 import { IFileListItem, ISocketMessage } from '@/storage.d';
 import { StorageService } from '@/storage.service';
 import { FileService, TFileList } from '@/file.service';
 import { FileSizePipe } from '@/filesize.pipe';
-// import { default as videojs } from 'video.js';
-// import { default as VideoPlayer } from 'video.js/dist/types/player.d';
+import { MyPercentPipe } from '@/mypercent.pipe';
+// import parseRange from 'range-parser';
 
-type VJS_PRELOAD = "auto" | "metadata" | "none"
+const BUFFER_CHUNK_SIZE = 1024 * 100;
 
 @Component({
   selector: 'app-player',
@@ -30,7 +31,7 @@ type VJS_PRELOAD = "auto" | "metadata" | "none"
   imports: [
     NgIf,
     ButtonModule, Skeleton, ScrollPanelModule, CardModule, ProgressBar, Message, PanelModule,
-    FileSizePipe,
+    FileSizePipe, PercentPipe, MyPercentPipe,
   ],
   templateUrl: './player.component.html',
   styleUrl: './player.component.scss',
@@ -38,8 +39,7 @@ type VJS_PRELOAD = "auto" | "metadata" | "none"
 })
 export class CPlayer implements OnInit, OnDestroy, AfterViewInit {
 
-  @ViewChild('videoEl', { /*static: false*/ }) videoEl!: ElementRef;
-  @ViewChild('audioEl', { /*static: false*/ }) audioEl!: ElementRef;
+  @ViewChild('videoEl', { /*static: true*/ }) videoEl!: ElementRef;
 
   // @Input() options!: {
   //   fluid?: boolean,
@@ -85,7 +85,11 @@ export class CPlayer implements OnInit, OnDestroy, AfterViewInit {
           this.loaded.set(true);
 
           if (m.sourceReady) {
-            of('').pipe(delay(100)).subscribe(() => this.initPlayer())
+            console.log(this.f())
+            of('').pipe(
+              delay(1),
+              first(),
+            ).subscribe(() => this.initPlayer())
           }
         })
       )
@@ -94,24 +98,13 @@ export class CPlayer implements OnInit, OnDestroy, AfterViewInit {
 
     this.destroy$.add(
       this.fileService.changed$
-        // .pipe(debounceTime(1000))
         .subscribe((f: IFileListItem) => {
           this.f.update((v) => (v));
-          // this.cdRef.detectChanges();
         }),
     )
-
-    // of('').pipe(
-    //   // delay(350),
-    //   takeUntil(this.loaded$),
-    // ).subscribe(() => {
-    //   console.log(this.f())
-    //   // this.initPlayer();
-    // });
   }
 
   ngOnDestroy(): void {
-    this.audioEl.nativeElement.src = "";
     if (this.player) {
       this.player.dispose();
     }
@@ -130,8 +123,121 @@ export class CPlayer implements OnInit, OnDestroy, AfterViewInit {
     )
   }
 
-  initPlayer() {
+  async initAudio() {
+    let context
+    if (!context) {
+      // @ts-ignore
+      context = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    // @for (dub of f().dubs; track $index) {
+    //   <source
+    //     src="http://192.168.56.55:4150/{{ f().nodeId }}/{{
+    //       f().fileKey
+    //     }}.{{ dub.lang_code }}{{ dub.stream_index }}.mp4"
+    //     type="audio/ogg"
+    //   />
+    // }
+
+    // Fetch and decode the audio file
+    const dubs = this.f().dubs
+    if (!dubs || dubs.length == 0) { return }
+
+    // interval(10000).pipe(
+    //   takeWhile(() => currentStart < totalSize),
+    //   switchMap(() => { }),
+    // ).subscribe()
+
+    const fileUrl = `http://192.168.56.55:4150/${this.f().nodeId}/${this.f().fileKey}.${dubs[0].lang_code}${dubs[0].stream_index}.mp4`
+    // this.fileService.fetchFile(fileUrl, 0, 1024 - 1).subscribe()
+    const response = await fetch(fileUrl);
+    const arrayBuffer = await response.arrayBuffer();
+    console.log(arrayBuffer)
+    const audioBuffer = await context.decodeAudioData(arrayBuffer);
+
+    // Create a GainNode for volume control
+    const gain: GainNode = context.createGain();
+    gain.gain.value = 0.76; // Default volume (1 = 100%)
+    gain.connect(context.destination);
+
+    // Create a buffer source
+    const initSource = () => {
+      const source: AudioBufferSourceNode = context.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(gain);
+
+      return source;
+    }
+
+    let source = initSource();
+    let isPlaying = false;
+
+    return {
+      // Function to change volume
+      async start(time: number) {
+        if (!isPlaying) {
+          source.start();
+          isPlaying = true;
+        } else {
+          if (context.state === 'suspended') {
+            await context.resume();
+          }
+
+          // Stop current playback
+          source.stop();
+          source.disconnect();
+
+          // Restart from seeked position
+          source = initSource();
+          source.start(0, time || 0);
+        }
+      },
+      async pause() {
+        if (context && context.state === 'running') {
+          await context.suspend();
+        }
+      },
+      async close() {
+        context.close();
+      },
+      setVolume(value: number) {
+        gain.gain.value = ldClamp(value, 0.0, 1.0);
+      },
+    };
+  }
+
+  async initPlayer() {
     if (this.player) { return }
+
+    const audio = await this.initAudio();
+    const audioEventInit = () => {
+      if (!audio) { return }
+
+      // @ts-ignore
+      this.player.on('playing', async () => {
+        await audio.start(this.getPlayerCurrentTime());
+      });
+
+      // @ts-ignore
+      this.player.on('pause', async () => {
+        await audio.pause();
+      });
+
+      // @ts-ignore
+      this.player.on('volumechange', async () => {
+        audio.setVolume(this.getPlayerCurrentVolume());
+      });
+
+      // @ts-ignore
+      this.player.on('seeked', async () => {
+        await audio.start(this.getPlayerCurrentTime());
+      });
+
+      // @ts-ignore
+      this.player.on('dispose', async () => {
+        await audio.close();
+      });
+    }
 
     // @ts-ignore
     this.player = videojs(this.videoEl.nativeElement, {
@@ -139,38 +245,26 @@ export class CPlayer implements OnInit, OnDestroy, AfterViewInit {
       controls: true,
       fluid: true,
       responsive: true,
-    });
+    }, audioEventInit);
+  }
 
-    // @ts-ignore
-    this.player.on('playing', () => {
-      this.audioEl.nativeElement.play()
-    });
+  getPlayerCurrentVolume() {
+    let val;
+    if (this.player.ended()) {
+      val = this.player.volume();
+    } else {
+      val = (this.player.scrubbing()) ? this.player.getCache().volume : this.player.volume();
+    }
+    return val;
+  }
 
-    // @ts-ignore
-    this.player.on('pause', () => {
-      this.audioEl.nativeElement.pause()
-    });
-
-    // @ts-ignore
-    this.player.on('volumechange', () => {
-      let val;
-      if (this.player.ended()) {
-        val = this.player.volume();
-      } else {
-        val = (this.player.scrubbing()) ? this.player.getCache().volume : this.player.volume();
-      }
-      this.audioEl.nativeElement.volume = val;
-    });
-
-    // @ts-ignore
-    this.player.on('seeked', () => {
-      let val;
-      if (this.player.ended()) {
-        val = this.player.duration();
-      } else {
-        val = (this.player.scrubbing()) ? this.player.getCache().currentTime : this.player.currentTime();
-      }
-      this.audioEl.nativeElement.currentTime = val;
-    });
+  getPlayerCurrentTime() {
+    let val;
+    if (this.player.ended()) {
+      val = this.player.duration();
+    } else {
+      val = (this.player.scrubbing()) ? this.player.getCache().currentTime : this.player.currentTime();
+    }
+    return val;
   }
 }

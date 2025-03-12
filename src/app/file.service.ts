@@ -1,6 +1,7 @@
 import { Injectable, WritableSignal } from '@angular/core';
 import { signal } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 
 import { Observable, Subject, switchMap, map, tap } from 'rxjs';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
@@ -8,9 +9,14 @@ import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { LRUCache } from 'lru-cache';
 import { keyBy as ldKeyBy, get as ldGet } from 'lodash-es';
 
-import { ENDPOINT_FILE_API } from '@/environment';
+import { ENDPOINT_FILE_WS } from '@/environment';
 import { IFileListItem, ISocketMessage } from './storage.d';
 import { StorageService } from './storage.service';
+
+import {
+  // ENDPOINT_STORAGE_API,
+  ENDPOINT_STREAMING_API,
+} from './environment'
 
 export type TFileList = { [fileKey: string]: IFileListItem }
 
@@ -51,6 +57,7 @@ export class FileService {
 
   constructor(
     private storageService: StorageService,
+    private http: HttpClient,
   ) {
     // this.changed$.subscribe({
     //   next: (x) => console.log(x),
@@ -134,6 +141,7 @@ export class FileService {
             ...f,
             isCompleted: !(!stage || stage < 5),
             isProgressing: stage > 0 && stage < 5,
+            isDownloading: stage == 2,
           }
           if (stage == 5) {
             result = { ...result, ...(<{ message: object }>v.payload).message }
@@ -149,6 +157,23 @@ export class FileService {
   }
 
   newSocket(f: IFileListItem) {
-    return webSocket<ISocketMessage>(`${ENDPOINT_FILE_API}/ws/${f.sessionId}/${f.fileKey}`);
+    return webSocket<ISocketMessage>(`${ENDPOINT_FILE_WS}/ws/${f.sessionId}/${f.fileKey}`);
+  }
+
+  fetchFile(srcUrl: string, byteStart?: number, byteEnd?: number) {
+    const headers = new HttpHeaders({
+      'endpoint': ENDPOINT_STREAMING_API,
+      'range': `bytes=${byteStart || ''}-${byteEnd || ''}`,
+      'responseType': 'arraybuffer',
+    });
+
+    return this.http
+      .get<any>(`${srcUrl}`, {
+        headers,
+        // observe: "body",
+      })
+      .pipe(
+        tap((v) => console.log(v)),
+      )
   }
 }

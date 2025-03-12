@@ -68,12 +68,12 @@ func TestGetSession(t *testing.T) {
 	litter.Dump(ss)
 }
 
-func TestCreateDownload(t *testing.T) {
+func TestPrerequisite(t *testing.T) {
 	var (
 		err error
 	)
 
-	if err = CreateDownload(
+	if err = Prerequisite(
 		sample.SampleConfig,
 		sample.SampleSessionID,
 		sample.SampleFilePath,
@@ -83,19 +83,22 @@ func TestCreateDownload(t *testing.T) {
 	}
 }
 
-func TestNotifyDownloaded(t *testing.T) {
-	var (
-		err error
-		ss  *Session[FileSourceType]
-	)
+// func TestDownload(t *testing.T) {
+// 	var (
+// 		err error
+// 		ss  *Session[FileSourceType]
+// 	)
 
-	if ss, err = InitTorrent(
-		sample.SampleConfig,
-		sample.SampleSessionID,
-	); err != nil {
-		t.Fatal(err)
-		return
-	}
-	ss.NotifyDownloaded()
-	// download.Start(sample.SampleConfig)
-}
+// 	if ss, err = InitTorrent(
+// 		sample.SampleConfig,
+// 		sample.SampleSessionID,
+// 	); err != nil {
+// 		t.Fatal(err)
+// 		return
+// 	}
+
+// 	// ss.DownloadTorrent()
+
+// 	// ss.NotifyDownload("", 0)
+// 	// download.Start(sample.SampleConfig)
+// }

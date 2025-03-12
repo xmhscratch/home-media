@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"home-media/sys/sample"
 	"testing"
+	"time"
 
 	"github.com/anacrolix/torrent"
 	"github.com/sanity-io/litter"
@@ -89,4 +90,31 @@ out:
 	}
 
 	litter.D(selectedFile)
+}
+
+func TestTorrentTest(t *testing.T) {
+	var (
+		done chan struct{} = make(chan struct{})
+	)
+
+	go func() {
+		var (
+			// fileKey string       = sys.GenerateID(ctx.NodeID, selFile.Path())
+			ticker *time.Ticker = time.NewTicker(time.Duration(500) * time.Millisecond)
+		)
+		defer ticker.Stop()
+
+		// breakDownloadRate:
+		for range ticker.C {
+			select {
+			case t := <-ticker.C:
+				fmt.Println(t)
+				// ctx.notify(fileKey, stats.BytesReadData.Int64())
+				// default:
+				// 	break breakDownloadRate
+			}
+		}
+		done <- struct{}{}
+	}()
+	<-done
 }

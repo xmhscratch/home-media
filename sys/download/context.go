@@ -9,7 +9,12 @@ import (
 
 type DQItem struct {
 	sys.QItem[DQItem]
-	cfg *sys.Config        `json:"-"`
-	rds *redis.Client      `json:"-"`
-	dm  *session.DQMessage `json:"-"`
+	HasOriginSource bool               `json:"hasOriginSource"`
+	HasUpdtDuration bool               `json:"hasUpdtDuration"`
+	HasExtrSubtitle bool               `json:"hasExtrSubtitle"`
+	HasExtrAudio    bool               `json:"hasExtrAudio"`
+	HasExtrVideo    bool               `json:"hasExtrVideo"`
+	cfg             *sys.Config        `json:"-"`
+	rds             *redis.Client      `json:"-"`
+	dm              *session.DQMessage `json:"-"`
 }

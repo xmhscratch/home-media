@@ -85,7 +85,7 @@ func (ctx *RouteContext) GetProgress() gin.HandlerFunc {
 			sessionId = ginCtx.Param("ssid")
 		}
 
-		if err := session.CreateDownload(
+		if err := session.Prerequisite(
 			ctx.Config,
 			sessionId,
 			filePath,

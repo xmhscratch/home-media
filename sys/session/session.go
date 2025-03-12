@@ -3,9 +3,11 @@ package session
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"home-media/sys"
 	"os"
 	"path/filepath"
+	"strconv"
 	// "github.com/sanity-io/litter"
 	// "mime"
 )
@@ -75,8 +77,8 @@ func (T FileSourceType) InitSession(
 		return nil, true, err
 	}
 
-	ctx.File.notify = func(filePath string) error {
-		return ctx.NotifyDownloaded()
+	ctx.File.notify = func(fileKey string, percentage float64) error {
+		return ctx.NotifyDownload(fileKey, percentage)
 	}
 
 	return ctx, true, err
@@ -176,7 +178,7 @@ func InitTorrent(
 		ctx.File.SourceURL = magnetURI
 	}
 
-	if _, err = ctx.File.InitTorrent(); err != nil {
+	if _, err = ctx.File.InitTorrent(false); err != nil {
 		return nil, err
 	}
 
@@ -230,7 +232,7 @@ func InitTorrent(
 	return ctx, err
 }
 
-func CreateDownload(
+func Prerequisite(
 	cfg *sys.Config,
 	sessionId string,
 	filePath string,
@@ -307,6 +309,17 @@ func (ctx *Session[I]) IsDownloadable() bool {
 	return true
 }
 
-func (ctx *Session[I]) NotifyDownloaded() error {
+func (ctx *Session[I]) NotifyDownload(fileKey string, percentage float64) error {
+	rds := sys.NewClient(ctx.Config)
+	defer rds.Close()
+
+	if err := (&FSMessage{
+		Stage:   2,
+		Message: strconv.FormatFloat(percentage, 'f', 2, 64),
+	}).SendToSocket(rds, fileKey); err != nil {
+		fmt.Println(err)
+		return err
+	}
+
 	return nil
 }

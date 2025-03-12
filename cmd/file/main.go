@@ -1,13 +1,12 @@
 package main
 
 import (
-	"home-media/cmd/file/middleware"
 	"home-media/sys"
-	"os"
-	"os/signal"
-	"syscall"
+	"home-media/sys/filesrv"
+	"home-media/sys/filesrv/wsevent"
 	"time"
 
+	"github.com/gofiber/contrib/socketio"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -25,7 +24,7 @@ func main() {
 	app.Use(cors.New())
 	app.Use(
 		"/:nodeId<[0-9a-z]{24}>/:fileKey<^[0-9a-z]+(\\.[0-9a-z]{1,20}|)(\\.vtt|\\.mp4)$>",
-		middleware.NewStorageHandler(cfg.DataPath, middleware.StorageConfig{
+		filesrv.NewStorageHandler(cfg.DataPath, filesrv.StorageConfig{
 			Compress:      false,
 			ByteRange:     true,
 			Browse:        false,
@@ -35,15 +34,20 @@ func main() {
 		}),
 	)
 
-	app.Use(func(c *fiber.Ctx) error {
+	// socketio.On(socketio.EventConnect, wsevent.HandleConnect(cfg, app))
+	// socketio.On(socketio.EventDisconnect, wsevent.HandleDisconnect(cfg, app))
+	socketio.On(socketio.EventClose, wsevent.HandleClose(cfg, app))
+	// socketio.On(socketio.EventError, wsevent.HandleError(cfg, app))
+	socketio.On(socketio.EventPing, wsevent.HandlePing(cfg, app))
+
+	app.Use("/ws/*", func(c *fiber.Ctx) error {
 		if websocket.IsWebSocketUpgrade(c) {
 			c.Locals("allowed", true)
 			return c.Next()
 		}
 		return fiber.ErrUpgradeRequired
 	})
-
-	middleware.AttachSocket(cfg, app)
+	app.Get("/ws/:sessionId/:fileKey", socketio.New(wsevent.NewSocketRoute(cfg, app)))
 
 	app.Get("*", func(c *fiber.Ctx) error {
 		return c.SendString("File not found!")
@@ -51,26 +55,5 @@ func main() {
 
 	go app.Listen(":4150")
 
-	exit := make(chan struct{})
-	SignalC := make(chan os.Signal, 4)
-
-	signal.Notify(
-		SignalC,
-		syscall.SIGHUP,
-		syscall.SIGINT,
-		syscall.SIGTERM,
-		syscall.SIGQUIT,
-	)
-	go func() {
-		for s := range SignalC {
-			switch s {
-			case syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT:
-				close(exit)
-				return
-			}
-		}
-	}()
-
-	<-exit
-	os.Exit(0)
+	sys.WaitTermination()
 }

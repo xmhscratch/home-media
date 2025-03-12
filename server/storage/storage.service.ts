@@ -13,7 +13,7 @@ export class StorageService implements OnModuleInit, OnModuleDestroy {
     RootList: Map<string, string> = new Map()
     Database: any
     dbpool: LRUCache<string, IDatabase, object>
-    _pendingWrites: object = {}
+    _pendingWrites: Map<string, any> = new Map()
 
     constructor(
         private configService: ConfigService,
@@ -26,24 +26,32 @@ export class StorageService implements OnModuleInit, OnModuleDestroy {
         this.dbpool = new LRUCache({
             max: 10,
             maxSize: 50,
-            ttl: 1000 * 60, /* 1 mins */
+            ttl: 1000 * 30, /* 30s */
             updateAgeOnGet: true,
-            updateAgeOnHas: true,
+            updateAgeOnHas: false,
 
             sizeCalculation: (_value, _key) => 1,
 
-            dispose: async (db: IDatabase, rootId: string) => {
-                if (has(this._pendingWrites, rootId)) { return }
+            dispose: (db: IDatabase, rootId: string) => {
+                if (this._pendingWrites.has(rootId)) { return }
 
-                const buffer = db.serialize()
-                const pWriteFile = writeFile(this.getDbPath(rootId), buffer)
+                this._pendingWrites.set(
+                    rootId,
+                    setTimeout(async () => {
+                        const buffer = db.serialize()
+                        const pWriteFile = writeFile(this.getDbPath(rootId), buffer)
 
-                db.close()
-                await pWriteFile
+                        db.close()
+                        await pWriteFile
 
-                unset(this._pendingWrites, rootId)
+                        clearTimeout(this._pendingWrites.get(rootId))
+                        this._pendingWrites.delete(rootId)
+                        console.log(`db ${rootId} saved`)
+                    }, 500)
+                )
             },
         })
+        console.log("storage.services onModuleInit")
     }
 
     async onModuleDestroy(): Promise<void> {
@@ -60,29 +68,24 @@ export class StorageService implements OnModuleInit, OnModuleDestroy {
         })
     }
 
-    getBottom(): Array<object> {
-        return Array.from(this.RootList, (vals, index) => {
-            return zipObject(['rootId', 'label'], vals)
-        })
-    }
-
     async getDb(rootId: string) {
-        if (this.dbpool.has(rootId)) {
-            return this.dbpool.get(rootId)
-        }
+        let db: IDatabase
 
-        const db: IDatabase = new this.Database(
-            this.getDbPath(rootId),
-            // { verbose: console.log },
-        )
+        if (this.dbpool.has(rootId)) {
+            db = this.dbpool.get(rootId)
+        } else {
+            db = new this.Database(
+                this.getDbPath(rootId),
+                // { verbose: console.log },
+            )
+            this.dbpool.set(rootId, db)
+        }
         db.pragma('journal_mode = WAL');
 
-        this.dbpool.set(rootId, db)
         return db
     }
 
     async closeDb(rootId: string, db: IDatabase) {
-        set(this._pendingWrites, rootId, true)
         return this.dbpool.delete(rootId)
     }
 

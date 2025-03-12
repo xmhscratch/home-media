@@ -16,7 +16,7 @@ import { toObservable } from '@angular/core/rxjs-interop';
 // import { ElementRef, afterRender } from '@angular/core';
 // import { $dt } from '@primeng/themes';
 
-import { sortBy } from 'lodash-es';
+import { orderBy as ldOrderBy } from 'lodash-es';
 import { IINode } from '@/storage.d'
 import { StorageService } from '@/storage.service'
 import { CItem } from './item/item.component';
@@ -57,25 +57,26 @@ export class CGridview implements OnInit, OnDestroy {
   ngOnInit() {
     this.destroy$.add(
       this.route.paramMap
-      .pipe(
-        tap(() => {
-          this.destroy$.add(this.rootId$.subscribe())
-          this.destroy$.add(this.nodeId$.subscribe())
-        }),
-      )
-      .subscribe((a) => {
-        this.destroy$.add(
-          this.storage
-            .switchNode(this.rootId(), this.nodeId())
-            .pipe(
-              tap(() => this.loaded.set(true)),
-              map(({ nodes }) => ({
-                nodes: sortBy(nodes, (i) => (~new Date(i.created_date as string)))
-              })),
-            )
-            .subscribe(({ nodes }) => this.nodes.set(nodes))
+        .pipe(
+          tap(() => {
+            this.destroy$.add(this.rootId$.subscribe())
+            this.destroy$.add(this.nodeId$.subscribe())
+          }),
         )
-      })
+        .subscribe((a) => {
+          this.destroy$.add(
+            this.storage
+              .switchNode(this.rootId(), this.nodeId())
+              .pipe(
+                tap(() => this.loaded.set(true)),
+                map(({ nodes }) => ({
+                  nodes: ldOrderBy(nodes, (i) => (new Date(i.created_date as string)).valueOf(), 'desc')
+                })),
+                // tap((v) => console.log(v)),
+              )
+              .subscribe(({ nodes }) => this.nodes.set(nodes))
+          )
+        })
     )
   }
 

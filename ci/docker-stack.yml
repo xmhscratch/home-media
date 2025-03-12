@@ -19,7 +19,7 @@ services:
     - root:/go/src/home-media/
     working_dir: /go/src/home-media/
     command:
-    - npm rebuild && npm run server:start:dev
+    - npm rebuild && npm run server:start
     deploy:
       replicas: 1
       placement:

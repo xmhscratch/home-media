@@ -35,13 +35,12 @@
         </div>
       </ng-template>
 
-      <p-card [dt]="cardStyles" class="overflow-hidden">
+      <p-card [dt]="cardStyles">
         <video
           #videoEl
           class="video-js vjs-default-skin"
           controls
           preload="auto"
-          playsinline
           crossorigin="anonymous"
         >
           <source
@@ -51,19 +50,9 @@
             type="video/mp4"
           />
 
-          <audio #audioEl controls>
-            @for (dub of f().dubs; track $index) {
-              <source
-                src="http://192.168.56.55:4150/{{ f().nodeId }}/{{
-                  f().fileKey
-                }}.{{ dub.lang_code }}{{ dub.stream_index }}.mp4"
-                type="audio/ogg"
-              />
-            }
-          </audio>
-
           @for (sub of f().subtitles; track $index) {
             <track
+              class="hidden"
               kind="captions"
               src="http://192.168.56.55:4150/{{ f().nodeId }}/{{
                 f().fileKey
@@ -82,17 +71,23 @@
 @if (loaded() == true && f().isProgressing) {
   <div class="flex flex-wrap gap-1 items-center pb-3">
     <div class="card flex justify-start h-3 w-full">
-      <p-progressbar mode="indeterminate" [style]="{ height: '12px' }">
+      <p-progressbar
+        [value]="f().message"
+        [mode]="f().isDownloading ? 'determinate' : 'indeterminate'"
+        [style]="{ height: '16px' }"
+      >
         <ng-template pTemplate="content" let-value>
-          <span>{{ f().message }}</span>
+          <span>{{ value | mypercent: 5 | percent }}</span>
         </ng-template>
       </p-progressbar>
     </div>
 
-    <div class="flex justify-start h-2 w-full">
-      <p-message severity="secondary" size="small" variant="simple">
-        <span>{{ f().message }}</span>
-      </p-message>
-    </div>
+    @if (!f().isDownloading) {
+      <div class="flex justify-start h-2 w-full">
+        <p-message severity="secondary" size="small" variant="simple">
+          <span>{{ f().message }}</span>
+        </p-message>
+      </div>
+    }
   </div>
 }

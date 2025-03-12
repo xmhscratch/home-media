@@ -39,10 +39,10 @@ func (name FileSourceType) IsEqual(target string) bool {
 type File[T FileSourceType | FileDirect | FileTorrent] struct {
 	*FileDirect  `json:"-"`
 	*FileTorrent `json:"-"`
-	NodeID       string             `json:"nodeId"`
-	SourceURL    string             `json:"sourceUrl"`
-	SourceType   FileSourceType     `json:"sourceType,string"`
-	notify       func(string) error `json:"-"`
+	NodeID       string                      `json:"nodeId"`
+	SourceURL    string                      `json:"sourceUrl"`
+	SourceType   FileSourceType              `json:"sourceType,string"`
+	notify       func(string, float64) error `json:"-"`
 }
 
 type FileDirect struct {
@@ -57,10 +57,14 @@ type FileTorrent struct {
 
 type FStreamInfoList []FStreamInfo
 type FStreamInfo struct {
-	StreamIndex int64  `json:"stream_index,string"`
-	CodecName   string `json:"codec_name"`
-	LangCode    string `json:"lang_code"`
-	LangTitle   string `json:"lang_title"`
+	StreamIndex    int64  `json:"stream_index,string"`
+	CodecName      string `json:"codec_name"`
+	LangCode       string `json:"lang_code"`
+	LangTitle      string `json:"lang_title"`
+	BitRate        int64  `json:"bps,string,omitempty"`
+	Duration       string `json:"duration,omitempty"`
+	NumberOfFrames int64  `json:"number_of_frames,string,omitempty"`
+	NumberOfBytes  int64  `json:"number_of_bytes,string,omitempty"`
 }
 
 type FileMetaInfoList map[string]FileMetaInfo

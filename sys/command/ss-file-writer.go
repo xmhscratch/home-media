@@ -63,7 +63,7 @@ func (ctx SessionFileWriter) Write(p []byte) (int, error) {
 	default:
 		break
 	}
-
+	// fmt.Println(strings.TrimSpace(string(p)))
 	if err = json.Unmarshal([]byte(strings.TrimSpace(string(p))), attrValue); err != nil {
 		return -1, err
 	}
@@ -71,6 +71,7 @@ func (ctx SessionFileWriter) Write(p []byte) (int, error) {
 	if fInfByt, err := json.Marshal(ctx.FileMeta); err != nil {
 		return -1, nil
 	} else {
+		// fmt.Println(ctx.FileMeta, string(fInfByt))
 		if err = rds.HSet(
 			context.TODO(),
 			session.GetKeyName(ctx.SessionId, ":files"),

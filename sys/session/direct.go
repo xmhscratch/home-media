@@ -2,6 +2,7 @@ package session
 
 import (
 	"fmt"
+	"home-media/sys"
 	"io"
 	"net/http"
 
@@ -31,7 +32,8 @@ func (ctx *File[FileDirect]) InitDirect() (map[string]interface{}, error) {
 func (ctx *File[FileDirect]) DownloadDirect(ginCtx *gin.Context, filePath string) (err error) {
 	filePath = GetFilePath(filePath)
 
-	defer ctx.notify(filePath)
+	fileKey := sys.GenerateID(ctx.NodeID, filePath)
+	defer ctx.notify(fileKey, 0)
 
 	req, err := http.NewRequest("GET", ctx.SourceURL, nil)
 	if err != nil {

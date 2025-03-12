@@ -1,10 +1,13 @@
 package download
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"home-media/sys"
 	"home-media/sys/command"
 	"home-media/sys/runtime"
+	"home-media/sys/session"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -19,6 +22,62 @@ func (ctx DQItem) Index() int {
 
 func (ctx DQItem) Key() string {
 	return ctx.dm.FileKey
+}
+
+func (ctx *DQItem) VerifyInfo() (*DQItem, error) {
+	ctx.HasOriginSource = sys.CheckFileExists(filepath.Join(ctx.cfg.DataPath, ctx.dm.SavePath))
+
+	if fInfStr, err := ctx.rds.HGet(
+		context.TODO(),
+		session.GetKeyName(ctx.dm.SessionId, ":files"),
+		ctx.dm.FileKey,
+	).Result(); err != nil {
+		return ctx, err
+	} else {
+		if err := json.Unmarshal([]byte(fInfStr), &ctx.dm.FileMeta); err != nil {
+			return ctx, err
+		} else {
+			ctx.HasUpdtDuration = ctx.dm.FileMeta.Duration > 0
+		}
+	}
+
+	for i, sub := range ctx.dm.FileMeta.Subtitles {
+		subFilePath := filepath.Join(
+			ctx.cfg.DataPath,
+			filepath.Dir(ctx.dm.SavePath),
+			sys.BuildString(ctx.dm.FileKey, ".", sub.LangCode, strconv.Itoa(int(sub.StreamIndex)), ".vtt"),
+		)
+		// fmt.Println(subFilePath)
+		if i == 0 {
+			ctx.HasExtrSubtitle = sys.CheckFileExists(subFilePath)
+		} else {
+			ctx.HasExtrSubtitle = ctx.HasExtrSubtitle && sys.CheckFileExists(subFilePath)
+		}
+	}
+
+	for i, dub := range ctx.dm.FileMeta.Dubs {
+		dubFilePath := filepath.Join(
+			ctx.cfg.DataPath,
+			filepath.Dir(ctx.dm.SavePath),
+			sys.BuildString(ctx.dm.FileKey, ".", dub.LangCode, strconv.Itoa(int(dub.StreamIndex)), ".mp4"),
+		)
+		// fmt.Println(dubFilePath)
+		if i == 0 {
+			ctx.HasExtrAudio = sys.CheckFileExists(dubFilePath)
+		} else {
+			ctx.HasExtrAudio = ctx.HasExtrAudio && sys.CheckFileExists(dubFilePath)
+		}
+	}
+
+	vidFilePath := filepath.Join(
+		ctx.cfg.DataPath,
+		filepath.Dir(ctx.dm.SavePath),
+		sys.BuildString(ctx.dm.FileKey, ".mp4"),
+	)
+	// fmt.Println(vidFilePath)
+	ctx.HasExtrVideo = sys.CheckFileExists(vidFilePath)
+
+	return ctx, nil
 }
 
 func (ctx *DQItem) StartDownload() error {

@@ -13,4 +13,4 @@ cmd1=(
 )
 
 # echo ${cmd1[@]};
-echo ${cmd1[@]} | sh | jq -cM '[.streams[] | {stream_index: .index, codec_name, lang_code: .tags.language, lang_title: .tags.title}]'
+echo ${cmd1[@]} | sh | jq -cM '[(.streams[] | {stream_index: .index, codec_name, lang_code: .tags.language, lang_title: .tags.title}) + (.streams[].tags | to_entries | map({key: .key | match("^[A-Z][A-Z_]+"; "g") | .string | ascii_downcase, value: .value}) | from_entries)]'
