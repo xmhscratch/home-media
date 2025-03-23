@@ -5,7 +5,7 @@ import { RouterOutlet } from '@angular/router';
 import { SpeedDial } from 'primeng/speeddial';
 import { CardModule } from 'primeng/card';
 
-import { IINode } from '@/storage.d'
+import { IINode } from '../types/storage'
 import { StorageService } from '@/storage.service'
 
 import { CNavigation } from './navigation/navigation.component';

@@ -1,6 +1,6 @@
 import { Component, WritableSignal, signal, Signal, OnInit, OnDestroy, computed } from '@angular/core';
 import { MenuItem } from 'primeng/api';
-import { IINode } from '@/storage.d';
+import { IINode } from '../../../types/storage';
 // import { StorageService } from '@/storage.service';
 
 @Component({

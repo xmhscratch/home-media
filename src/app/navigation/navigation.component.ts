@@ -15,7 +15,7 @@ import { Tree } from 'primeng/tree'
 import { tap, map, defer } from 'rxjs'
 import { mergeMap } from 'rxjs/operators'
 
-import { IINode, ITreeRootNode } from '@/storage.d'
+import { IINode, ITreeRootNode } from '../../types/storage'
 import { StorageService } from '@/storage.service'
 
 @Component({

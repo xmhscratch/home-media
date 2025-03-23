@@ -2,7 +2,7 @@
 
 pids=(
     "client-dev             client:start"
-    "server-dev             server:start"
+    "backend-dev            backend:start"
     "redis                  redis"
     "logstash               logstash"
     "streaming-file         streaming:start:file"

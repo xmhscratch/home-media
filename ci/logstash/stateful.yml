@@ -1,0 +1,36 @@
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: logstash
+spec:
+  serviceName: logstash
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logstash
+  template:
+    metadata:
+      labels:
+        app: logstash
+    spec:
+      containers:
+        - name: logstash
+          image: docker.elastic.co/logstash/logstash:8.4.2
+          ports:
+            - containerPort: 6379
+              name: master
+          env:
+            - name: LS_JAVA_OPTS
+              value: "-Xmx2048m -Xms2048m"
+            - name: XPACK_MONITORING_ENABLED
+              value: "false"
+            - name: HTTP_HOST
+              value: "0.0.0.0"
+          volumeMounts:
+            - name: pvc-channel
+              mountPath: /usr/share/logstash/pipeline/
+              readOnly: true
+      volumes:
+        - name: pvc-channel
+          persistentVolumeClaim:
+            claimName: pvc-channel

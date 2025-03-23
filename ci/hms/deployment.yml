@@ -1,0 +1,116 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      initContainers:
+        - name: wait-for-job
+          image: bitnami/kubectl:latest
+          command:
+            - "/bin/sh"
+            - "-c"
+          args:
+            - |
+              while [[ $(kubectl -n hms get job job-build-backend -o jsonpath='{.status.succeeded}') -ne 1 ]]; do
+                echo "Waiting backend build to complete..."
+                sleep 5
+              done
+      containers:
+        - name: backend
+          image: localhost:5000/hms:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 4100
+              name: backend
+          env:
+            - name: APP_NAME
+              value: "hms_backend"
+            - name: NODE_ENV
+              value: "production"
+          command:
+            - "/bin/sh"
+            - "-c"
+          args:
+            - |
+              npm install -g @angular/cli @nestjs/cli &&
+              npm install --omit=dev &&
+              npm run backend:start:prod
+          volumeMounts:
+            - name: pvc-dist-backend
+              mountPath: /export/dist/
+              readOnly: true
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - "/bin/sh"
+                  - "-c"
+                  - "echo 'Container started'"
+      volumes:
+        - name: pvc-dist-backend
+          persistentVolumeClaim:
+            claimName: pvc-dist-backend
+# ---
+# kind: Deployment
+# apiVersion: apps/v1
+# metadata:
+#   name: frontend
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: frontend
+#   template:
+#     metadata:
+#       labels:
+#         app: frontend
+#     spec:
+#       initContainers:
+#         - name: wait-for-job
+#           image: bitnami/kubectl:latest
+#           command:
+#             - "/bin/sh"
+#             - "-c"
+#           args:
+#             - |
+#               while [[ $(kubectl -n hms get job job-build-frontend -o jsonpath='{.status.succeeded}') -ne 1 ]]; do
+#                 echo "Waiting frontend build to complete..."
+#                 sleep 5
+#               done
+#       containers:
+#         - name: frontend
+#           image: localhost:5000/hms:latest
+#           imagePullPolicy: Never
+#           ports:
+#             - containerPort: 4200
+#               name: frontend
+#           env:
+#             - name: APP_NAME
+#               value: "hms_frontend"
+#             - name: NODE_ENV
+#               value: "production"
+#           command:
+#             - "/bin/sh"
+#             - "-c"
+#           args:
+#             - |
+#               npm install -g @angular/cli @nestjs/cli &&
+#               npm install --omit=dev &&
+#               npm run client:serve:ssr:hms
+#           volumeMounts:
+#             - name: pvc-dist-frontend
+#               mountPath: /export/dist/
+#               readOnly: true
+#       volumes:
+#         - name: pvc-dist-frontend
+#           persistentVolumeClaim:
+#             claimName: pvc-dist-frontend

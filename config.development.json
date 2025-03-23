@@ -2,7 +2,6 @@
     "debug": false,
     "port": "4110",
     "hostName": "streaming.home-media.me",
-    "streamApiUrl": "http://192.168.56.55:4110",
     "redis": {
         "db": "0",
         "host": "192.168.56.55",
@@ -11,6 +10,12 @@
     },
     "sqlite": {
         "path": "/home/data"
+    },
+    "endpoint": {
+        "backend": "http://192.168.56.55:4100",
+        "api": "http://192.168.56.55:4110",
+        "file": "http://192.168.56.55:4150",
+        "frontend": "http://192.168.56.55:4200"
     },
     "binPath": "/home/web/repos/home-media/ci",
     "tmpPath": "/home/tmp",

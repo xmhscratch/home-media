@@ -3,7 +3,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "./out-tsc/app",
+    "outDir": "./dist/client",
     "types": [
       "node"
     ]
@@ -12,7 +12,7 @@
     "src/main.ts",
     "src/main.server.ts",
     "src/polyfills.ts",
-    "server.ts"
+    "src/server.ts"
   ],
   "include": [
     "src/**/*.d.ts",

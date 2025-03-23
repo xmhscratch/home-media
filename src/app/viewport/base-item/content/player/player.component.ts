@@ -1,4 +1,4 @@
-import { Component, Input, WritableSignal, ElementRef, ViewChild, ViewEncapsulation, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Signal, WritableSignal, ElementRef, ViewChild, ViewEncapsulation, ChangeDetectorRef } from '@angular/core';
 import { signal } from '@angular/core';
 import { NgIf, PercentPipe } from '@angular/common';
 import { OnInit, OnDestroy, AfterViewInit } from '@angular/core';
@@ -16,7 +16,8 @@ import { PanelModule } from 'primeng/panel';
 import { clamp as ldClamp } from 'lodash-es';
 import { Subscription, Subject, debounceTime, delay, of, first } from 'rxjs';
 
-import { IFileListItem, ISocketMessage } from '@/storage.d';
+import { IFileListItem, ISocketMessage } from '../../../../../types/storage';
+import { EnvService } from '@/env.service';
 import { StorageService } from '@/storage.service';
 import { FileService, TFileList } from '@/file.service';
 import { FileSizePipe } from '@/filesize.pipe';
@@ -66,12 +67,15 @@ export class CPlayer implements OnInit, OnDestroy, AfterViewInit {
 
   @Input() file!: IFileListItem
 
+  baseURL: Signal<string> = signal<string>(this.envService.get('endpoint.file'));
+
   f: WritableSignal<IFileListItem> = signal<IFileListItem>(this.file);
   loaded: WritableSignal<boolean> = signal<boolean>(false);
 
   destroy$: Subscription = new Subscription();
 
   constructor(
+    private envService: EnvService,
     private storageService: StorageService,
     private fileService: FileService,
     private cdRef: ChangeDetectorRef,
@@ -148,7 +152,7 @@ export class CPlayer implements OnInit, OnDestroy, AfterViewInit {
     //   switchMap(() => { }),
     // ).subscribe()
 
-    const fileUrl = `http://192.168.56.55:4150/${this.f().nodeId}/${this.f().fileKey}.${dubs[0].lang_code}${dubs[0].stream_index}.mp4`
+    const fileUrl = `${this.baseURL()}${this.f().nodeId}/${this.f().fileKey}.${dubs[0].lang_code}${dubs[0].stream_index}.mp4`
     // this.fileService.fetchFile(fileUrl, 0, 1024 - 1).subscribe()
     const response = await fetch(fileUrl);
     const arrayBuffer = await response.arrayBuffer();

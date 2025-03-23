@@ -1,0 +1,5 @@
+namespace: redis
+resources:
+- namespace.yml
+- service.yml
+- stateful.yml

@@ -27,16 +27,15 @@ type SQLiteConnectionConfig struct {
 
 // ConfigFile comment
 type ConfigFile struct {
-	Debug        bool                   `json:"debug"`
-	Port         string                 `json:"port"`
-	HostName     string                 `json:"hostName"`
-	StreamApiURL string                 `json:"streamApiUrl"`
-	SQLite       SQLiteConnectionConfig `json:"sqlite"`
-	Redis        RedisConnectionConfig  `json:"redis"`
-	BinPath      string                 `json:"binPath"`
-	TmpPath      string                 `json:"tmpPath"`
-	RootPath     string                 `json:"rootPath"`
-	DataPath     string                 `json:"dataPath"`
+	Debug    bool                   `json:"debug"`
+	Port     string                 `json:"port"`
+	HostName string                 `json:"hostName"`
+	SQLite   SQLiteConnectionConfig `json:"sqlite"`
+	Redis    RedisConnectionConfig  `json:"redis"`
+	BinPath  string                 `json:"binPath"`
+	TmpPath  string                 `json:"tmpPath"`
+	RootPath string                 `json:"rootPath"`
+	DataPath string                 `json:"dataPath"`
 }
 
 // Config comment

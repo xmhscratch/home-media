@@ -1,0 +1,9 @@
+namespace: hms
+resources:
+- namespace.yml
+- service.yml
+- ingress.yml
+- pv.yml
+- pvc.yml
+- job.yml
+- deployment.yml

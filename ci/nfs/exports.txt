@@ -1,1 +1,1 @@
-/home/      *(rw,fsid=0,nohide,insecure,no_subtree_check,no_root_squash,sync,anonuid=0,anongid=0)
+/home/      *(rw,no_subtree_check,no_root_squash,fsid=0,anonuid=0,anongid=0)

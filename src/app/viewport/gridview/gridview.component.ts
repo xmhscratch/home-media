@@ -17,7 +17,7 @@ import { toObservable } from '@angular/core/rxjs-interop';
 // import { $dt } from '@primeng/themes';
 
 import { orderBy as ldOrderBy } from 'lodash-es';
-import { IINode } from '@/storage.d'
+import { IINode } from '../../../types/storage'
 import { StorageService } from '@/storage.service'
 import { CItem } from './item/item.component';
 import { Subscription } from 'rxjs';

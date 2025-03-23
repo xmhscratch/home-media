@@ -1,0 +1,7 @@
+namespace: logstash
+resources:
+- namespace.yml
+- service.yml
+- pv.yml
+- pvc.yml
+- stateful.yml

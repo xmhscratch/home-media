@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-channel
+spec:
+  storageClassName: storage-repo
+  accessModes:
+  - ReadOnlyMany
+  selector:
+    matchLabels:
+      dirname: channel
+  resources:
+    requests:
+      storage: 10Gi

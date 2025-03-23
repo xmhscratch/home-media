@@ -1,9 +1,9 @@
 import { writeFile } from 'node:fs/promises'
 import { Injectable, Scope, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config'
+import { ConfigService } from '@nestjs/config';
 
-import { LRUCache } from 'lru-cache'
-import { has, set, unset, zipObject } from 'lodash-es'
+import { LRUCache } from 'lru-cache';
+import { has, set, unset, zipObject } from 'lodash-es';
 
 import { IDatabase } from './tree/tree.d';
 

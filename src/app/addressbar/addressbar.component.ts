@@ -14,7 +14,7 @@ import { CardModule } from 'primeng/card';
 import { tap, map } from 'rxjs/operators';
 
 import { CItem } from './item/item.component';
-import { IINode } from '@/storage.d';
+import { IINode } from '../../types/storage';
 import { StorageService } from '@/storage.service';
 
 @Component({

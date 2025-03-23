@@ -12,7 +12,7 @@ import { zip, combineLatest, switchMap, Subscription } from 'rxjs';
 import { map, isEmpty } from 'rxjs/operators'
 import { toObservable } from '@angular/core/rxjs-interop';
 
-import { IINode } from '@/storage.d'
+import { IINode } from '../../types/storage'
 import { StorageService } from '@/storage.service'
 
 import { CGridview } from './gridview/gridview.component';

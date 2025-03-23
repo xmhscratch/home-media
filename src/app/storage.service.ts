@@ -15,12 +15,9 @@ import {
   FileMetaInfo,
   SessionInfo,
   IFileListItem,
-} from './storage.d'
+} from '../types/storage'
 
-import {
-  ENDPOINT_STORAGE_API,
-  ENDPOINT_STREAMING_API,
-} from './environment'
+import { EnvService } from './env.service'
 
 @Injectable({
   providedIn: 'root'
@@ -55,7 +52,10 @@ export class StorageService {
   onchange = new Subject<any>();
   switchNode$: Subscription = new Subscription();
 
-  constructor(private http: HttpClient) { }
+  constructor(
+    private env: EnvService,
+    private http: HttpClient,
+  ) { }
 
   getRoots() {
     return this.roots$
@@ -133,7 +133,7 @@ export class StorageService {
   fetchRoots(): Observable<ITreeRootNode[]> {
     const headers = new HttpHeaders({
       'enctype': 'multipart/form-data',
-      'endpoint': ENDPOINT_STORAGE_API,
+      'endpoint': this.env.get('endpoint.backend'),
     });
 
     return this.http
@@ -160,7 +160,7 @@ export class StorageService {
 
     const headers = new HttpHeaders({
       'enctype': 'multipart/form-data',
-      'endpoint': ENDPOINT_STREAMING_API,
+      'endpoint': this.env.get('endpoint.api'),
     });
 
     return this.http
@@ -190,7 +190,7 @@ export class StorageService {
 
     const headers = new HttpHeaders({
       'enctype': 'multipart/form-data',
-      'endpoint': ENDPOINT_STREAMING_API,
+      'endpoint': this.env.get('endpoint.api'),
     });
 
     return this.http

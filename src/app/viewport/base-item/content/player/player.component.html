@@ -44,9 +44,7 @@
           crossorigin="anonymous"
         >
           <source
-            src="http://192.168.56.55:4150/{{ f().nodeId }}/{{
-              f().fileKey
-            }}.mp4"
+            src="{{ baseURL() }}/{{ f().nodeId }}/{{ f().fileKey }}.mp4"
             type="video/mp4"
           />
 
@@ -54,9 +52,7 @@
             <track
               class="hidden"
               kind="captions"
-              src="http://192.168.56.55:4150/{{ f().nodeId }}/{{
-                f().fileKey
-              }}.{{ sub.lang_code }}{{ sub.stream_index }}.vtt"
+              src="{{ baseURL() }}/{{ f().nodeId }}/{{ f().fileKey }}.{{ sub.lang_code }}{{ sub.stream_index }}.vtt"
               srclang="{{ sub.lang_code }}"
               label="{{ sub.lang_title }}"
               [default]="sub.lang_code == 'eng'"

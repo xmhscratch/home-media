@@ -21,7 +21,7 @@ import { Subscription } from 'rxjs';
 // import { map as ldMap } from 'lodash-es';
 
 import { FileSizePipe } from '@/filesize.pipe';
-import { IFileListItem } from '@/storage.d';
+import { IFileListItem } from '../../../../types/storage';
 import { StorageService } from '@/storage.service';
 import { FileService, TFileList } from '@/file.service';
 import { CPlayer } from './player/player.component';

@@ -1,0 +1,47 @@
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: redis
+spec:
+  serviceName: redis
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: bitnami/redis:7.4
+          ports:
+            - containerPort: 6379
+              name: master
+          env:
+            - name: REDIS_REPLICATION_MODE
+              value: "master"
+            - name: REDIS_PASSWORD
+              value: ""
+            - name: ALLOW_EMPTY_PASSWORD
+              value: "true"
+            - name: REDIS_TLS_ENABLED
+              value: "no"
+            - name: REDIS_TLS_PORT_NUMBER
+              value: "6379"
+            - name: REDIS_TLS_AUTH_CLIENTS
+              value: "no"
+          volumeMounts:
+            - name: pvc-data
+              mountPath: /bitnami/redis/
+  volumeClaimTemplates:
+    - metadata:
+        name: pvc-data
+      spec:
+        storageClassName: nfs-client
+        accessModes:
+          - ReadWriteMany
+        resources:
+          requests:
+            storage: 10Gi

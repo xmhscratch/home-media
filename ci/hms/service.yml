@@ -1,0 +1,33 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: backend
+  namespace: hms
+  labels:
+    app: backend
+spec:
+  type: NodePort
+  ports:
+  - name: backend
+    protocol: TCP
+    port: 4100
+    targetPort: 4100
+  selector:
+    app: backend
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: frontend
+  namespace: hms
+  labels:
+    app: frontend
+spec:
+  type: NodePort
+  ports:
+  - name: frontend
+    protocol: TCP
+    port: 4200
+    targetPort: 4200
+  selector:
+    app: frontend

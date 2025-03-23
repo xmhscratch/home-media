@@ -9,14 +9,9 @@ import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 import { LRUCache } from 'lru-cache';
 import { keyBy as ldKeyBy, get as ldGet } from 'lodash-es';
 
-import { ENDPOINT_FILE_WS } from '@/environment';
-import { IFileListItem, ISocketMessage } from './storage.d';
+import { EnvService } from '@/env.service';
+import { IFileListItem, ISocketMessage } from '../types/storage';
 import { StorageService } from './storage.service';
-
-import {
-  // ENDPOINT_STORAGE_API,
-  ENDPOINT_STREAMING_API,
-} from './environment'
 
 export type TFileList = { [fileKey: string]: IFileListItem }
 
@@ -56,6 +51,7 @@ export class FileService {
   changed$: Subject<IFileListItem> = new Subject<IFileListItem>()
 
   constructor(
+    private env: EnvService,
     private storageService: StorageService,
     private http: HttpClient,
   ) {
@@ -157,12 +153,12 @@ export class FileService {
   }
 
   newSocket(f: IFileListItem) {
-    return webSocket<ISocketMessage>(`${ENDPOINT_FILE_WS}/ws/${f.sessionId}/${f.fileKey}`);
+    return webSocket<ISocketMessage>(`${this.env.get('endpoint.file').replace('http://', 'ws://')}/ws/${f.sessionId}/${f.fileKey}`);
   }
 
   fetchFile(srcUrl: string, byteStart?: number, byteEnd?: number) {
     const headers = new HttpHeaders({
-      'endpoint': ENDPOINT_STREAMING_API,
+      'endpoint': this.env.get('endpoint.file'),
       'range': `bytes=${byteStart || ''}-${byteEnd || ''}`,
       'responseType': 'arraybuffer',
     });

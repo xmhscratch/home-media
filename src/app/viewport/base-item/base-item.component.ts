@@ -6,7 +6,7 @@ import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { DialogService, DynamicDialog, DynamicDialogRef } from 'primeng/dynamicdialog';
 
-import { IINode } from '@/storage.d'
+import { IINode } from '../../../types/storage'
 import { StorageService } from '@/storage.service'
 import { CContent } from './content/content.component';
 import { CFooter } from './footer/footer.component';

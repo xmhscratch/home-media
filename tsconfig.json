@@ -28,7 +28,7 @@
       "ES2022",
       "DOM"
     ],
-    "typeRoots": ["./node_modules/@types", "./types"],
+    "typeRoots": ["./node_modules/@types", "./src/types"],
 		"types": ["node", "lodash-es", "sql.js", "jest"],
     "paths": {
       "@/*": ["./src/app/*"]
