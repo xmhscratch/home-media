@@ -4,10 +4,14 @@ import { Router } from '@angular/router';
 
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
-import { DialogService, DynamicDialog, DynamicDialogRef } from 'primeng/dynamicdialog';
+import {
+  DialogService,
+  DynamicDialog,
+  DynamicDialogRef,
+} from 'primeng/dynamicdialog';
 
-import { IINode } from '../../../types/storage'
-import { StorageService } from '@/storage.service'
+import { IINode } from '../../../types/storage';
+import { StorageService } from '@/storage.service';
 import { CContent } from './content/content.component';
 import { CFooter } from './footer/footer.component';
 import { CHeader } from './header/header.component';
@@ -27,8 +31,9 @@ export class CBaseItem implements OnInit, OnDestroy {
   @Input() item: IINode = <IINode>{};
 
   cardStyles = {
-    shadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);'
-  }
+    shadow:
+      '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);',
+  };
 
   chipStyles = {
     borderRadius: '50px',
@@ -37,7 +42,7 @@ export class CBaseItem implements OnInit, OnDestroy {
     iconSize: `0.5rem`,
     iconFontSize: '0.5rem',
     iconColor: '{rose.500}',
-  }
+  };
 
   ref: DynamicDialogRef | undefined;
 
@@ -48,20 +53,22 @@ export class CBaseItem implements OnInit, OnDestroy {
 
   destroy$: Subscription = new Subscription();
 
-  constructor(
-    protected injectors: Injector,
-  ) {
+  constructor(protected injectors: Injector) {
     this.router = this.injectors.get(Router);
     this.storage = this.injectors.get(StorageService);
     this.dialogService = this.injectors.get(DialogService);
     this.messageService = this.injectors.get(MessageService);
   }
 
-  ngOnInit(): void { }
+  ngOnInit(): void {}
 
   ngOnDestroy(): void {
-    if (this.destroy$) { this.destroy$.unsubscribe() }
-    if (this.ref) { this.ref.close(); }
+    if (this.destroy$) {
+      this.destroy$.unsubscribe();
+    }
+    if (this.ref) {
+      this.ref.close();
+    }
   }
 
   handleEventClick($event: Event) {
@@ -71,13 +78,10 @@ export class CBaseItem implements OnInit, OnDestroy {
 
     if (isFolder) {
       this.router.navigate(['storage', rootId, nodeId]);
-    }
-    else {
+    } else {
       this.destroy$.add(
-        this.storage
-          .switchNode(rootId, nodeId)
-          .subscribe(() => this.show())
-      )
+        this.storage.switchNode(rootId, nodeId).subscribe(() => this.show()),
+      );
     }
   }
 
@@ -88,7 +92,7 @@ export class CBaseItem implements OnInit, OnDestroy {
       contentStyle: { overflow: 'hidden' },
       breakpoints: {
         '960px': '75vw',
-        '640px': '90vw'
+        '640px': '90vw',
       },
       // data: this.item,
       templates: {
@@ -99,11 +103,9 @@ export class CBaseItem implements OnInit, OnDestroy {
 
     this.destroy$.add(
       this.ref.onClose.subscribe((data: any) => {
-        this.ref = undefined
-      })
-    )
-    this.destroy$.add(
-      this.ref.onMaximize.subscribe((value) => { })
-    )
+        this.ref = undefined;
+      }),
+    );
+    this.destroy$.add(this.ref.onMaximize.subscribe((value) => {}));
   }
 }

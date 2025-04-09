@@ -9,11 +9,11 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 
 import { zip, combineLatest, switchMap, Subscription } from 'rxjs';
-import { map, isEmpty } from 'rxjs/operators'
+import { map, isEmpty } from 'rxjs/operators';
 import { toObservable } from '@angular/core/rxjs-interop';
 
-import { IINode } from '../../types/storage'
-import { StorageService } from '@/storage.service'
+import { IINode } from '../../types/storage';
+import { StorageService } from '@/storage.service';
 
 import { CGridview } from './gridview/gridview.component';
 
@@ -24,9 +24,7 @@ import { CGridview } from './gridview/gridview.component';
   templateUrl: './viewport.component.html',
   styleUrl: './viewport.component.scss',
 })
-
 export class CViewport implements OnInit, OnDestroy {
-
   private readonly route = inject(ActivatedRoute);
 
   rootId: WritableSignal<string> = signal('');
@@ -48,26 +46,28 @@ export class CViewport implements OnInit, OnDestroy {
   constructor(
     private storage: StorageService,
     private router: Router,
-  ) { }
+  ) {}
 
   ngOnInit() {
     this.destroy$.add(
       this.route.paramMap
         .pipe(
           map((params) => {
-            const rootId = (params.get('rootId') || '');
-            const nodeId = (params.get('nodeId') || '');
-            return { rootId, nodeId }
+            const rootId = params.get('rootId') || '';
+            const nodeId = params.get('nodeId') || '';
+            return { rootId, nodeId };
           }),
         )
         .subscribe(({ rootId, nodeId }) => {
           this.rootId.set(rootId);
           this.nodeId.set(nodeId);
-        })
-    )
+        }),
+    );
   }
 
   ngOnDestroy() {
-    if (this.destroy$) { this.destroy$.unsubscribe() }
+    if (this.destroy$) {
+      this.destroy$.unsubscribe();
+    }
   }
 }

@@ -52,7 +52,9 @@
             <track
               class="hidden"
               kind="captions"
-              src="{{ baseURL() }}/{{ f().nodeId }}/{{ f().fileKey }}.{{ sub.lang_code }}{{ sub.stream_index }}.vtt"
+              src="{{ baseURL() }}/{{ f().nodeId }}/{{ f().fileKey }}.{{
+                sub.lang_code
+              }}{{ sub.stream_index }}.vtt"
               srclang="{{ sub.lang_code }}"
               label="{{ sub.lang_title }}"
               [default]="sub.lang_code == 'eng'"

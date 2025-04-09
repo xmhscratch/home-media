@@ -8,9 +8,8 @@ describe('CFooter', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CFooter]
-    })
-    .compileComponents();
+      imports: [CFooter],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(CFooter);
     component = fixture.componentInstance;

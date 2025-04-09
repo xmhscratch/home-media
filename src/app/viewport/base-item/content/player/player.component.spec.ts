@@ -8,9 +8,8 @@ describe('CPlayer', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CPlayer]
-    })
-    .compileComponents();
+      imports: [CPlayer],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(CPlayer);
     component = fixture.componentInstance;

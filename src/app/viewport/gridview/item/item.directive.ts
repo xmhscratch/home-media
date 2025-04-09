@@ -7,9 +7,7 @@ import { CItem } from './item.component';
   standalone: true,
 })
 export class ItemDirective {
-
   constructor() {
     // console.log(234234)
   }
-
 }

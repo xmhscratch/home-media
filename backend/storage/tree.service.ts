@@ -32,7 +32,8 @@ export class TreeService {
 
     async execute(rootId: string, fnName: string, fnArgs: any[]) {
         return this.customEx(rootId, async (tree: Tree, db: IDatabase) => {
-            return tree[fnName](...fnArgs)
+            // @ts-ignore
+            return tree[fnName]<Function>(...fnArgs)
         })
     }
 

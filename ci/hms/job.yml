@@ -5,9 +5,10 @@ metadata:
   labels:
     app: backend
 spec:
-  ttlSecondsAfterFinished: 60
+  # ttlSecondsAfterFinished: 60
   template:
     spec:
+      restartPolicy: Never
       containers:
         - name: build-backend
           image: localhost:5000/hms:latest
@@ -16,17 +17,14 @@ spec:
           args:
             - |
               cd /export &&
-              npm install --verbose &&
-              npm run backend:build &&
-              go get -d -v ./... &&
-              go install -v ./... &&
-              go mod vendor &&
-              go build -ldflags="-s -w" -mod=vendor -o ./dist/api ./cmd/api/main.go &&
-              go build -ldflags="-s -w" -mod=vendor -o ./dist/downloader ./cmd/downloader/main.go &&
-              go build -ldflags="-s -w" -mod=vendor -o ./dist/encoder ./cmd/encoder/main.go &&
-              go build -ldflags="-s -w" -mod=vendor -o ./dist/file ./cmd/file/main.go;
+              if [ ! -d /export/dist/backend/ ]; then { [[ ! -d /export/node_modules/ ]] && npm install --verbose; npm run backend:build; }; fi &&
+              if [ ! -f /export/dist/api ] || [ ! -f /export/dist/downloader ] || [ ! -f /export/dist/encoder ] || [ ! -f /export/dist/file ]; then { go get -d -v ./... && go install -v ./... && go mod vendor; }; fi &&
+              [[ ! -f /export/dist/api ]] && go build -ldflags="-s -w" -mod=vendor -o /export/dist/api /export/cmd/api/main.go &&
+              [[ ! -f /export/dist/downloader ]] && go build -ldflags="-s -w" -mod=vendor -o /export/dist/downloader /export/cmd/downloader/main.go &&
+              [[ ! -f /export/dist/encoder ]] && go build -ldflags="-s -w" -mod=vendor -o /export/dist/encoder /export/cmd/encoder/main.go &&
+              [[ ! -f /export/dist/file ]] && go build -ldflags="-s -w" -mod=vendor -o /export/dist/file /export/cmd/file/main.go;
           volumeMounts:
-            - name: pvc-dist-build
+            - name: pvc-dist-backend-build
               mountPath: /export/dist/
             - name: pvc-backend-build
               mountPath: /export/backend/
@@ -35,9 +33,9 @@ spec:
             - name: pvc-cmd-build
               mountPath: /export/cmd/
       volumes:
-        - name: pvc-dist-build
+        - name: pvc-dist-backend-build
           persistentVolumeClaim:
-            claimName: pvc-dist-build
+            claimName: pvc-dist-backend-build
         - name: pvc-backend-build
           persistentVolumeClaim:
             claimName: pvc-backend-build
@@ -47,7 +45,6 @@ spec:
         - name: pvc-cmd-build
           persistentVolumeClaim:
             claimName: pvc-cmd-build
-      restartPolicy: Never
 ---
 apiVersion: batch/v1
 kind: Job
@@ -56,22 +53,10 @@ metadata:
   labels:
     app: frontend
 spec:
-  ttlSecondsAfterFinished: 60
+  # ttlSecondsAfterFinished: 60
   template:
     spec:
-      initContainers:
-        - name: wait-for-backend
-          image: bitnami/kubectl:latest
-          command:
-            - "/bin/sh"
-            - "-c"
-          # curl --head -s --max-time 21600 -o /dev/null -w "%{http_code}" "http://backend.hms.svc.cluster.local:4100/ping"
-          args:
-            - |
-              while [[ $(kubectl -n hms get pods --selector=app=backend -o jsonpath='{.items[*].status.containerStatuses[*].started}') -ne 1 ]]; do
-                echo "Waiting backend to response..."
-                sleep 5
-              done
+      restartPolicy: Never
       containers:
         - name: build-frontend
           image: localhost:5000/hms:latest
@@ -79,19 +64,19 @@ spec:
           command: ["sh", "-c"]
           args:
             - |
+              while [[ $(curl --head -s --max-time 10 -o /dev/null -w "%{http_code}" "http://backend.hms:4100/ping") -ne 200 ]]; do { echo "Waiting backend to response..."; sleep 5; } done &&
               cd /export &&
-              npm install --verbose &&
-              npm run client:build
+              echo "building frontend ..." &&
+              if [ ! -d /export/dist/client/ ]; then { [[ ! -d /export/node_modules/ ]] && npm install --verbose; npm run client:build; }; fi;
           volumeMounts:
-            - name: pvc-dist-build
+            - name: pvc-dist-frontend-build
               mountPath: /export/dist/
             - name: pvc-src-build
               mountPath: /export/src/
       volumes:
-        - name: pvc-dist-build
+        - name: pvc-dist-frontend-build
           persistentVolumeClaim:
-            claimName: pvc-dist-build
+            claimName: pvc-dist-frontend-build
         - name: pvc-src-build
           persistentVolumeClaim:
             claimName: pvc-src-build
-      restartPolicy: Never

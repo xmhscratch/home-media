@@ -36,7 +36,7 @@ export default (context: ITree<ITreeArgs>): ITreeFuncContext => {
             )
             LIMIT 1;
         `)
-        let results = stmt.get(<BindParams>{
+        let results: { count?: number } = stmt.get(<BindParams>{
             nodeId: <SqlValue>nodeId,
             rootId: <SqlValue>rootId,
         })

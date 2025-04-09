@@ -1,16 +1,19 @@
 package main
 
 import (
-	"home-media/sys"
-	"home-media/sys/filesrv"
-	"home-media/sys/filesrv/wsevent"
+	"net"
 	"time"
 
 	"github.com/gofiber/contrib/socketio"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+
 	// "github.com/gofiber/fiber/v2/middleware/filesystem"
+
+	"home-media/sys"
+	"home-media/sys/filesrv"
+	"home-media/sys/filesrv/wsevent"
 )
 
 func main() {
@@ -53,7 +56,11 @@ func main() {
 		return c.SendString("File not found!")
 	})
 
-	go app.Listen(":4150")
+	_, port, err := net.SplitHostPort(cfg.EndPoint["file"])
+	if err != nil {
+		panic(err)
+	}
+	go app.Listen(net.JoinHostPort("0.0.0.0", port))
 
 	sys.WaitTermination()
 }

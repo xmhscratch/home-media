@@ -26,7 +26,7 @@ export default (context: ITree<ITreeArgs>): ITreeFuncContext => {
             )
             GROUP BY node.id;
         `)
-        let results = stmt.get(<BindParams>{
+        let results: { level?: number } = stmt.get(<BindParams>{
             nodeId: <SqlValue>nodeId,
         })
         // stmt.free()

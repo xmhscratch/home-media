@@ -1,7 +1,7 @@
 import { Injectable, Scope, OnModuleInit, OnModuleDestroy, ConsoleLogger } from '@nestjs/common';
 
 import { map, pick, join } from 'lodash-es';
-import * as Parser from 'rss-parser';
+import Parser from 'rss-parser';
 
 import { Tree } from '../storage/tree/tree';
 import { TreeMetaNode, IDatabase, IStatement, BindParams, SqlValue } from '../storage/tree/tree.d';
@@ -175,7 +175,7 @@ export class NyaaService implements OnModuleInit, OnModuleDestroy {
         })
     }
 
-    genId(infoHash): string {
+    genId(infoHash: string): string {
         let txt = ""
         const primes = [5, 7, 11, 13, 17, 19, 23]
         for (let i = 0; i < infoHash.length; i++) {

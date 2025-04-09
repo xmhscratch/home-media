@@ -8,9 +8,8 @@ describe('CToolbar', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CToolbar]
-    })
-    .compileComponents();
+      imports: [CToolbar],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(CToolbar);
     component = fixture.componentInstance;

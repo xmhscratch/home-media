@@ -15,23 +15,27 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [
     // Menubar,
-    ButtonModule, BadgeModule, AvatarModule, InputTextModule, CommonModule,
+    ButtonModule,
+    BadgeModule,
+    AvatarModule,
+    InputTextModule,
+    CommonModule,
   ],
   templateUrl: './header.component.html',
-  styleUrl: './header.component.scss'
+  styleUrl: './header.component.scss',
 })
 export class CHeader implements OnInit {
   items: MenuItem[] | undefined;
 
-  constructor(public ref: DynamicDialogRef) { }
+  constructor(public ref: DynamicDialogRef) {}
 
   ngOnInit() {
     this.items = [
       {
         label: 'Home',
-        icon: 'pi pi-home'
+        icon: 'pi pi-home',
       },
-    ]
+    ];
   }
 
   closeDialog(data: any) {

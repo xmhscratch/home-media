@@ -2,7 +2,10 @@ import { NestFactory } from '@nestjs/core';
 
 import { APP_BASE_HREF } from '@angular/common';
 import { CommonEngine } from '@angular/ssr';
+
 import express from 'express';
+import { parseInt as ldParseInt } from 'lodash-es';
+
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 
@@ -54,12 +57,12 @@ export async function app(): Promise<express.Express> {
 }
 
 async function run(): Promise<void> {
-    const port = process.env['PORT'] || '4000'
+    const port = ldParseInt(process.env['PORT'] || '4000')
 
     // Start up the Node server
     const server = await app();
-    server.listen(port, () => {
-        console.log(`Node Express server listening on http://localhost:${port}`);
+    server.listen(port, '0.0.0.0', () => {
+        console.log(`Node Express server listening on http://0.0.0.0:${port}`);
     });
 }
 

@@ -1,7 +1,7 @@
 export interface ITreeFuncContext extends Function { }
-export type ITreeFuncResult = any
-export type BindParams = any
-export type SqlValue = any
+export type ITreeFuncResult = unknown
+export type BindParams = unknown
+export type SqlValue = unknown
 
 export const TreeFuncArgs: Array<T>
 export type TreePlainNode = {
@@ -12,6 +12,7 @@ export type TreePlainNode = {
     left: number,
     right: number,
     level: number,
+    children?: Array<TreePlainNode>,
 }
 
 export type TreeMetaNode = {
@@ -31,11 +32,14 @@ export type ITreeArgs = {
 }
 
 export interface ITree<ITreeArgs> {
-    [x: string]: any
+    [x: unknown]: unknown
+
+    db: IDatabase | undefined
+    rootId: string
 
     _memoizer: object
 
-    destroy(): Promise<any>
+    destroy(): Promise<unknown>
 
     getNewID(): string
 
@@ -58,7 +62,7 @@ export interface ITree<ITreeArgs> {
     toAdjacencyList(...TreeFuncArgs): ITreeFuncResult
     toLinearList(...TreeFuncArgs): ITreeFuncResult
 
-    memoize(fnName: string, origFn: Function, fnArgs: any): ITreeFuncResult
+    memoize(fnName: string, origFn: Function, fnArgs: unknown): ITreeFuncResult
 }
 
 export interface IMemoizer extends object {

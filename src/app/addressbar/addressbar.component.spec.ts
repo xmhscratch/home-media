@@ -8,9 +8,8 @@ describe('CAddressbar', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CAddressbar]
-    })
-    .compileComponents();
+      imports: [CAddressbar],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(CAddressbar);
     component = fixture.componentInstance;

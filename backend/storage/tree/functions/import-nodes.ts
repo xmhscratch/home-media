@@ -31,19 +31,26 @@ export default (context: ITree<ITreeArgs>): ITreeFuncContext => {
                     $nodeId, $rootId, $parentId, $left, $right, $level
                 )`)
 
-                const params: BindParams = {
-                    nodeId:    <SqlValue>(item.id || item._id),
-                    rootId:    <SqlValue>item.root,
-                    parentId:  <SqlValue>item.parent,
-                    left:      <SqlValue>item.left,
-                    right:     <SqlValue>item.right,
-                    level:     <SqlValue>(item.level || 0),
+                const params: BindParams & {
+                    nodeId: SqlValue,
+                    rootId: SqlValue,
+                    parentId: SqlValue,
+                    left: SqlValue,
+                    right: SqlValue,
+                    level: SqlValue,
+                } = {
+                    nodeId: <SqlValue>(item.id || item._id),
+                    rootId: <SqlValue>item.root,
+                    parentId: <SqlValue>item.parent,
+                    left: <SqlValue>item.left,
+                    right: <SqlValue>item.right,
+                    level: <SqlValue>(item.level || 0),
                 }
                 stmt.bind(params)
                 stmt.run()
 
-                item.id = params.nodeId
-                item.root = params.rootId
+                item.id = <string>params.nodeId
+                item.root = <string>params.rootId
 
                 const meta = pick(
                     omit(
@@ -55,8 +62,8 @@ export default (context: ITree<ITreeArgs>): ITreeFuncContext => {
                 return resolve(meta)
             }))
         )
-        .then((results) => Promise.all(
-            map(results, (metaItem: any) => insertNodeMeta(context)(metaItem))
-        ))
+            .then((results) => Promise.all(
+                map(results, (metaItem: object) => insertNodeMeta(context)(metaItem))
+            ))
     }
 }

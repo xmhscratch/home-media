@@ -19,11 +19,7 @@ spec:
             - "/bin/sh"
             - "-c"
           args:
-            - |
-              while [[ $(kubectl -n hms get job job-build-backend -o jsonpath='{.status.succeeded}') -ne 1 ]]; do
-                echo "Waiting backend build to complete..."
-                sleep 5
-              done
+            - while [[ $(kubectl -n hms get job job-build-backend -o jsonpath='{.status.succeeded}') -ne 1 ]]; do { echo "Waiting backend build to complete..."; sleep 5; }; done
       containers:
         - name: backend
           image: localhost:5000/hms:latest
@@ -48,69 +44,249 @@ spec:
             - name: pvc-dist-backend
               mountPath: /export/dist/
               readOnly: true
-          lifecycle:
-            postStart:
-              exec:
-                command:
-                  - "/bin/sh"
-                  - "-c"
-                  - "echo 'Container started'"
+            - name: pvc-db-backend
+              mountPath: /export/db/
       volumes:
         - name: pvc-dist-backend
           persistentVolumeClaim:
             claimName: pvc-dist-backend
-# ---
-# kind: Deployment
-# apiVersion: apps/v1
-# metadata:
-#   name: frontend
-# spec:
-#   replicas: 1
-#   selector:
-#     matchLabels:
-#       app: frontend
-#   template:
-#     metadata:
-#       labels:
-#         app: frontend
-#     spec:
-#       initContainers:
-#         - name: wait-for-job
-#           image: bitnami/kubectl:latest
-#           command:
-#             - "/bin/sh"
-#             - "-c"
-#           args:
-#             - |
-#               while [[ $(kubectl -n hms get job job-build-frontend -o jsonpath='{.status.succeeded}') -ne 1 ]]; do
-#                 echo "Waiting frontend build to complete..."
-#                 sleep 5
-#               done
-#       containers:
-#         - name: frontend
-#           image: localhost:5000/hms:latest
-#           imagePullPolicy: Never
-#           ports:
-#             - containerPort: 4200
-#               name: frontend
-#           env:
-#             - name: APP_NAME
-#               value: "hms_frontend"
-#             - name: NODE_ENV
-#               value: "production"
-#           command:
-#             - "/bin/sh"
-#             - "-c"
-#           args:
-#             - |
-#               npm install -g @angular/cli @nestjs/cli &&
-#               npm install --omit=dev &&
-#               npm run client:serve:ssr:hms
-#           volumeMounts:
-#             - name: pvc-dist-frontend
-#               mountPath: /export/dist/
-#               readOnly: true
-#       volumes:
-#         - name: pvc-dist-frontend
-#           persistentVolumeClaim:
-#             claimName: pvc-dist-frontend
+        - name: pvc-db-backend
+          persistentVolumeClaim:
+            claimName: pvc-db-backend
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      initContainers:
+        - name: wait-for-job
+          image: bitnami/kubectl:latest
+          command:
+            - "/bin/sh"
+            - "-c"
+          args:
+            - while [[ $(kubectl -n hms get job job-build-frontend -o jsonpath='{.status.succeeded}') -ne 1 ]]; do { echo "Waiting build to complete..."; sleep 5; }; done
+      containers:
+        - name: frontend
+          image: localhost:5000/hms:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 4000
+              name: frontend
+          env:
+            - name: APP_NAME
+              value: "hms_frontend"
+            - name: NODE_ENV
+              value: "production"
+          command:
+            - "/bin/sh"
+            - "-c"
+          args:
+            - |
+              npm install -g @angular/cli @nestjs/cli &&
+              npm install --omit=dev &&
+              npm run client:serve:ssr
+          volumeMounts:
+            - name: pvc-dist-backend
+              mountPath: /export/dist/
+              readOnly: true
+      volumes:
+        - name: pvc-dist-backend
+          persistentVolumeClaim:
+            claimName: pvc-dist-backend
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+        - name: api
+          image: localhost:5000/hms:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 4110
+              name: api
+          env:
+            - name: APP_NAME
+              value: "hms_api"
+            - name: GO_ENV
+              value: "production"
+          command:
+            - "/bin/sh"
+            - "-c"
+          args:
+            - |
+              while [[ ! -f /export/dist/api ]]; do { echo "Waiting build to complete..."; sleep 5; } done &&
+              cd /export/dist/ &&
+              ./api;
+          volumeMounts:
+            - name: pvc-dist-backend
+              mountPath: /export/dist/
+              readOnly: true
+            - name: pvc-db-backend
+              mountPath: /export/db/
+      volumes:
+        - name: pvc-dist-backend
+          persistentVolumeClaim:
+            claimName: pvc-dist-backend
+        - name: pvc-db-backend
+          persistentVolumeClaim:
+            claimName: pvc-db-backend
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: file
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: file
+  template:
+    metadata:
+      labels:
+        app: file
+    spec:
+      containers:
+        - name: file
+          image: localhost:5000/hms:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 4150
+              name: file
+          env:
+            - name: APP_NAME
+              value: "hms_file"
+            - name: GO_ENV
+              value: "production"
+          command:
+            - "/bin/sh"
+            - "-c"
+          args:
+            - |
+              while [[ ! -f /export/dist/file ]]; do { echo "Waiting build to complete..."; sleep 5; } done &&
+              cd /export/dist/ &&
+              ./file;
+          volumeMounts:
+            - name: pvc-dist-backend
+              mountPath: /export/dist/
+              readOnly: true
+            - name: pvc-db-backend
+              mountPath: /export/db/
+      volumes:
+        - name: pvc-dist-backend
+          persistentVolumeClaim:
+            claimName: pvc-dist-backend
+        - name: pvc-db-backend
+          persistentVolumeClaim:
+            claimName: pvc-db-backend
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: downloader
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: downloader
+  template:
+    metadata:
+      labels:
+        app: downloader
+    spec:
+      containers:
+        - name: downloader
+          image: localhost:5000/hms:latest
+          imagePullPolicy: Never
+          env:
+            - name: APP_NAME
+              value: "hms_downloader"
+            - name: GO_ENV
+              value: "production"
+          command:
+            - "/bin/sh"
+            - "-c"
+          args:
+            - |
+              while [[ ! -f /export/dist/downloader ]]; do { echo "Waiting build to complete..."; sleep 5; } done &&
+              cd /export/dist/ &&
+              ./downloader;
+          volumeMounts:
+            - name: pvc-dist-backend
+              mountPath: /export/dist/
+              readOnly: true
+            - name: pvc-db-backend
+              mountPath: /export/db/
+      volumes:
+        - name: pvc-dist-backend
+          persistentVolumeClaim:
+            claimName: pvc-dist-backend
+        - name: pvc-db-backend
+          persistentVolumeClaim:
+            claimName: pvc-db-backend
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: encoder
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: encoder
+  template:
+    metadata:
+      labels:
+        app: encoder
+    spec:
+      containers:
+        - name: encoder
+          image: localhost:5000/hms:latest
+          imagePullPolicy: Never
+          env:
+            - name: APP_NAME
+              value: "hms_encoder"
+            - name: GO_ENV
+              value: "production"
+          command:
+            - "/bin/sh"
+            - "-c"
+          args:
+            - |
+              while [[ ! -f /export/dist/encoder ]]; do { echo "Waiting build to complete..."; sleep 5; } done &&
+              cd /export/dist/ &&
+              ./encoder;
+          volumeMounts:
+            - name: pvc-dist-backend
+              mountPath: /export/dist/
+              readOnly: true
+            - name: pvc-db-backend
+              mountPath: /export/db/
+      volumes:
+        - name: pvc-dist-backend
+          persistentVolumeClaim:
+            claimName: pvc-dist-backend
+        - name: pvc-db-backend
+          persistentVolumeClaim:
+            claimName: pvc-db-backend

@@ -1,0 +1,15 @@
+[Unit]
+Description=Minikube Cluster
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/minikube start --force --cpus=max --memory=max
+RemainAfterExit=true
+ExecStop=/usr/local/bin/minikube stop
+StandardOutput=journal
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target

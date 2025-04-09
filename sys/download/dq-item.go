@@ -105,7 +105,7 @@ func (ctx *DQItem) StartDownload() error {
 		stdin.WriteVar("ExecBin", filepath.Join(ctx.cfg.BinPath, "./download.sh"))
 		stdin.WriteVar("DownloadURL", ctx.dm.DownloadURL)
 		stdin.WriteVar("Output", ctx.dm.SavePath)
-		stdin.WriteVar("BaseURL", ctx.cfg.StreamApiURL)
+		stdin.WriteVar("BaseURL", ctx.cfg.EndPoint["api"])
 		stdin.WriteVar("RootDir", filepath.Join(ctx.cfg.DataPath))
 
 		exitCode <- shell.Run()

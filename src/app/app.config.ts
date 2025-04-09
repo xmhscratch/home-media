@@ -2,8 +2,16 @@ import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
 
 import { provideClientHydration } from '@angular/platform-browser';
-import { withEventReplay, withHttpTransferCacheOptions } from '@angular/platform-browser';
-import { HttpRequest, provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
+import {
+  withEventReplay,
+  withHttpTransferCacheOptions,
+} from '@angular/platform-browser';
+import {
+  HttpRequest,
+  provideHttpClient,
+  withFetch,
+  withInterceptors,
+} from '@angular/common/http';
 
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { providePrimeNG } from 'primeng/config';
@@ -19,24 +27,21 @@ export const appConfig: ApplicationConfig = {
     provideClientHydration(
       withEventReplay(),
       withHttpTransferCacheOptions({
-        filter: (req: HttpRequest<unknown>) => true, // to filter
+        filter: (_req: HttpRequest<unknown>) => true, // to filter
         includeHeaders: [], // to include headers
         includePostRequests: true, // to include POST
         includeRequestsWithAuthHeaders: false, // to include with auth
       }),
     ),
-    provideHttpClient(
-      withFetch(),
-      withInterceptors([apiInterceptor]),
-    ),
+    provideHttpClient(withFetch(), withInterceptors([apiInterceptor])),
     provideAnimationsAsync(),
     providePrimeNG({
       theme: {
         preset: DefaultThemePreset,
         options: {
           darkModeSelector: '.app-dark',
-        }
-      }
-    })
-  ]
+        },
+      },
+    }),
+  ],
 };

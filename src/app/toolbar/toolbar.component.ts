@@ -17,25 +17,29 @@ import { CAddressbar } from '../addressbar/addressbar.component';
   standalone: true,
   imports: [
     CAddressbar,
-    FormsModule, SelectButton, SelectButtonModule, Toolbar, ButtonModule, InputTextModule,
+    FormsModule,
+    SelectButton,
+    SelectButtonModule,
+    Toolbar,
+    ButtonModule,
+    InputTextModule,
   ],
   templateUrl: './toolbar.component.html',
-  styleUrl: './toolbar.component.scss'
+  styleUrl: './toolbar.component.scss',
 })
 export class CToolbar implements OnInit {
-
   toolbarStyles = {
     borderColor: 'none',
-  }
+  };
 
   viewModeOpts: any[] = [
-    { label: 'Grid', value: 'grid', },
+    { label: 'Grid', value: 'grid' },
     { label: 'List', value: 'list' },
   ];
 
   themeModeOpts: any[] = [
     { label: 'Dark Mode', icon: 'pi pi-sun', value: 'dark' },
-    { label: 'Light Mode', icon: 'pi pi-moon', value: 'light', },
+    { label: 'Light Mode', icon: 'pi pi-moon', value: 'light' },
   ];
 
   viewMode: string = 'grid';
@@ -53,12 +57,14 @@ export class CToolbar implements OnInit {
   //   });
   // }
   toggleThemeMode() {
-    this.setThemeMode(this.themeMode==='dark'?'light':'dark');
+    this.setThemeMode(this.themeMode === 'dark' ? 'light' : 'dark');
   }
 
   setThemeMode(themeMode?: string) {
-    if (!themeMode) { return }
+    if (!themeMode) {
+      return;
+    }
     const element = document.querySelector('html');
-    element?.classList[themeMode==='dark'?'add':'remove']('app-dark');
+    element?.classList[themeMode === 'dark' ? 'add' : 'remove']('app-dark');
   }
 }

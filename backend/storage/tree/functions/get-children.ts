@@ -15,7 +15,7 @@ import {
 } from '../tree.d'
 
 export default (context: ITree<ITreeArgs>): ITreeFuncContext => {
-    return (nodeId: string, { includeMeta, onlyBranch }): ITreeFuncResult => {
+    return (nodeId: string, opts: { includeMeta: boolean, onlyBranch: boolean }): ITreeFuncResult => {
         const { db } = context
 
         let memo: {
@@ -39,10 +39,10 @@ export default (context: ITree<ITreeArgs>): ITreeFuncContext => {
         stmt = (<IDatabase>db).prepare(`
             SELECT
                 ${join(compact([
-                    'node.*',
-                    includeMeta ? 'meta.title, meta.description, meta.created_date, meta.modified_date, meta.data_source, meta.data_source_type' : '',
-                    'nodeWithDepth.depth AS depth',
-                ]), ',')}
+            'node.*',
+            opts.includeMeta ? 'meta.title, meta.description, meta.created_date, meta.modified_date, meta.data_source, meta.data_source_type' : '',
+            'nodeWithDepth.depth AS depth',
+        ]), ',')}
             FROM
                 nodes AS node
             LEFT JOIN
@@ -82,9 +82,9 @@ export default (context: ITree<ITreeArgs>): ITreeFuncContext => {
             ORDER BY node.left;
         `)
         stmt.bind(<BindParams>{
-            rootId:     <SqlValue>memo.rootId,
-            parentId:   <SqlValue>memo.nodeId,
-            onlyBranch: <SqlValue>onlyBranch,
+            rootId: <SqlValue>memo.rootId,
+            parentId: <SqlValue>memo.nodeId,
+            onlyBranch: <SqlValue>opts.onlyBranch,
         })
 
         const results = stmt.all()

@@ -38,24 +38,15 @@ ENV CGO_LDFLAGS="-L/usr/lib64"
 ENV CGO_CFLAGS="-I/usr/include/ffmpeg"
 ENV PKG_CONFIG_PATH="/usr/lib64/pkgconfig:$PKG_CONFIG_PATH"
 
-# COPY --from=builder \
-#     /go/bin/api \
-#     /go/bin/downloader \
-#     /go/bin/encoder \
-#     /go/bin/file \
-#     /export/cmd/
-# COPY --from=builder \
-#     /export/dist/ \
-#     /export/dist/
 COPY \
     .env \
     .browserslistrc \
     .env \
+    .eslintrc.json \
     angular.json \
     config.development.json \
     config.production.json \
     go.mod \
-    go.sum \
     package.json \
     postcss.config.js \
     tailwind.config.js \

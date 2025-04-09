@@ -8,9 +8,8 @@ describe('CViewport', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CViewport]
-    })
-    .compileComponents();
+      imports: [CViewport],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(CViewport);
     component = fixture.componentInstance;

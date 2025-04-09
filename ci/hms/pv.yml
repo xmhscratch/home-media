@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: pv-dist-build
+  name: pv-dist-backend-build
   labels:
-    dirname: dist-build
+    dirname: dist-backend-build
 spec:
   capacity:
     storage: 10Gi
@@ -18,14 +18,14 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: pv-dist-backend
+  name: pv-dist-frontend-build
   labels:
-    dirname: dist-backend
+    dirname: dist-frontend-build
 spec:
   capacity:
     storage: 10Gi
   accessModes:
-    - ReadOnlyMany
+    - ReadWriteMany
   persistentVolumeReclaimPolicy: Delete
   storageClassName: storage-repo
   nfs:
@@ -99,3 +99,54 @@ spec:
   nfs:
     server: 192.168.56.55
     path: /web/repos/home-media/cmd/
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-dist-backend
+  labels:
+    dirname: dist-backend
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadOnlyMany
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: storage-repo
+  nfs:
+    server: 192.168.56.55
+    path: /data/dist/
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-dist-frontend
+  labels:
+    dirname: dist-frontend
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadOnlyMany
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: storage-repo
+  nfs:
+    server: 192.168.56.55
+    path: /data/dist/
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-db-backend
+  labels:
+    dirname: db-backend
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: storage-repo
+  nfs:
+    server: 192.168.56.55
+    path: /data/db/

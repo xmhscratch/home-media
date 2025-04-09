@@ -1,4 +1,5 @@
-import { writeFile } from 'node:fs/promises'
+import { writeFile } from 'node:fs/promises';
+import path from 'node:path';
 import { Injectable, Scope, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
@@ -12,8 +13,9 @@ export class StorageService implements OnModuleInit, OnModuleDestroy {
 
     RootList: Map<string, string> = new Map()
     Database: any
-    dbpool: LRUCache<string, IDatabase, object>
-    _pendingWrites: Map<string, any> = new Map()
+
+    private dbpool: any
+    private _pendingWrites: Map<string, NodeJS.Timeout> = new Map()
 
     constructor(
         private configService: ConfigService,
@@ -23,7 +25,7 @@ export class StorageService implements OnModuleInit, OnModuleDestroy {
         const Database = require('better-sqlite3');
         this.Database = Database
 
-        this.dbpool = new LRUCache({
+        this.dbpool = new LRUCache<string, IDatabase, object>({
             max: 10,
             maxSize: 50,
             ttl: 1000 * 30, /* 30s */
@@ -91,6 +93,6 @@ export class StorageService implements OnModuleInit, OnModuleDestroy {
 
     getDbPath(rootId: string) {
         const rootPath = this.configService.get<string>('rootPath')
-        return `${rootPath}/db/${rootId}.db`
+        return path.resolve(`${rootPath}`, `./db/${rootId}.db`);
     }
 }

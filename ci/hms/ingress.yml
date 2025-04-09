@@ -3,42 +3,20 @@ kind: Ingress
 metadata:
   name: ingress-hms
   namespace: hms
+  labels:
+    app: backend
   annotations:
     kubernetes.io/ingress.class: nginx
     nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/enable-cors: "true"
     nginx.ingress.kubernetes.io/cors-allow-methods: "OPTIONS,GET,POST,PUT,PATCH,HEAD,DELETE"
     nginx.ingress.kubernetes.io/cors-allow-credentials: "false"
-    # nginx.ingress.kubernetes.io/configuration-snippet: |
-    #   if ($request_method = "OPTIONS") {
-    #       add_header Access-Control-Allow-Origin $http_origin;
-    #       add_header Access-Control-Allow-Credentials "true";
-    #       add_header Access-Control-Allow-Headers "origin,x-requested-with,content-type,accept,$http_access_control_request_headers";
-    #       add_header Access-Control-Allow-Methods "OPTIONS,$http_access_control_request_method";
-
-    #       add_header Access-Control-Max-Age 1728000;
-    #       add_header Content-Type "text/plain charset=UTF-8";
-    #       add_header Content-Length 0;
-
-    #       return 204;
-    #   }
-
-    #   if ($request_method ~ "^(GET|POST|PUT|PATCH|HEAD|DELETE)$") {
-    #       add_header X-Frame-Options SAMEORIGIN;
-    #       add_header X-Content-Type-Options nosniff;
-    #       add_header Strict-Transport-Security "max-age=1296000; includeSubdomains; preload";
-
-    #       add_header Access-Control-Allow-Origin $http_origin;
-    #       add_header Access-Control-Allow-Credentials "true";
-    #       add_header Access-Control-Allow-Headers "*";
-    #       add_header Access-Control-Allow-Methods "GET,POST,PUT,PATCH,HEAD,DELETE";
-    #   }
     ingress.kubernetes.io/ssl-redirect: "false"
     ingress.kubernetes.io/force-ssl-redirect: "false"
 spec:
   ingressClassName: nginx
   rules:
-    - host: backend.hms.loc
+    - host: backend.hms
       http:
         paths:
           - path: /
@@ -48,7 +26,7 @@ spec:
                 name: backend
                 port:
                   number: 4100
-    - host: frontend.hms.loc
+    - host: frontend.hms
       http:
         paths:
           - path: /
@@ -57,4 +35,4 @@ spec:
               service:
                 name: frontend
                 port:
-                  number: 4200
+                  number: 4000

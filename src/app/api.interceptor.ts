@@ -1,14 +1,25 @@
 import { inject } from '@angular/core';
-import { HttpInterceptorFn, HttpRequest, HttpEvent, HttpHandlerFn } from '@angular/common/http';
+import {
+  HttpInterceptorFn,
+  HttpRequest,
+  HttpEvent,
+  HttpHandlerFn,
+} from '@angular/common/http';
 
-import { Subject, Observable, Subscription } from 'rxjs';
+import { Observable } from 'rxjs';
+// import { Subject, Subscription } from 'rxjs';
 
 import { EnvService } from './env.service';
 
-export const apiInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> => {
+export const apiInterceptor: HttpInterceptorFn = (
+  req: HttpRequest<unknown>,
+  next: HttpHandlerFn,
+): Observable<HttpEvent<unknown>> => {
   const env = inject(EnvService);
 
-  const endpoint = req.headers.get('endpoint') || env.get('endpoint.backend');
+  const endpoint: string =
+    'http://' + <string>req.headers.get('endpoint') ||
+    <string>env.get('endpoint.backend');
   const apiReq = req.clone({ url: new URL(req.url, endpoint).toString() });
 
   return next(apiReq);

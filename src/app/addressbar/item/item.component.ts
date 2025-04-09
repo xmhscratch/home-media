@@ -1,4 +1,12 @@
-import { Component, WritableSignal, signal, Signal, OnInit, OnDestroy, computed } from '@angular/core';
+import {
+  Component,
+  WritableSignal,
+  signal,
+  Signal,
+  OnInit,
+  OnDestroy,
+  computed,
+} from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { IINode } from '../../../types/storage';
 // import { StorageService } from '@/storage.service';
@@ -8,12 +16,12 @@ import { IINode } from '../../../types/storage';
   standalone: true,
   imports: [],
   templateUrl: './item.component.html',
-  styleUrl: './item.component.scss'
+  styleUrl: './item.component.scss',
 })
 export class CItem implements IINode, MenuItem {
-  id: string = ''
-  root: string = ''
+  id: string = '';
+  root: string = '';
 
-  title?: string = ''
-  depth?: number = 0
+  title?: string = '';
+  depth?: number = 0;
 }

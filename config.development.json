@@ -1,7 +1,5 @@
 {
     "debug": false,
-    "port": "4110",
-    "hostName": "streaming.home-media.me",
     "redis": {
         "db": "0",
         "host": "192.168.56.55",
@@ -12,13 +10,13 @@
         "path": "/home/data"
     },
     "endpoint": {
-        "backend": "http://192.168.56.55:4100",
-        "api": "http://192.168.56.55:4110",
-        "file": "http://192.168.56.55:4150",
-        "frontend": "http://192.168.56.55:4200"
+        "backend": "192.168.56.55:4100",
+        "api": "192.168.56.55:4110",
+        "file": "192.168.56.55:4150",
+        "frontend": "192.168.56.55:4200"
     },
+    "rootPath": "/home/web/repos/home-media",
     "binPath": "/home/web/repos/home-media/ci",
     "tmpPath": "/home/tmp",
-    "rootPath": "/home/web/repos/home-media",
     "dataPath": "/home/data/"
 }

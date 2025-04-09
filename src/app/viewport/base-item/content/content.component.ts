@@ -30,8 +30,12 @@ import { CPlayer } from './player/player.component';
   selector: 'app-content',
   standalone: true,
   imports: [
-    NgFor, NgClass,
-    ButtonModule, ScrollPanelModule, CardModule, PanelModule,
+    NgFor,
+    NgClass,
+    ButtonModule,
+    ScrollPanelModule,
+    CardModule,
+    PanelModule,
     CPlayer,
     KeyValuePipe,
   ],
@@ -40,7 +44,6 @@ import { CPlayer } from './player/player.component';
   providers: [DialogService, MessageService],
 })
 export class CContent implements OnInit, OnDestroy {
-
   files: WritableSignal<TFileList> = signal<TFileList>({});
   files$ = toObservable(this.files);
 
@@ -51,21 +54,26 @@ export class CContent implements OnInit, OnDestroy {
     private fileService: FileService,
     // private dialogService: DialogService,
     private ref: DynamicDialogRef,
-  ) { }
+  ) {}
 
   ngOnInit() {
     this.destroy$.add(
       this.fileService.loadFiles().subscribe((files: TFileList) => {
         this.files.set(files);
       }),
-    )
+    );
 
-    this.destroy$.add(() => Object.keys(this.files())
-      .forEach(this.fileService.disconnect.bind(this.fileService)))
+    this.destroy$.add(() =>
+      Object.keys(this.files()).forEach(
+        this.fileService.disconnect.bind(this.fileService),
+      ),
+    );
   }
 
   ngOnDestroy(): void {
-    if (this.destroy$) { this.destroy$.unsubscribe() }
+    if (this.destroy$) {
+      this.destroy$.unsubscribe();
+    }
   }
 
   closeDialog(data: any) {

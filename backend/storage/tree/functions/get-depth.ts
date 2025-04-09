@@ -26,7 +26,7 @@ export default (context: ITree<ITreeArgs>): ITreeFuncContext => {
                 AND node.root = parent.root
             ORDER BY node.left;
         `)
-        let results = stmt.get(<BindParams>{
+        let results: { depth?: number } = stmt.get(<BindParams>{
             nodeId: <SqlValue>nodeId,
             rootId: <SqlValue>rootId,
         })

@@ -25,7 +25,7 @@ export default function (context: ITree<ITreeArgs>): ITreeFuncContext {
         } = options || {}
 
         const evalNodeChild = (node: TreePlainNode) => {
-            const childNodes = context.getChildren(node.id, { onlyBranch, includeMeta })
+            const childNodes = context.getChildren(node.id, { onlyBranch, includeMeta }) as Array<TreePlainNode>
 
             if (!isEmpty(childNodes)) {
                 set(node, 'children', childNodes)

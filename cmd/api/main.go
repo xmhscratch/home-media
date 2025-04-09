@@ -2,12 +2,13 @@ package main
 
 import (
 	"errors"
+	"log"
+	"net"
 
 	"github.com/gin-gonic/gin"
 
 	"home-media/cmd/api/routers"
 	"home-media/sys"
-	"log"
 )
 
 // Server comment
@@ -43,8 +44,13 @@ func (ctx *Server) Start() (err error) {
 	if ctx.Router == nil {
 		return errors.New("server is uninitialized")
 	}
-	portNumber := sys.BuildString(":", ctx.Config.Port)
-	return ctx.Router.Run(portNumber)
+
+	_, port, err := net.SplitHostPort(ctx.Config.EndPoint["api"])
+	if err != nil {
+		return err
+	}
+
+	return ctx.Router.Run(net.JoinHostPort("0.0.0.0", port))
 }
 
 func main() {

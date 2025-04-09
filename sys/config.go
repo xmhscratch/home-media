@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"os"
 	"path"
-	"strconv"
 
 	"github.com/golang/groupcache"
 	"github.com/joho/godotenv"
@@ -50,8 +49,7 @@ func NewConfig(appDir string) (*Config, error) {
 		return cfg, err
 	}
 
-	port, err := strconv.ParseInt(cfg.Port, 10, 32)
-	hostAddress := BuildString("http://", cfg.HostName, ":", strconv.Itoa(int(port+1)))
+	hostAddress := BuildString("http://", cfg.EndPoint["api"])
 	peers := groupcache.NewHTTPPool(hostAddress)
 	peers.Set(hostAddress)
 

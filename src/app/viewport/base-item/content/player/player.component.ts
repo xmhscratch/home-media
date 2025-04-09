@@ -1,4 +1,13 @@
-import { Component, Input, Signal, WritableSignal, ElementRef, ViewChild, ViewEncapsulation, ChangeDetectorRef } from '@angular/core';
+import {
+  Component,
+  Input,
+  Signal,
+  WritableSignal,
+  ElementRef,
+  ViewChild,
+  ViewEncapsulation,
+  ChangeDetectorRef,
+} from '@angular/core';
 import { signal } from '@angular/core';
 import { NgIf, PercentPipe } from '@angular/common';
 import { OnInit, OnDestroy, AfterViewInit } from '@angular/core';
@@ -31,16 +40,26 @@ const BUFFER_CHUNK_SIZE = 1024 * 100;
   standalone: true,
   imports: [
     NgIf,
-    ButtonModule, Skeleton, ScrollPanelModule, CardModule, ProgressBar, Message, PanelModule,
-    FileSizePipe, PercentPipe, MyPercentPipe,
+    ButtonModule,
+    Skeleton,
+    ScrollPanelModule,
+    CardModule,
+    ProgressBar,
+    Message,
+    PanelModule,
+    FileSizePipe,
+    PercentPipe,
+    MyPercentPipe,
   ],
   templateUrl: './player.component.html',
   styleUrl: './player.component.scss',
   encapsulation: ViewEncapsulation.None,
 })
 export class CPlayer implements OnInit, OnDestroy, AfterViewInit {
-
-  @ViewChild('videoEl', { /*static: true*/ }) videoEl!: ElementRef;
+  @ViewChild('videoEl', {
+    /*static: true*/
+  })
+  videoEl!: ElementRef;
 
   // @Input() options!: {
   //   fluid?: boolean,
@@ -61,13 +80,15 @@ export class CPlayer implements OnInit, OnDestroy, AfterViewInit {
   cardStyles = {
     shadow: 'none',
     bodyPadding: '0',
-  }
+  };
 
   player!: any;
 
-  @Input() file!: IFileListItem
+  @Input() file!: IFileListItem;
 
-  baseURL: Signal<string> = signal<string>(this.envService.get('endpoint.file'));
+  baseURL: Signal<string> = signal<string>(
+    <string>this.envService.get('endpoint.file'),
+  );
 
   f: WritableSignal<IFileListItem> = signal<IFileListItem>(this.file);
   loaded: WritableSignal<boolean> = signal<boolean>(false);
@@ -89,23 +110,21 @@ export class CPlayer implements OnInit, OnDestroy, AfterViewInit {
           this.loaded.set(true);
 
           if (m.sourceReady) {
-            console.log(this.f())
-            of('').pipe(
-              delay(1),
-              first(),
-            ).subscribe(() => this.initPlayer())
+            console.log(this.f());
+            of('')
+              .pipe(delay(1), first())
+              .subscribe(() => this.initPlayer());
           }
-        })
-      )
+        }),
+      );
       this.fileService.getNativeSocket(f).next({ event: 9 });
     })(this.file);
 
     this.destroy$.add(
-      this.fileService.changed$
-        .subscribe((f: IFileListItem) => {
-          this.f.update((v) => (v));
-        }),
-    )
+      this.fileService.changed$.subscribe((f: IFileListItem) => {
+        this.f.update((v) => v);
+      }),
+    );
   }
 
   ngOnDestroy(): void {
@@ -117,18 +136,20 @@ export class CPlayer implements OnInit, OnDestroy, AfterViewInit {
   ngAfterViewInit(): void { }
 
   handleItemSelect(e: Event, f: IFileListItem) {
-    if (!f) { return }
+    if (!f) {
+      return;
+    }
 
     this.destroy$.add(
       this.storageService
         .fetchSource(f.sessionId, f.path)
         // .pipe(tap((v) => { console.log(v) }))
-        .subscribe()
-    )
+        .subscribe(),
+    );
   }
 
   async initAudio() {
-    let context
+    let context;
     if (!context) {
       // @ts-ignore
       context = new (window.AudioContext || window.webkitAudioContext)();
@@ -144,19 +165,21 @@ export class CPlayer implements OnInit, OnDestroy, AfterViewInit {
     // }
 
     // Fetch and decode the audio file
-    const dubs = this.f().dubs
-    if (!dubs || dubs.length == 0) { return }
+    const dubs = this.f().dubs;
+    if (!dubs || dubs.length == 0) {
+      return;
+    }
 
     // interval(10000).pipe(
     //   takeWhile(() => currentStart < totalSize),
     //   switchMap(() => { }),
     // ).subscribe()
 
-    const fileUrl = `${this.baseURL()}${this.f().nodeId}/${this.f().fileKey}.${dubs[0].lang_code}${dubs[0].stream_index}.mp4`
+    const fileUrl = `${this.baseURL()}${this.f().nodeId}/${this.f().fileKey}.${dubs[0].lang_code}${dubs[0].stream_index}.mp4`;
     // this.fileService.fetchFile(fileUrl, 0, 1024 - 1).subscribe()
     const response = await fetch(fileUrl);
     const arrayBuffer = await response.arrayBuffer();
-    console.log(arrayBuffer)
+    console.log(arrayBuffer);
     const audioBuffer = await context.decodeAudioData(arrayBuffer);
 
     // Create a GainNode for volume control
@@ -171,7 +194,7 @@ export class CPlayer implements OnInit, OnDestroy, AfterViewInit {
       source.connect(gain);
 
       return source;
-    }
+    };
 
     let source = initSource();
     let isPlaying = false;
@@ -211,11 +234,15 @@ export class CPlayer implements OnInit, OnDestroy, AfterViewInit {
   }
 
   async initPlayer() {
-    if (this.player) { return }
+    if (this.player) {
+      return;
+    }
 
     const audio = await this.initAudio();
     const audioEventInit = () => {
-      if (!audio) { return }
+      if (!audio) {
+        return;
+      }
 
       // @ts-ignore
       this.player.on('playing', async () => {
@@ -241,15 +268,19 @@ export class CPlayer implements OnInit, OnDestroy, AfterViewInit {
       this.player.on('dispose', async () => {
         await audio.close();
       });
-    }
+    };
 
     // @ts-ignore
-    this.player = videojs(this.videoEl.nativeElement, {
-      autoplay: false,
-      controls: true,
-      fluid: true,
-      responsive: true,
-    }, audioEventInit);
+    this.player = videojs(
+      this.videoEl.nativeElement,
+      {
+        autoplay: false,
+        controls: true,
+        fluid: true,
+        responsive: true,
+      },
+      audioEventInit,
+    );
   }
 
   getPlayerCurrentVolume() {
@@ -257,7 +288,9 @@ export class CPlayer implements OnInit, OnDestroy, AfterViewInit {
     if (this.player.ended()) {
       val = this.player.volume();
     } else {
-      val = (this.player.scrubbing()) ? this.player.getCache().volume : this.player.volume();
+      val = this.player.scrubbing()
+        ? this.player.getCache().volume
+        : this.player.volume();
     }
     return val;
   }
@@ -267,7 +300,9 @@ export class CPlayer implements OnInit, OnDestroy, AfterViewInit {
     if (this.player.ended()) {
       val = this.player.duration();
     } else {
-      val = (this.player.scrubbing()) ? this.player.getCache().currentTime : this.player.currentTime();
+      val = this.player.scrubbing()
+        ? this.player.getCache().currentTime
+        : this.player.currentTime();
     }
     return val;
   }

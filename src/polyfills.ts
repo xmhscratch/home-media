@@ -1,20 +1,22 @@
 if (typeof globalThis !== 'object') {
     // the below function is not CSP-compliant, but reliably gets the
     // global object in sloppy mode in every engine.
-    var getGlobal = Function('return this');
+    const getGlobal = Function('return this');
 
     /* when `globalThis` is not present */
-    var shimmedGlobal = require('globalthis').shim();
+    const shimmedGlobal = require('globalthis').shim();
 
-    var shimmedFlat = require('array.prototype.flat').shim();
+    const shimmedFlat = require('array.prototype.flat').shim();
 
-    var shimmedQueueMicrotask = require('./polyfills/queue-microtask')();
+    const shimmedRegExp = require('./polyfills/regex')();
 
-    var shimmedReplaceAll = require('string.prototype.replaceall').shim();
+    const shimmedQueueMicrotask = require('./polyfills/queue-microtask')();
 
-    var shimmedPerformanceObserver = require('./polyfills/performance-observer')();
+    const shimmedReplaceAll = require('string.prototype.replaceall').shim();
 
-    var shimmedMatchAll = require('string.prototype.matchall').shim();
+    const shimmedPerformanceObserver = require('./polyfills/performance-observer')();
 
-    var shimmedFromEntries = !Object.fromEntries ? require('object.fromentries').shim() : undefined;
+    const shimmedMatchAll = require('string.prototype.matchall').shim();
+
+    const shimmedFromEntries = !Object.fromEntries ? require('object.fromentries').shim() : undefined;
 }

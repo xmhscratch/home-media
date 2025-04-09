@@ -11,7 +11,11 @@ import { MessageService } from 'primeng/api';
 import { PanelModule } from 'primeng/panel';
 import { AvatarModule } from 'primeng/avatar';
 import { MenuModule } from 'primeng/menu';
-import { DialogService, DynamicDialog, DynamicDialogRef } from 'primeng/dynamicdialog';
+import {
+  DialogService,
+  DynamicDialog,
+  DynamicDialogRef,
+} from 'primeng/dynamicdialog';
 
 import { CBaseItem } from '../../base-item/base-item.component';
 import { ItemDirective } from './item.directive';
@@ -21,7 +25,16 @@ import { ItemDirective } from './item.directive';
   standalone: true,
   imports: [
     NgClass,
-    CardModule, ButtonModule, PanelModule, AvatarModule, MenuModule, Chip, Image, Fluid, Tag, DynamicDialog,
+    CardModule,
+    ButtonModule,
+    PanelModule,
+    AvatarModule,
+    MenuModule,
+    Chip,
+    Image,
+    Fluid,
+    Tag,
+    DynamicDialog,
   ],
   templateUrl: './item.component.html',
   styleUrl: './item.component.scss',
@@ -29,9 +42,9 @@ import { ItemDirective } from './item.directive';
   providers: [{ provide: ItemDirective }, DialogService, MessageService],
 })
 export class CItem extends CBaseItem implements OnInit {
-  currentClasses: Record<string, boolean> = {}
+  currentClasses: Record<string, boolean> = {};
 
-  isSpecial: boolean = false
+  isSpecial: boolean = false;
 
   constructor(injectors: Injector) {
     super(injectors);

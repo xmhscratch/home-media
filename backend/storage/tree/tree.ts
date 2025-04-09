@@ -1,5 +1,5 @@
 import ObjectID from 'bson-objectid'
-import * as hashObject from 'object-hash'
+import hashObject from 'object-hash'
 import {
     isEmpty,
     has,
@@ -63,6 +63,8 @@ export class Tree implements ITree<ITreeArgs> {
     static getNewID(): string { return getNewID() }
 
     async createRoot(rootId: string) {
+        if (!this.db) { return }
+
         const stmt: IStatement = this.db.prepare(`INSERT OR IGNORE INTO nodes (
             id, root, parent, left, right, level
         ) VALUES (
@@ -74,33 +76,33 @@ export class Tree implements ITree<ITreeArgs> {
         return this
     }
 
-    create = (...args: any[]) => this.memoize('create', createNode(this), args)
-    import = (...args: any[]) => this.memoize('import', importNodes(this), args)
-    insert = (...args: any[]) => this.memoize('insert', insertNodeMeta(this), args)
-    moveTo = (...args: any[]) => this.memoize('moveTo', moveTo(this), args)
-    delete = (...args: any[]) => this.memoize('delete', deleteNode(this), args)
+    create = (...args: unknown[]) => this.memoize('create', createNode(this), args)
+    import = (...args: unknown[]) => this.memoize('import', importNodes(this), args)
+    insert = (...args: unknown[]) => this.memoize('insert', insertNodeMeta(this), args)
+    moveTo = (...args: unknown[]) => this.memoize('moveTo', moveTo(this), args)
+    delete = (...args: unknown[]) => this.memoize('delete', deleteNode(this), args)
 
-    getNode = (...args: any[]) => this.memoize('getNode', getNode(this), args)
-    getRootNode = (...args: any[]) => this.memoize('getRootNode', getRootNode(this), args)
-    getPrevNode = (...args: any[]) => this.memoize('getPrevNode', getPrevNode(this), args)
-    getNodeByParentIndex = (...args: any[]) => this.memoize('getNodeByParentIndex', getNodeByParentIndex(this), args)
-    getPaths = (...args: any[]) => this.memoize('getPaths', getPaths(this), args)
-    getLevel = (...args: any[]) => this.memoize('getLevel', getLevel(this), args)
-    getDepth = (...args: any[]) => this.memoize('getDepth', getDepth(this), args)
-    getIndexOf = (...args: any[]) => this.memoize('getIndexOf', getIndexOf(this), args)
-    getChildren = (...args: any[]) => this.memoize('getChildren', getChildren(this), args)
-    getDescendants = (...args: any[]) => this.memoize('getDescendants', getDescendants(this), args)
-    countChilds = (...args: any[]) => this.memoize('countChilds', countChilds(this), args)
-    toAdjacencyList = (...args: any[]) => this.memoize('toAdjacencyList', toAdjacencyList(this), args)
-    toLinearList = (...args: any[]) => this.memoize('toLinearList', toLinearList(this), args)
+    getNode = (...args: unknown[]) => this.memoize('getNode', getNode(this), args)
+    getRootNode = (...args: unknown[]) => this.memoize('getRootNode', getRootNode(this), args)
+    getPrevNode = (...args: unknown[]) => this.memoize('getPrevNode', getPrevNode(this), args)
+    getNodeByParentIndex = (...args: unknown[]) => this.memoize('getNodeByParentIndex', getNodeByParentIndex(this), args)
+    getPaths = (...args: unknown[]) => this.memoize('getPaths', getPaths(this), args)
+    getLevel = (...args: unknown[]) => this.memoize('getLevel', getLevel(this), args)
+    getDepth = (...args: unknown[]) => this.memoize('getDepth', getDepth(this), args)
+    getIndexOf = (...args: unknown[]) => this.memoize('getIndexOf', getIndexOf(this), args)
+    getChildren = (...args: unknown[]) => this.memoize('getChildren', getChildren(this), args)
+    getDescendants = (...args: unknown[]) => this.memoize('getDescendants', getDescendants(this), args)
+    countChilds = (...args: unknown[]) => this.memoize('countChilds', countChilds(this), args)
+    toAdjacencyList = (...args: unknown[]) => this.memoize('toAdjacencyList', toAdjacencyList(this), args)
+    toLinearList = (...args: unknown[]) => this.memoize('toLinearList', toLinearList(this), args)
 
-    memoize(fnName: string, invokeFn: Function, fnArgs: any[]) {
-        let fnResult: any
+    memoize(fnName: string, invokeFn: Function, fnArgs: unknown[]) {
+        let fnResult: unknown
 
         // fnResult = invokeFn(...fnArgs)
-        const fnKeyGetter = (fnArgs: any[]): string => !isEmpty(fnArgs) ? `${fnName}_${hashObject(fnArgs)}` : fnName
+        const fnKeyGetter = (...fnArgs: unknown[]): any => !isEmpty(fnArgs) ? `${fnName}_${hashObject(fnArgs)}` : fnName
         if (!has(this._memoizer, `${fnKeyGetter(fnArgs)}`)) {
-            this._memoizer[`${fnKeyGetter(fnArgs)}`] = memoize<any>(invokeFn, fnKeyGetter) 
+            this._memoizer[`${fnKeyGetter(fnArgs)}`] = memoize<any>(invokeFn, fnKeyGetter)
         }
 
         if ((new RegExp(`^(${join(Tree.MODIFIER_FUNCTIONS, '|')})$`, 'g')).test(fnName)) {

@@ -6,14 +6,14 @@ metadata:
   labels:
     app: backend
 spec:
-  type: NodePort
+  type: ClusterIP
+  selector:
+    app: backend
   ports:
   - name: backend
     protocol: TCP
     port: 4100
     targetPort: 4100
-  selector:
-    app: backend
 ---
 kind: Service
 apiVersion: v1
@@ -23,11 +23,45 @@ metadata:
   labels:
     app: frontend
 spec:
-  type: NodePort
+  type: ClusterIP
+  selector:
+    app: frontend
   ports:
   - name: frontend
     protocol: TCP
-    port: 4200
-    targetPort: 4200
+    port: 4000
+    targetPort: 4000
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: api
+  namespace: hms
+  labels:
+    app: api
+spec:
+  type: ClusterIP
   selector:
-    app: frontend
+    app: api
+  ports:
+  - name: api
+    protocol: TCP
+    port: 4110
+    targetPort: 4110
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: file
+  namespace: hms
+  labels:
+    app: file
+spec:
+  type: ClusterIP
+  selector:
+    app: file
+  ports:
+  - name: file
+    protocol: TCP
+    port: 4150
+    targetPort: 4150

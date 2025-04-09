@@ -8,9 +8,8 @@ describe('CNavigation', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CNavigation]
-    })
-    .compileComponents();
+      imports: [CNavigation],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(CNavigation);
     component = fixture.componentInstance;

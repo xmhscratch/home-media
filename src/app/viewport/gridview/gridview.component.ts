@@ -1,4 +1,10 @@
-import { Component, Input, WritableSignal, signal, inject } from '@angular/core';
+import {
+  Component,
+  Input,
+  WritableSignal,
+  signal,
+  inject,
+} from '@angular/core';
 import { OnInit, OnDestroy } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 
@@ -17,8 +23,8 @@ import { toObservable } from '@angular/core/rxjs-interop';
 // import { $dt } from '@primeng/themes';
 
 import { orderBy as ldOrderBy } from 'lodash-es';
-import { IINode } from '../../../types/storage'
-import { StorageService } from '@/storage.service'
+import { IINode } from '../../../types/storage';
+import { StorageService } from '@/storage.service';
 import { CItem } from './item/item.component';
 import { Subscription } from 'rxjs';
 
@@ -26,14 +32,18 @@ import { Subscription } from 'rxjs';
   selector: 'app-gridview',
   standalone: true,
   imports: [
-    ButtonModule, PanelModule, AvatarModule, MenuModule, ProgressSpinner, Skeleton,
+    ButtonModule,
+    PanelModule,
+    AvatarModule,
+    MenuModule,
+    ProgressSpinner,
+    Skeleton,
     CItem,
   ],
   templateUrl: './gridview.component.html',
   styleUrl: './gridview.component.scss',
 })
 export class CGridview implements OnInit, OnDestroy {
-
   private readonly route = inject(ActivatedRoute);
 
   @Input() rootId: WritableSignal<string> = signal<string>('');
@@ -52,15 +62,15 @@ export class CGridview implements OnInit, OnDestroy {
   constructor(
     private storage: StorageService,
     private router: Router,
-  ) { }
+  ) {}
 
   ngOnInit() {
     this.destroy$.add(
       this.route.paramMap
         .pipe(
           tap(() => {
-            this.destroy$.add(this.rootId$.subscribe())
-            this.destroy$.add(this.nodeId$.subscribe())
+            this.destroy$.add(this.rootId$.subscribe());
+            this.destroy$.add(this.nodeId$.subscribe());
           }),
         )
         .subscribe((a) => {
@@ -70,23 +80,29 @@ export class CGridview implements OnInit, OnDestroy {
               .pipe(
                 tap(() => this.loaded.set(true)),
                 map(({ nodes }) => ({
-                  nodes: ldOrderBy(nodes, (i) => (new Date(i.created_date as string)).valueOf(), 'desc')
+                  nodes: ldOrderBy(
+                    nodes,
+                    (i) => new Date(i.created_date as string).valueOf(),
+                    'desc',
+                  ),
                 })),
                 // tap((v) => console.log(v)),
               )
-              .subscribe(({ nodes }) => this.nodes.set(nodes))
-          )
-        })
-    )
+              .subscribe(({ nodes }) => this.nodes.set(nodes)),
+          );
+        }),
+    );
   }
 
   ngOnDestroy(): void {
-    if (this.destroy$) { this.destroy$.unsubscribe() }
+    if (this.destroy$) {
+      this.destroy$.unsubscribe();
+    }
   }
 
   selectItemHandler = ($event: Event, item: IINode) => {
     // this.router.navigate(['storage', `${item.root}`, `${item.id}`]);
-  }
+  };
 }
 
 // constructor(elementRef: ElementRef) {

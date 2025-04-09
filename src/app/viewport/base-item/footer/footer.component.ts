@@ -7,19 +7,14 @@ import { ButtonModule } from 'primeng/button';
 @Component({
   selector: 'app-footer',
   standalone: true,
-  imports: [
-    ButtonModule, FormsModule,
-  ],
+  imports: [ButtonModule, FormsModule],
   templateUrl: './footer.component.html',
   styleUrl: './footer.component.scss',
 })
 export class CFooter implements OnInit {
+  constructor(private ref: DynamicDialogRef) {}
 
-  constructor(
-    private ref: DynamicDialogRef,
-  ) { }
-
-  ngOnInit(): void { }
+  ngOnInit(): void {}
 
   // closeDialog(data: any) {
   //   this.ref.close(data);
