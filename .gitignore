@@ -35,7 +35,7 @@ yarn-error.log
 /connect.lock
 /coverage
 /libpeerconnection.log
-testem.log
+**/*.log
 /typings
 
 # System files
@@ -96,3 +96,8 @@ vendor/
 public/**/*
 package-lock.json
 **/tmp
+
+#yocto
+**/cache
+**/build/downloads
+**/build/sstate-cache
