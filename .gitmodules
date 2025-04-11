@@ -1,0 +1,23 @@
+[submodule "webos/deps/qtwebengine-chromium"]
+	path = webos/deps/qtwebengine-chromium
+	url = git@github.com:qt/qtwebengine-chromium.git
+	branch = 130-based
+[submodule "webos/deps/meta-openembedded"]
+	path = webos/deps/meta-openembedded
+	url = git@github.com:openembedded/meta-openembedded.git
+	branch = scarthgap
+[submodule "webos/deps/meta-qt5"]
+	path = webos/deps/meta-qt5
+	url = git@github.com:meta-qt5/meta-qt5.git
+	branch = scarthgap
+[submodule "webos/deps/openembedded-core"]
+	path = webos/deps/openembedded-core
+	url = git@github.com:openembedded/openembedded-core.git
+	branch = scarthgap
+[submodule "webos/deps"]
+	path = webos/deps
+	url = git@github.com:yoctoproject/poky.git
+	branch = scarthgap
+[submodule "webos/poky"]
+	path = webos/poky
+	url = git@github.com:yoctoproject/poky.git
