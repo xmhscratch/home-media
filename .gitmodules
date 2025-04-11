@@ -14,10 +14,6 @@
 	path = webos/deps/openembedded-core
 	url = git@github.com:openembedded/openembedded-core.git
 	branch = scarthgap
-[submodule "webos/deps"]
-	path = webos/deps
-	url = git@github.com:yoctoproject/poky.git
-	branch = scarthgap
 [submodule "webos/poky"]
 	path = webos/poky
 	url = git@github.com:yoctoproject/poky.git
