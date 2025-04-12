@@ -17,3 +17,8 @@
 [submodule "webos/poky"]
 	path = webos/poky
 	url = git@github.com:yoctoproject/poky.git
+	branch = scarthgap
+[submodule "webos/depot_tools"]
+	path = webos/depot_tools
+	url = https://chromium.googlesource.com/chromium/tools/depot_tools.git
+	branch = main
