@@ -1,0 +1,1 @@
+sudo ./alpine-make-rootfs --branch v3.21 --packages 'ruby ruby-bigdecimal sqlite' --timezone 'Europe/London' --script-chroot example-$(date +%Y%m%d).tar.gz
