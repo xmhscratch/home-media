@@ -2,26 +2,26 @@
 
 HOSTNAME="$1"
 if [ -z "$HOSTNAME" ]; then
-    echo "usage: $0 hostname"
-    exit 1
+	echo "usage: $0 hostname"
+	exit 1
 fi
 
 cleanup() {
-    rm -rf "$tmp"
+	rm -rf "$tmp"
 }
 
 makefile() {
-    OWNER="$1"
-    PERMS="$2"
-    FILENAME="$3"
-    cat >"$FILENAME"
-    chown "$OWNER" "$FILENAME"
-    chmod "$PERMS" "$FILENAME"
+	OWNER="$1"
+	PERMS="$2"
+	FILENAME="$3"
+	cat > "$FILENAME"
+	chown "$OWNER" "$FILENAME"
+	chmod "$PERMS" "$FILENAME"
 }
 
 rc_add() {
-    mkdir -p "$tmp"/etc/runlevels/"$2"
-    ln -sf /etc/init.d/"$1" "$tmp"/etc/runlevels/"$2"/"$1"
+	mkdir -p "$tmp"/etc/runlevels/"$2"
+	ln -sf /etc/init.d/"$1" "$tmp"/etc/runlevels/"$2"/"$1"
 }
 
 tmp="$(mktemp -d)"
@@ -44,36 +44,13 @@ EOF
 mkdir -p "$tmp"/etc/apk
 makefile root:root 0644 "$tmp"/etc/apk/world <<EOF
 alpine-base
-EOF
-
-###########
-# repositories_file=/etc/apk/repositories
-# keys_dir=/etc/apk/keys
-# branch=edge
-
-# VERSION_ID=$(awk -F= '$1=="VERSION_ID" {print $2}' /etc/os-release)
-# case $VERSION_ID in
-# *_alpha*|*_beta*) branch=edge;;
-# *.*.*) branch=v${VERSION_ID%.*};;
-# esac
-
-cat > "$tmp"/etc/apk/repositories <<EOF
-https://dl-cdn.alpinelinux.org/alpine/v3.21/main
-https://dl-cdn.alpinelinux.org/alpine/v3.21/community
-EOF
-###########
-makefile root:root 0644 "$tmp"/etc/apk/world <<EOF
 xorg-server
 xf86-input-libinput
 xinit
 eudev
-EOF
-makefile root:root 0644 "$tmp"/etc/apk/world <<EOF
 mesa-dri-gallium
 elogind
 polkit-elogind
-EOF
-makefile root:root 0644 "$tmp"/etc/apk/world <<EOF
 polkit-qt-dev
 polkit-qt5
 qt5-assistant
@@ -166,8 +143,6 @@ qt5-qtx11extras
 qt5-qtx11extras-dev
 qt5-qtxmlpatterns
 qt5-qtxmlpatterns-dev
-EOF
-makefile root:root 0644 "$tmp"/etc/apk/world <<EOF
 mesa-vulkan-ati
 mesa-vulkan-intel
 mesa-vulkan-layers
@@ -177,16 +152,12 @@ vulkan-loader
 vulkan-loader-dbg
 vulkan-loader-dev
 vulkan-tools
-EOF
-makefile root:root 0644 "$tmp"/etc/apk/world <<EOF
 chromium
 chromium-chromedriver
 chromium-dbg
 chromium-lang
 chromium-qt5
 chromium-swiftshader
-EOF
-makefile root:root 0644 "$tmp"/etc/apk/world <<EOF
 lxqt-build-tools
 libqtxdg
 libsysstat
@@ -199,13 +170,10 @@ lxqt-qtplugin
 lxqt-notificationd
 pm-utils
 xdg-utils
-EOF
-makefile root:root 0644 "$tmp"/etc/apk/world <<EOF
 lximage-qt
 obconf-qt
 pavucontrol-qt
 arandr
-sddm
 font-dejavu
 dbus
 dbus-x11
@@ -217,7 +185,7 @@ udisks2
 adwaita-qt
 oxygen
 EOF
-# makefile root:root 0644 "$tmp"/etc/apk/world <<EOF
+###########
 # lxqt-themes
 # lxqt-about
 # lxqt-admin
@@ -231,10 +199,24 @@ EOF
 # qtermwidget
 # qterminal
 # openbox
-# EOF
 ###########
-makefile root:root 0644 "$tmp"/etc/modules <<EOF
+branch=edge
+
+VERSION_ID=$([ ! -f "$tmp"/etc/os-release ] || awk -F= '$1=="VERSION_ID" {print $2}' "$tmp"/etc/os-release)
+case $VERSION_ID in
+*_alpha*|*_beta*) branch=edge;;
+*.*.*) branch=v${VERSION_ID%.*};;
+*) branch=v3.21;;
+esac
+
+cat > "$tmp"/etc/apk/repositories <<EOF
+https://dl-cdn.alpinelinux.org/alpine/$branch/main
+https://dl-cdn.alpinelinux.org/alpine/$branch/community
 EOF
+###########
+# rc_add dbus boot
+# rc_add elogind boot
+# rc_add xinit boot
 ###########
 
 rc_add devfs sysinit
@@ -254,11 +236,4 @@ rc_add mount-ro shutdown
 rc_add killprocs shutdown
 rc_add savecache shutdown
 
-###########
-rc_add elogind boot
-rc_add polkit boot
-rc_add xinit boot
-rc_add dbus boot
-###########
-
-tar -c -C "$tmp" etc | gzip -9n >$HOSTNAME.apkovl.tar.gz
+tar -c -C "$tmp" etc | gzip -9n > $HOSTNAME.apkovl.tar.gz
