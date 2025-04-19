@@ -44,148 +44,20 @@ EOF
 mkdir -p "$tmp"/etc/apk
 makefile root:root 0644 "$tmp"/etc/apk/world <<EOF
 alpine-base
-xorg-server
-xf86-input-libinput
-xinit
-eudev
-mesa-dri-gallium
-elogind
-polkit-elogind
-polkit-qt-dev
-polkit-qt5
-qt5-assistant
-qt5-qdbusviewer
-qt5-qt3d
-qt5-qt3d-dev
-qt5-qtbase
-qt5-qtbase-dbg
-qt5-qtbase-dev
-qt5-qtbase-mysql
-qt5-qtbase-odbc
-qt5-qtbase-postgresql
-qt5-qtbase-sqlite
-qt5-qtbase-tds
-qt5-qtbase-x11
-qt5-qtcharts
-qt5-qtcharts-dev
-qt5-qtconnectivity
-qt5-qtconnectivity-dev
-qt5-qtdatavis3d
-qt5-qtdatavis3d-dev
-qt5-qtdeclarative
-qt5-qtdeclarative-dbg
-qt5-qtdeclarative-dev
-qt5-qtfeedback
-qt5-qtfeedback-dev
-qt5-qtgamepad
-qt5-qtgamepad-dev
-qt5-qtgraphicaleffects
-qt5-qtimageformats
-qt5-qtkeychain
-qt5-qtkeychain-lang
-qt5-qtlocation
-qt5-qtlocation-dev
-qt5-qtlottie
-qt5-qtlottie-dev
-qt5-qtmultimedia
-qt5-qtmultimedia-dev
-qt5-qtnetworkauth
-qt5-qtnetworkauth-dev
-qt5-qtpim
-qt5-qtpim-dev
-qt5-qtpurchasing
-qt5-qtpurchasing-dev
-qt5-qtquick3d
-qt5-qtquick3d-dev
-qt5-qtquickcontrols
-qt5-qtquickcontrols2
-qt5-qtquickcontrols2-dev
-qt5-qtquicktimeline
-qt5-qtremoteobjects
-qt5-qtremoteobjects-dev
-qt5-qtscript
-qt5-qtscript-dev
-qt5-qtscxml
-qt5-qtscxml-dev
-qt5-qtsensors
-qt5-qtsensors-dev
-qt5-qtserialbus
-qt5-qtserialbus-dev
-qt5-qtserialport
-qt5-qtserialport-dev
-qt5-qtspeech
-qt5-qtspeech-dev
-qt5-qtsvg
-qt5-qtsvg-dev
-qt5-qtsystems
-qt5-qtsystems-dev
-qt5-qttools
-qt5-qttools-dev
-qt5-qttranslations
-qt5-qtusb
-qt5-qtusb-dev
-qt5-qtvirtualkeyboard
-qt5-qtvirtualkeyboard-dev
-qt5-qtwayland
-qt5-qtwayland-dev
-qt5-qtwebchannel
-qt5-qtwebchannel-dev
-qt5-qtwebengine
-qt5-qtwebengine-dev
-qt5-qtwebglplugin
-qt5-qtwebglplugin-dev
-qt5-qtwebsockets
-qt5-qtwebsockets-dev
-qt5-qtwebsockets-libs
-qt5-qtwebview
-qt5-qtwebview-dev
-qt5-qtx11extras
-qt5-qtx11extras-dev
-qt5-qtxmlpatterns
-qt5-qtxmlpatterns-dev
-mesa-vulkan-ati
-mesa-vulkan-intel
-mesa-vulkan-layers
-mesa-vulkan-swrast
-vulkan-headers
-vulkan-loader
-vulkan-loader-dbg
-vulkan-loader-dev
-vulkan-tools
-chromium
-chromium-chromedriver
-chromium-dbg
-chromium-lang
-chromium-qt5
-chromium-swiftshader
-lxqt-build-tools
-libqtxdg
-libsysstat
-liblxqt
-libdbusmenu-lxqt
-lxqt-globalkeys
-lxqt-powermanagement
-lxqt-session
-lxqt-qtplugin
-lxqt-notificationd
-pm-utils
-xdg-utils
-lximage-qt
-obconf-qt
-pavucontrol-qt
-arandr
-font-dejavu
-dbus
-dbus-x11
-openbox
-elogind
-polkit-elogind
-gvfs
-udisks2
-adwaita-qt
-oxygen
 EOF
+
 ###########
+cat /tmp/build/apk-deps.txt >> "$tmp"/etc/apk/world
+###########
+# wayland
+# wayland-dbg
+# wayland-protocols
+# wayland-libs-egl
+# wayland-libs-server
+# wayland-libs-cursor
+# weston
+# weston-xwayland
+# weston-backend-wayland
 # lxqt-themes
 # lxqt-about
 # lxqt-admin
@@ -195,14 +67,13 @@ EOF
 # lxqt-archiver
 # lxqt-policykit
 # lxqt-openssh-askpass
-# lxqt-sudo
 # qtermwidget
 # qterminal
 # openbox
 ###########
 branch=edge
 
-VERSION_ID=$([ ! -f "$tmp"/etc/os-release ] || awk -F= '$1=="VERSION_ID" {print $2}' "$tmp"/etc/os-release)
+VERSION_ID=$([ ! -f /etc/os-release ] || awk -F= '$1=="VERSION_ID" {print $2}' /etc/os-release)
 case $VERSION_ID in
 *_alpha*|*_beta*) branch=edge;;
 *.*.*) branch=v${VERSION_ID%.*};;
@@ -214,14 +85,120 @@ https://dl-cdn.alpinelinux.org/alpine/$branch/main
 https://dl-cdn.alpinelinux.org/alpine/$branch/community
 EOF
 ###########
-# rc_add dbus boot
-# rc_add elogind boot
-# rc_add xinit boot
+mkdir -pv "$tmp/usr/bin/"
+cp /tmp/build/minikube "$tmp"/usr/bin/minikube
+chmod +x ""$tmp"/usr/bin/minikube"
+
+mkdir -p "${tmp}/etc/init.d/"
+makefile root:root 0755 "$tmp/etc/init.d/minikube" << EOF
+#!/sbin/openrc-run
+name="Minikube Cluster"
+description="Minikube is local Kubernetes, focusing on making it easy to learn and develop for Kubernetes."
+
+command="/usr/bin/minikube start"
+command_args="--force --cpus=max --memory=max ${command_args:-}"
+command_background="yes"
+pidfile="/run/$RC_SVCNAME.pid"
+
+depend() {
+	need localmount
+	after bootmisc
+	after docker
+}
+EOF
+###########
+mkdir -pv "$tmp"/root/
+mkdir -pv "$tmp"/etc/conf.d/
+mkdir -pv "$tmp"/usr/share/lxqt/
+
+Xorg :20 -depth 32 -nolisten tcp -configure
+makefile root:root 0644 "$tmp"/etc/X11/xorg.conf <<EOF
+EOF
+cat /root/xorg.conf.new > "$tmp"/etc/X11/xorg.conf
+
+makefile root:root 0644 "$tmp"/root/.xinitrc <<EOF
+EOF
+cat /etc/X11/xinit/xinitrc > "$tmp"/root/.xinitrc
+cat >> "$tmp"/root/.xinitrc <<EOF
+exec dbus-run-session startlxqt
+exec dbus-run-session chromium --app=https://www.youtube.com/ --no-sandbox --kiosk --start-fullscreen --enable-features=UseOzonePlatform --ozone-platform=x11 --enable-unsafe-swiftshader
+EOF
+
+makefile root:root 0644 "$tmp"/etc/conf.d/dbus <<EOF
+command_args="--system --nofork --nopidfile --syslog-only ${command_args:-}"
+EOF
+
+if [ -n $(awk '/^nameserver/ {printf "%s ",$2}' /etc/resolv.conf) ] || [ $# -gt 0 ]; then
+    sed -i "/export dns/a dns=\"$(echo '1.1.1.1' | tr ',' ' ')\"" /usr/share/udhcpc/default.script
+fi
+
+makefile root:root 0644 "$tmp"/etc/X11/Xwrapper.config <<EOF
+needs_root_rights = no
+allowed_users = anybody
+EOF
+
+# linuxfb, wayland, eglfs, xcb, wayland-egl, minimalegl, minimal, offscreen, vkkhrdisplay, vnc
+makefile root:root 0644 "$tmp"/etc/profile.d/00-startup.sh <<EOF
+export XDG_SESSION_TYPE=x11
+export DISPLAY=:20
+export QT_QPA_PLATFORM="eglfs"
+export XDG_RUNTIME_DIR=/run/user/$(id -u)
+[ -z $XDG_RUNTIME_DIR ] || mkdir -pv $XDG_RUNTIME_DIR;
+if [[ -z $XDG_RUNTIME_DIR ]]; then
+	chmod 700 $XDG_RUNTIME_DIR;
+	chown $(id -un):$(id -gn) $XDG_RUNTIME_DIR;
+fi
+# dbus-run-session xinit lxqt -- $DISPLAY
+lxqt-session
+
+adduser nopwd seat # For seatd
+adduser nopwd audio # For audio hardware.
+adduser nopwd dialout # For serial consoles.
+adduser nopwd kvm # For hardware virtualisation capabilities.
+adduser nopwd qemu # Ditto
+adduser nopwd gnupg # Smart-cards.
+adduser nopwd power # For powerctl (power management tool).
+adduser nopwd video # For video devices. See below.
+setup-devd udev
+EOF
+
+# exec dbus-run-session -- startlxqt
+makefile root:root 0644 "$tmp"/usr/share/lxqt/session.conf <<EOF
+[General]
+leave_confirmation=false
+
+[Environment]
+GTK_CSD=0
+GTK_OVERLAY_SCROLLING=0
+
+[Mouse]
+cursor_size=18
+cursor_theme=whiteglass
+acc_factor=20
+acc_threshold=10
+left_handed=false
+
+[Keyboard]
+delay=350
+interval=20
+beep=false
+
+[Font]
+antialias=true
+hinting=true
+dpi=96
+EOF
+###########
+rc_add dbus boot
+rc_add polkit default
+rc_add networking default
+rc_add docker default
+rc_add minikube default
 ###########
 
 rc_add devfs sysinit
 rc_add dmesg sysinit
-rc_add mdev sysinit
+rc_add udev sysinit
 rc_add hwdrivers sysinit
 rc_add modloop sysinit
 
@@ -236,4 +213,4 @@ rc_add mount-ro shutdown
 rc_add killprocs shutdown
 rc_add savecache shutdown
 
-tar -c -C "$tmp" etc | gzip -9n > $HOSTNAME.apkovl.tar.gz
+tar -c -C "$tmp" etc proc usr root | gzip -9n > $HOSTNAME.apkovl.tar.gz

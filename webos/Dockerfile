@@ -1,7 +1,34 @@
-FROM alpine:3.21 AS build
+FROM alpine:3.21 AS build-kube
 
 USER root
-COPY ./genapkovl-hms.sh ./mkimg.hms.sh /tmp/aports-scripts/
+COPY ./genapkovl-hms.sh ./mkimg.hms.sh ./apk-deps.txt /tmp/build/
+ENV KUBE_ARCH=x86_64
+ENV KUBE_VERS=1.35.0
+RUN apk update && apk add --no-cache \
+        alpine-sdk \
+        coreutils \
+        wget \
+        openssh \
+        git \
+        go \
+        build-base \
+        apk-tools \
+        alpine-conf; \
+    \
+    # asdasd
+    cd $HOME/; \
+    git clone --depth=1 --branch=v$KUBE_VERS https://github.com/kubernetes/minikube.git ./minikube-$KUBE_VERS; \
+    cd ./minikube-$KUBE_VERS; \
+    make -j$(getconf _NPROCESSORS_ONLN) linux; \
+    mv -vf ./out/minikube-linux-amd64 /home/minikube; \
+    chmod +x /home/minikube; \
+    ls -lha /home/;
+
+FROM alpine:3.21 AS build-iso
+
+USER root
+COPY ./genapkovl-hms.sh ./mkimg.hms.sh ./apk-deps.txt /tmp/build/
+COPY --from=build-kube /home/minikube /tmp/build/
 RUN apk update && apk add --no-cache \
         alpine-sdk \
         build-base \
@@ -15,6 +42,11 @@ RUN apk update && apk add --no-cache \
         mtools \
         dosfstools \
         grub-efi; \
+    \
+    apk add --no-cache \
+        python3 \
+        py3-pylspci \
+        xorg-server; \
     \
     # asdasd
     addgroup root abuild; \
@@ -35,8 +67,8 @@ RUN \
     echo $TMPDIR; \
     ###########
     cp -vr \
-        /tmp/aports-scripts/genapkovl-hms.sh \
-        /tmp/aports-scripts/mkimg.hms.sh \
+        /tmp/build/genapkovl-hms.sh \
+        /tmp/build/mkimg.hms.sh \
         $APORTS/scripts/; \
     \
     sudo chmod +x $APORTS/scripts/genapkovl-hms.sh $APORTS/scripts/mkimg.hms.sh; \
@@ -50,5 +82,5 @@ RUN \
         --profile hms;
 
 FROM scratch
-COPY --from=build /mnt/iso/ /
+COPY --from=build-iso /mnt/iso/ /
 ENTRYPOINT ["/mnt/iso/"]
