@@ -4,9 +4,9 @@ profile_hms() {
     hostname="alpine"
     kernel_cmdline="console=tty0 console=ttyS0,115200"
     syslinux_serial="0 115200"
-    arch="aarch64 x86 x86_64"
+    arch="x86_64"
     kernel_flavors="lts"
-    initfs_cmdline="modules=loop,squashfs,sd-mod,usb-storage"
+    initfs_cmdline="modules=loop,squashfs,sd-mod,usb-storage quiet nouveau.config=NvGspRm=1"
     # initfs_cmdline="modules=loop,squashfs,sd-mod,usb-storage quiet"
     initfs_features="ata base bootchart cdrom ext4 mmc nvme raid scsi squashfs usb virtio"
     modloop_sign=yes
@@ -18,6 +18,7 @@ profile_hms() {
     apks="alpine-base apk-cron busybox chrony dhcpcd doas e2fsprogs kbd-bkeymaps network-extras openntpd openssl openssh tzdata wget tiny-cloud-alpine"
     rootfs_apks="busybox alpine-baselayout alpine-keys alpine-release apk-tools libc-utils"
 
+    apks="$apks $(cat /tmp/build/apk-common | tr '\n' ' ') $(cat /tmp/build/apk-font | tr '\n' ' ') $(cat /tmp/build/apk-qt | tr '\n' ' ')"
     local _k _a
     for _k in $kernel_flavors; do
         apks="$apks linux-$_k"
@@ -25,7 +26,7 @@ profile_hms() {
             apks="$apks $_a-$_k"
         done
     done
+    apks="$apks linux-firmware"
 
-    apks="$apks $(cat /tmp/build/apk-deps.txt | tr '\n' ' ')"
     apkovl="aports/scripts/genapkovl-hms.sh"
 }

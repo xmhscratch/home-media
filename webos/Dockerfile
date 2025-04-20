@@ -1,4 +1,4 @@
-FROM alpine:3.21 AS build-kube
+FROM localhost:5000/gonode:latest AS build-kube
 
 USER root
 COPY ./genapkovl-hms.sh ./mkimg.hms.sh ./apk-deps.txt /tmp/build/
@@ -24,7 +24,7 @@ RUN apk update && apk add --no-cache \
     chmod +x /home/minikube; \
     ls -lha /home/;
 
-FROM alpine:3.21 AS build-iso
+FROM localhost:5000/gonode:latest AS build-iso
 
 USER root
 COPY ./genapkovl-hms.sh ./mkimg.hms.sh ./apk-deps.txt /tmp/build/

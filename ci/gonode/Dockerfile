@@ -1,4 +1,4 @@
-FROM alpine:3.20 AS build
+FROM alpine:3.21 AS build
 
 ENV PATH /usr/local/go/bin:$PATH
 
