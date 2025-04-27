@@ -1,3 +1,15 @@
+section_apks() {
+	[ -n "$apks" ] || return 0
+
+    apks="$apks $(cat /tmp/build/apk-xorg | tr '\n' ' ')"
+    apks="$apks $(cat /tmp/build/apk-docker | tr '\n' ' ')"
+    apks="$apks $(cat /tmp/build/apk-pulseaudio | tr '\n' ' ')"
+    apks="$apks $(cat /tmp/build/apk-chromium | tr '\n' ' ')"
+
+    echo "$apks"
+	build_section apks $ARCH $(apk fetch --progress --root "$APKROOT" --simulate --recursive $apks | sort | checksum)
+}
+
 profile_hms() {
     profile_standard
     profile_abbrev="hms"
@@ -6,7 +18,7 @@ profile_hms() {
     syslinux_serial="0 115200"
     arch="x86_64"
     kernel_flavors="lts"
-    initfs_cmdline="modules=loop,squashfs,sd-mod,usb-storage quiet nouveau.config=NvGspRm=1"
+    initfs_cmdline="modules=loop,squashfs,sd-mod,usb-storage nouveau.config=NvGspRm=1"
     # initfs_cmdline="modules=loop,squashfs,sd-mod,usb-storage quiet"
     initfs_features="ata base bootchart cdrom ext4 mmc nvme raid scsi squashfs usb virtio"
     modloop_sign=yes
@@ -15,10 +27,11 @@ profile_hms() {
     grub_mod="$grub_mod multiboot2 efi_uga"
     initfs_features="$initfs_features nfit"
 
-    apks="alpine-base apk-cron busybox chrony dhcpcd doas e2fsprogs kbd-bkeymaps network-extras openntpd openssl openssh tzdata wget tiny-cloud-alpine"
+    apks="alpine-base apk-cron busybox chrony dhcpcd doas e2fsprogs kbd-bkeymaps network-extras openssl openssh tzdata wget"
     rootfs_apks="busybox alpine-baselayout alpine-keys alpine-release apk-tools libc-utils"
 
-    apks="$apks $(cat /tmp/build/apk-common | tr '\n' ' ') $(cat /tmp/build/apk-font | tr '\n' ' ') $(cat /tmp/build/apk-qt | tr '\n' ' ')"
+    apks="$apks $(cat /tmp/build/apk-common | tr '\n' ' ')"
+
     local _k _a
     for _k in $kernel_flavors; do
         apks="$apks linux-$_k"

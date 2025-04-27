@@ -1,0 +1,11 @@
+docker
+docker-cli
+docker-cli-buildx
+docker-cli-compose
+docker-engine
+docker-openrc
+conntrack-tools
+conntrack-tools-openrc
+cri-o
+cri-o-openrc
+cri-tools

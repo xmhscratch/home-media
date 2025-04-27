@@ -12,14 +12,14 @@ spec:
       labels:
         app: backend
     spec:
-      initContainers:
-        - name: wait-for-job
-          image: bitnami/kubectl:latest
-          command:
-            - "/bin/sh"
-            - "-c"
-          args:
-            - while [[ $(kubectl -n hms get job job-build-backend -o jsonpath='{.status.succeeded}') -ne 1 ]]; do { echo "Waiting backend build to complete..."; sleep 5; }; done
+      # initContainers:
+      #   - name: wait-for-job
+      #     image: bitnami/kubectl:latest
+      #     command:
+      #       - "/bin/sh"
+      #       - "-c"
+      #     args:
+      #       - while [[ $(kubectl -n hms get job job-build-backend -o jsonpath='{.status.succeeded}') -ne 1 ]]; do { echo "Waiting backend build to complete..."; sleep 5; }; done
       containers:
         - name: backend
           image: localhost:5000/hms:latest
@@ -68,14 +68,14 @@ spec:
       labels:
         app: frontend
     spec:
-      initContainers:
-        - name: wait-for-job
-          image: bitnami/kubectl:latest
-          command:
-            - "/bin/sh"
-            - "-c"
-          args:
-            - while [[ $(kubectl -n hms get job job-build-frontend -o jsonpath='{.status.succeeded}') -ne 1 ]]; do { echo "Waiting build to complete..."; sleep 5; }; done
+      # initContainers:
+      #   - name: wait-for-job
+      #     image: bitnami/kubectl:latest
+      #     command:
+      #       - "/bin/sh"
+      #       - "-c"
+      #     args:
+      #       - while [[ $(kubectl -n hms get job job-build-frontend -o jsonpath='{.status.succeeded}') -ne 1 ]]; do { echo "Waiting build to complete..."; sleep 5; }; done
       containers:
         - name: frontend
           image: localhost:5000/hms:latest

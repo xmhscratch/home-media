@@ -5,5 +5,5 @@ resources:
 - ingress.yml
 - pv.yml
 - pvc.yml
-- job.yml
+# - job.yml
 - deployment.yml

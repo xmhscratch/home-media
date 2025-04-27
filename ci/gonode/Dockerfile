@@ -1,9 +1,6 @@
 FROM alpine:3.21 AS build
-
 ENV PATH /usr/local/go/bin:$PATH
-
 ENV GOLANG_VERSION 1.23.4
-
 RUN set -eux; \
 	now="$(date '+%s')"; \
 	apk add --no-cache --virtual .fetch-deps \
@@ -104,13 +101,10 @@ RUN set -eux; \
 	[ "$SOURCE_DATE_EPOCH" = "$epoch" ]; \
 	find /target -newer /target/usr/local/go -exec sh -c 'ls -ld "$@" && exit "$#"' -- '{}' +
 
-FROM node:22-alpine3.20
-
+FROM node:22-alpine3.21
 USER root
-
 WORKDIR /export
 COPY ["./certs", "/tmp/certs/"]
-
 RUN set -eux; \
     # addgroup -g 82 -S www-data; \
     adduser -u 82 -D -S -G www-data www-data; \
@@ -127,7 +121,6 @@ RUN set -eux; \
     addgroup www-data tape; \
     addgroup www-data video; \
 	addgroup www-data node;
-
 # set up nsswitch.conf for Go's "netgo" implementation
 # - https://github.com/golang/go/blob/go1.9.1/src/net/conf.go#L194-L275
 # - docker run --rm debian:stretch grep '^hosts:' /etc/nsswitch.conf
@@ -150,7 +143,6 @@ RUN \
     echo "@edge http://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories; \
     echo "@edge http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories; \
     rm -rf /var/cache/apk/*;
-
 RUN \
     apk update && apk upgrade; \
     apk fix --allow-untrusted alpine-keys; \
@@ -212,15 +204,11 @@ RUN \
     # cleanup
     rm -rf /var/cache/apk/*; \
     rm -rf /tmp/*;
-
 ENV GOLANG_VERSION 1.23.4
-
 # don't auto-upgrade the gotoolchain
 # https://github.com/docker-library/golang/issues/472
 ENV GOTOOLCHAIN=local
-
 ENV GOPATH /go
 ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
-# (see notes above about "COPY --link")
 COPY --from=build --link /target/ /
 RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 1777 "$GOPATH"

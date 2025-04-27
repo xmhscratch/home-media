@@ -1,0 +1,13 @@
+xorg-server
+xorg-server-common
+xinit
+mesa-dri-gallium
+libdrm
+xf86-video-nouveau
+xf86-input-libinput
+libxcb
+xcb-util-cursor
+libxcursor
+xcb-util-cursor
+xdg-utils
+arandr

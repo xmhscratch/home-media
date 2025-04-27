@@ -1,30 +1,6 @@
-# # build stage
-# FROM localhost:5000/sysenv:latest AS builder
-
-# WORKDIR /export/
-
-# ENV GOOS linux
-# ENV GOARCH amd64
-# ENV CGO_ENABLED 0 
-
-# # build
-# go get -d -v ./...; \
-# go install -v ./...; \
-# go mod vendor; \
-# go build -ldflags="-s -w" -mod=vendor -o /go/bin/api ./cmd/api/main.go; \
-# go build -ldflags="-s -w" -mod=vendor -o /go/bin/downloader ./cmd/downloader/main.go; \
-# go build -ldflags="-s -w" -mod=vendor -o /go/bin/encoder ./cmd/encoder/main.go; \
-# go build -ldflags="-s -w" -mod=vendor -o /go/bin/file ./cmd/file/main.go; \
-# # build
-# npm install; \
-# npm run client:build; \
-# npm run backend:build; \
-
 # final stage
 FROM localhost:5000/sysenv:latest
-
 WORKDIR /export/
-
 ENV GO_ENV development
 ENV GIN_MODE debug
 ENV CC=/usr/bin/gcc
@@ -37,7 +13,6 @@ ENV LD_LIBRARY_PATH=/usr/lib:/usr/lib64:$LD_LIBRARY_PATH
 ENV CGO_LDFLAGS="-L/usr/lib64"
 ENV CGO_CFLAGS="-I/usr/include/ffmpeg"
 ENV PKG_CONFIG_PATH="/usr/lib64/pkgconfig:$PKG_CONFIG_PATH"
-
 COPY \
     .env \
     .browserslistrc \
@@ -55,7 +30,6 @@ COPY \
     tsconfig.spec.json \
     /export/
 COPY ci/*.sh /export/bin/
-
 RUN \
     apk add --upgrade --no-cache --allow-untrusted --update-cache \
         --repository "http://dl-cdn.alpinelinux.org/alpine/edge/main" \
@@ -104,7 +78,6 @@ RUN \
     apk del .build-deps; \
     rm -rf /var/cache/apk/*; \
     rm -rf /tmp/*;
-
 EXPOSE 4000 4100 4110 4150 4200
 ENTRYPOINT [ "/bin/sh", "-c" ]
-# CMD [ "nohup" "/export/hms > /var/log/hms.log 2>&1 &"]
+# # CMD [ "nohup" "/export/hms > /var/log/hms.log 2>&1 &"]
