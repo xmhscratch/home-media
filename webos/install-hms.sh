@@ -183,10 +183,10 @@ install_mounted_root() {
 	init_chroot_mounts "$mnt"
 
 	printf "\n\n"
-	print_heading1 " Copying application"
-	print_heading1 "----------------------"
+	print_heading2 " Copying application"
+	print_heading2 "----------------------"
 
-	cp -vfrT /usr/sbin/hms/minikube "$mnt"/usr/bin/
+	cp -vfrT /usr/sbin/hms/minikube "$mnt"/usr/bin/minikube
 
 	local export_dir="$mnt"/home/data/dist/
 	makefile root:root 0644 "$mnt"/etc/profile.d/00-postinstall.sh <<-EOF
@@ -194,18 +194,24 @@ install_mounted_root() {
 	cat /usr/sbin/postinstall-hms.sh >>"$mnt"/etc/profile.d/00-postinstall.sh
 
 	mkdir -pv $export_dir
-	cp -vfr /usr/sbin/hms/app/* $export_dir
 	for exe in \
 		api \
 		downloader \
 		encoder \
-		file; do
-		cp -vfrT /usr/sbin/hms/$exe $export_dir
+		file \
+	; do
+		cp -vfrT /usr/sbin/hms/"$exe" "$export_dir"/"$exe"
+	done
+	for dir in \
+		backend \
+		client \
+	; do
+		cp -vfr /usr/sbin/hms/"$dir"/* "$export_dir"
 	done
 
 	printf "\n\n"
-	print_heading1 " Installing packages"
-	print_heading1 "----------------------"
+	print_heading2 " Installing packages"
+	print_heading2 "----------------------"
 
 	apk add --keys-dir "$keys_dir" \
 		--repositories-file "$repositories_file" \
