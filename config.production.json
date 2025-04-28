@@ -7,7 +7,7 @@
         "password": ""
     },
     "sqlite": {
-        "path": "/export/data"
+        "path": "/export/data/"
     },
     "endpoint": {
         "backend": "backend.hms:4100",
@@ -16,7 +16,7 @@
         "frontend": "frontend.hms:4200"
     },
     "rootPath": "/export/",
-    "binPath": "/export/bin",
-    "tmpPath": "/export/tmp",
+    "binPath": "/export/bin/",
+    "tmpPath": "/export/tmp/",
     "dataPath": "/export/data/"
 }

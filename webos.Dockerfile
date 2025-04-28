@@ -1,14 +1,12 @@
 FROM localhost:5000/gonode:latest AS build-iso
 USER root
+ENV GIT_SSL_NO_VERIFY=false
 COPY \
     ./webos/*.sh \
     ./webos/apk-* \
     /tmp/build/
-COPY ./dist/bin/* /tmp/bin/
-COPY ./dist/app/* /tmp/app/
-# COPY --from=build-kube /export/* /tmp/bin/
-# COPY --from=build-app /export/* /tmp/app/
-ENV GIT_SSL_NO_VERIFY=false
+COPY ./dist/bin/ /tmp/bin/
+COPY ./dist/app/ /tmp/app/
 RUN apk update && apk add --no-cache \
         alpine-sdk \
         build-base \

@@ -33,14 +33,14 @@ print_heading1() {
 }
 
 print_heading2() {
-    printf "${COLWHITE}%s${COLRESET}\n" "$1"
+	printf "${COLWHITE}%s${COLRESET}\n" "$1"
 }
 
 makefile() {
 	OWNER="$1"
 	PERMS="$2"
 	FILENAME="$3"
-	cat > "$FILENAME"
+	cat >"$FILENAME"
 	chown "$OWNER" "$FILENAME"
 	chmod "$PERMS" "$FILENAME"
 }
@@ -53,10 +53,10 @@ partition_id() {
 	fi
 
 	case "$1" in
-		swap)	id=82 ;;
-		linux)	id=83 ;;
-		prep)	id=41 ;;
-		*)	die "Partition id \"$1\" is not supported!" ;;
+	swap) id=82 ;;
+	linux) id=83 ;;
+	prep) id=41 ;;
+	*) die "Partition id \"$1\" is not supported!" ;;
 	esac
 
 	echo $id
@@ -86,14 +86,14 @@ find_partitions() {
 	local dev="$1" type="$2" search=
 
 	case "$type" in
-		boot)
-			search=bootable
-			sfdisk -d "${ROOT}${dev#/}" | awk '/'$search'/ {print $1}'
-			;;
-		*)
-			search=$(partition_id "$type")
-			sfdisk -d "${ROOT}${dev#/}" | awk '/type='$search'/ {print $1}'
-			;;
+	boot)
+		search=bootable
+		sfdisk -d "${ROOT}${dev#/}" | awk '/'$search'/ {print $1}'
+		;;
+	*)
+		search=$(partition_id "$type")
+		sfdisk -d "${ROOT}${dev#/}" | awk '/type='$search'/ {print $1}'
+		;;
 	esac
 }
 
@@ -129,8 +129,7 @@ find_nth_non_boot_parts() {
 	local disks="$@"
 
 	for disk in $disks; do
-		sfdisk -d "${ROOT}${disk#/}" | grep -v "bootable" \
-			| awk "/(Id|type)=$id/ { i++; if (i==$idx) print \$1 }"
+		sfdisk -d "${ROOT}${disk#/}" | grep -v "bootable" | awk "/(Id|type)=$id/ { i++; if (i==$idx) print \$1 }"
 	done
 }
 
@@ -182,6 +181,32 @@ install_mounted_root() {
 	local keys_dir="$mnt"/etc/apk/keys
 
 	init_chroot_mounts "$mnt"
+
+	printf "\n\n"
+	print_heading1 " Copying application"
+	print_heading1 "----------------------"
+
+	cp -vfrT /usr/sbin/hms/minikube "$mnt"/usr/bin/
+
+	local export_dir="$mnt"/home/data/dist/
+	makefile root:root 0644 "$mnt"/etc/profile.d/00-postinstall.sh <<-EOF
+	EOF
+	cat /usr/sbin/postinstall-hms.sh >>"$mnt"/etc/profile.d/00-postinstall.sh
+
+	mkdir -pv $export_dir
+	cp -vfr /usr/sbin/hms/app/* $export_dir
+	for exe in \
+		api \
+		downloader \
+		encoder \
+		file; do
+		cp -vfrT /usr/sbin/hms/$exe $export_dir
+	done
+
+	printf "\n\n"
+	print_heading1 " Installing packages"
+	print_heading1 "----------------------"
+
 	apk add --keys-dir "$keys_dir" \
 		--repositories-file "$repositories_file" \
 		--no-script --root "$mnt" --arch "$arch" \
@@ -204,7 +229,7 @@ native_disk_install() {
 	setup_root $root_dev $@
 }
 
-cat >> /etc/apk/repositories <<EOF
+cat >>/etc/apk/repositories <<EOF
 https://dl-cdn.alpinelinux.org/alpine/v3.21/main
 https://dl-cdn.alpinelinux.org/alpine/v3.21/community
 EOF
@@ -213,10 +238,6 @@ if rc-service --exists networking; then
 fi
 
 printf "y" | /usr/sbin/setup-alpine -e -f /usr/sbin/env-hms-answers.sh
-
-# printf "\n\n"
-# print_heading1 " ALPINE LINUX INSTALL"
-# print_heading1 "----------------------"
 
 reset_var
 $MOCK swapoff -a

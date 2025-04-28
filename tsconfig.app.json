@@ -3,7 +3,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "./dist/client",
+    "outDir": "./dist/app/client",
     "types": [
       "node"
     ]

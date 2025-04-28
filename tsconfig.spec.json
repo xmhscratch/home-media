@@ -3,7 +3,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "./dist/client/spec",
+    "outDir": "./dist/app/client/spec",
     "types": [
       "jasmine"
     ]

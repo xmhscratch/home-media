@@ -7,7 +7,7 @@
         "password": ""
     },
     "sqlite": {
-        "path": "/home/data"
+        "path": "/home/data/"
     },
     "endpoint": {
         "backend": "192.168.56.55:4100",
@@ -15,8 +15,8 @@
         "file": "192.168.56.55:4150",
         "frontend": "192.168.56.55:4200"
     },
-    "rootPath": "/home/web/repos/home-media",
-    "binPath": "/home/web/repos/home-media/ci",
-    "tmpPath": "/home/tmp",
+    "rootPath": "/home/web/repos/home-media/",
+    "binPath": "/home/web/repos/home-media/ci/",
+    "tmpPath": "/home/tmp/",
     "dataPath": "/home/data/"
 }

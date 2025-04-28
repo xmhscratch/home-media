@@ -104,27 +104,31 @@ RUN set -eux; \
 FROM node:22-alpine3.21
 USER root
 WORKDIR /export
-COPY ["./certs", "/tmp/certs/"]
+COPY "./certs" "/tmp/certs/"
 RUN set -eux; \
-    # addgroup -g 82 -S www-data; \
-    adduser -u 82 -D -S -G www-data www-data; \
-	addgroup www-data wheel; \
-    addgroup www-data root; \
-    addgroup www-data bin; \
-    addgroup www-data daemon; \
-    addgroup www-data sys; \
-    addgroup www-data adm; \
-    addgroup www-data disk; \
-    addgroup www-data wheel; \
-    addgroup www-data floppy; \
-    addgroup www-data dialout; \
-    addgroup www-data tape; \
-    addgroup www-data video; \
-	addgroup www-data node;
-# set up nsswitch.conf for Go's "netgo" implementation
-# - https://github.com/golang/go/blob/go1.9.1/src/net/conf.go#L194-L275
-# - docker run --rm debian:stretch grep '^hosts:' /etc/nsswitch.conf
-RUN \
+    ( \
+        adduser -u 82 -D -S -G www-data www-data; \
+        for grp in \
+            wheel \
+            root \
+            bin \
+            daemon \
+            sys \
+            adm \
+            disk \
+            wheel \
+            floppy \
+            dialout \
+            tape \
+            video \
+            node \
+        ; do \
+            addgroup www-data $grp; \
+        done \
+    ); \
+    # set up nsswitch.conf for Go's "netgo" implementation
+    # - https://github.com/golang/go/blob/go1.9.1/src/net/conf.go#L194-L275
+    # - docker run --rm debian:stretch grep '^hosts:' /etc/nsswitch.conf
 	[ ! -e /etc/nsswitch.conf ] && echo 'hosts: files dns' > /etc/nsswitch.conf; \
     echo "@3.10 http://dl-cdn.alpinelinux.org/alpine/v3.10/main" >> /etc/apk/repositories; \
     echo "@3.10 http://dl-cdn.alpinelinux.org/alpine/v3.10/community" >> /etc/apk/repositories; \
@@ -142,14 +146,15 @@ RUN \
     echo "@3.16 http://dl-cdn.alpinelinux.org/alpine/v3.16/community" >> /etc/apk/repositories; \
     echo "@edge http://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories; \
     echo "@edge http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories; \
-    rm -rf /var/cache/apk/*;
-RUN \
+    rm -rf /var/cache/apk/*; \
+    \
     apk update && apk upgrade; \
     apk fix --allow-untrusted alpine-keys; \
     apk add --upgrade \
         bash \
         ca-certificates \
         msttcorefonts-installer \
+        fontconfig \
         openssh-client \
         openssl \
         openssl-dev; \
@@ -183,15 +188,6 @@ RUN \
         pkgconf-dev \
         slibtool; \
     \
-    # install certs
-    cp -rf \
-        /tmp/certs/ca1.crt \
-        /tmp/certs/ca2.crt \
-        /tmp/certs/ca3.crt \
-        /tmp/certs/ca4.crt \
-        /usr/local/share/ca-certificates/; \
-    update-ca-certificates; \
-    openssl s_client -showcerts -connect come.home-media.me:443; \
     # Google fonts
     # cd /tmp; \
     # wget --progress=bar:force:noscroll https://github.com/google/fonts/archive/master.tar.gz -O /tmp/fonts-main.tar.gz; \
@@ -202,6 +198,7 @@ RUN \
     update-ms-fonts; \
     fc-cache -fv; \
     # cleanup
+    apk del .build-deps; \
     rm -rf /var/cache/apk/*; \
     rm -rf /tmp/*;
 ENV GOLANG_VERSION 1.23.4
