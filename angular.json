@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "client": {
+    "frontend": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -11,26 +11,22 @@
         }
       },
       "root": "",
-      "sourceRoot": "src",
+      "sourceRoot": "frontend",
       "prefix": "app",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/app/client",
-            "index": "src/index.html",
-            "browser": "src/main.ts",
-            "polyfills": ["src/polyfills.ts", "zone.js"],
+            "outputPath": "dist/app/frontend",
+            "index": "frontend/index.html",
+            "browser": "frontend/main.ts",
+            "polyfills": ["frontend/polyfills.ts", "zone.js"],
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
               {
                 "glob": "**/*",
                 "input": "public"
-              },
-              {
-                "glob": "**/*.{json,png}",
-                "input": "webostv"
               }
             ],
             "styles": [
@@ -39,13 +35,13 @@
                 "inject": false,
                 "bundleName": "videojs"
               },
-              "src/styles.scss"
+              "frontend/styles.scss"
             ],
             "scripts": ["video.js/dist/video.min.js"],
-            "server": "src/main.server.ts",
+            "server": "frontend/main.server.ts",
             "prerender": false,
             "ssr": {
-              "entry": "src/server.ts"
+              "entry": "frontend/server.ts"
             },
             "define": {},
             "verbose": true
@@ -80,8 +76,8 @@
               "sourceMap": true,
               "fileReplacements": [
                 {
-                  "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.development.ts"
+                  "replace": "frontend/environments/environment.ts",
+                  "with": "frontend/environments/environment.development.ts"
                 }
               ]
             }
@@ -92,10 +88,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "client:build:production"
+              "buildTarget": "frontend:build:production"
             },
             "development": {
-              "buildTarget": "client:build:development"
+              "buildTarget": "frontend:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -115,14 +111,13 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/styles.scss"],
-            "scripts": []
+            "styles": ["frontend/styles.scss"]
           }
         },
         "lint": {
           "builder": "@angular-eslint/builder:lint",
           "options": {
-            "lintFilePatterns": ["src/**/*.ts", "src/**/*.html"]
+            "lintFilePatterns": ["frontend/**/*.ts", "frontend/**/*.html"]
           }
         }
       }

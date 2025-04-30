@@ -175,6 +175,7 @@ install_mounted_root() {
 	pkgs="$pkgs $(cat /usr/sbin/apk-docker | tr '\n' ' ')"
 	pkgs="$pkgs $(cat /usr/sbin/apk-pulseaudio | tr '\n' ' ')"
 	pkgs="$pkgs $(cat /usr/sbin/apk-chromium | tr '\n' ' ')"
+	pkgs="$pkgs $(cat /usr/sbin/apk-auth | tr '\n' ' ')"
 
 	local arch="$(apk --print-arch)"
 	local repositories_file="$mnt"/etc/apk/repositories
@@ -183,17 +184,24 @@ install_mounted_root() {
 	init_chroot_mounts "$mnt"
 
 	printf "\n\n"
+	print_heading1 " Install home media software"
+	print_heading1 "----------------------"
+
+	printf "\n\n"
 	print_heading2 " Copying application"
 	print_heading2 "----------------------"
 
 	cp -vfrT /usr/sbin/hms/minikube "$mnt"/usr/bin/minikube
 
 	local export_dir="$mnt"/home/data/dist/
-	makefile root:root 0644 "$mnt"/etc/profile.d/00-postinstall.sh <<-EOF
+	mkdir -pv "$export_dir"
+	export_dir=$(realpath "$export_dir")
+
+	makefile root:wheel 0644 "$mnt"/etc/profile.d/00-postinstall.sh <<-EOF
 	EOF
 	cat /usr/sbin/postinstall-hms.sh >>"$mnt"/etc/profile.d/00-postinstall.sh
+	chmod u+x "$mnt"/etc/profile.d/00-postinstall.sh
 
-	mkdir -pv $export_dir
 	for exe in \
 		api \
 		downloader \
@@ -204,9 +212,9 @@ install_mounted_root() {
 	done
 	for dir in \
 		backend \
-		client \
+		frontend \
 	; do
-		cp -vfr /usr/sbin/hms/"$dir"/* "$export_dir"
+		cp -vfr /usr/sbin/hms/"$dir"/* "$export_dir"/"$dir"
 	done
 
 	printf "\n\n"
@@ -215,7 +223,7 @@ install_mounted_root() {
 
 	apk add --keys-dir "$keys_dir" \
 		--repositories-file "$repositories_file" \
-		--no-script --root "$mnt" --arch "$arch" \
+		--root "$mnt" --arch "$arch" \
 		$apkflags $pkgs
 	local ret=$?
 	cleanup_chroot_mounts "$mnt"
@@ -235,10 +243,6 @@ native_disk_install() {
 	setup_root $root_dev $@
 }
 
-cat >>/etc/apk/repositories <<EOF
-https://dl-cdn.alpinelinux.org/alpine/v3.21/main
-https://dl-cdn.alpinelinux.org/alpine/v3.21/community
-EOF
 if rc-service --exists networking; then
 	rc-service networking --quiet restart
 fi

@@ -1,0 +1,19 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "outDir": "./dist/app/backend",
+        "typeRoots": ["./node_modules/@types", "./backend/types"],
+        "types": ["node", "lodash-es", "jest"],
+    },
+    "files": [
+        "backend/app.config.ts",
+        "backend/app.controller.ts",
+        "backend/app.module.ts",
+        "backend/app.service.ts",
+        "backend/main.ts"
+    ],
+    "include": [
+        "backend/**/*.d.ts",
+        "backend/**/*.spec.ts"
+    ]
+}

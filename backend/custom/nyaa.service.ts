@@ -1,4 +1,4 @@
-import { Injectable, Scope, OnModuleInit, OnModuleDestroy, ConsoleLogger } from '@nestjs/common';
+import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 
 import { map, pick, join } from 'lodash-es';
 import Parser from 'rss-parser';
@@ -62,10 +62,10 @@ export class NyaaService implements OnModuleInit, OnModuleDestroy {
 
     async onModuleDestroy(): Promise<void> { }
 
-    async importItems(rootId: string, label: string, query: string): Promise<object> {
+    async importItems(rootId: string, _label: string, query: string): Promise<object> {
         const items = await this.fetchItems(query)
 
-        const metaItems = map(items, (i: ExNyaaItem, k): ExTreeMetaNode => {
+        const metaItems = map(items, (i: ExNyaaItem, _k: number): ExTreeMetaNode => {
             const { id, seeders, leechers, size, trusted } = i
             const { title, createdDate, dataSource, dataSourceType } = i
 
@@ -117,7 +117,7 @@ export class NyaaService implements OnModuleInit, OnModuleDestroy {
         const t1 = map(items, (i: NyaaItem) => pick(i, [
             'title', 'seeders', 'leechers', 'infoHash', 'size', 'trusted', 'isoDate'
         ]))
-        const t2 = map(t1, (v, k): ExNyaaItem => {
+        const t2 = map(t1, (v: NyaaItem, _k: number): ExNyaaItem => {
             const {
                 infoHash,
                 title, seeders, leechers,
@@ -164,7 +164,7 @@ export class NyaaService implements OnModuleInit, OnModuleDestroy {
             })
 
             const cleanIds = []
-            const targetIds: string[] = map(stmt.all(), (v) => v['id'])
+            const targetIds: string[] = map(stmt.all(), (v: never) => v['id'])
 
             for (let targetId of targetIds) {
                 await tree.delete(targetId)

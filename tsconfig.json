@@ -3,7 +3,7 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    "outDir": "./dist/app/client",
+    "outDir": "./dist/app/frontend",
     "strict": true,
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
@@ -31,10 +31,10 @@
       "ES2022.RegExp",
       "DOM"
     ],
-    "typeRoots": ["./node_modules/@types", "./src/types"],
+    "typeRoots": ["./node_modules/@types", "./frontend/types"],
 		"types": ["node", "lodash-es", "sql.js", "jest"],
     "paths": {
-      "@/*": ["./src/app/*"]
+      "@/*": ["./frontend/app/*"]
     },
   },
   "angularCompilerOptions": {

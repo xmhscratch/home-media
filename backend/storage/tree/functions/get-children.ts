@@ -12,6 +12,7 @@ import {
     ITreeArgs,
     ITreeFuncContext,
     ITreeFuncResult,
+    TreePlainNode,
 } from '../tree.d'
 
 export default (context: ITree<ITreeArgs>): ITreeFuncContext => {
@@ -94,7 +95,7 @@ export default (context: ITree<ITreeArgs>): ITreeFuncContext => {
         // }
         // stmt.free()
 
-        return map(results, (o) => omit(o, 'nodeLevel'))
+        return map(results, (o: TreePlainNode) => omit(o, 'nodeLevel'))
     }
 }
 

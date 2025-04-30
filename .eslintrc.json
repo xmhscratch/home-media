@@ -3,7 +3,7 @@
   "ignorePatterns": ["node_modules/**/*"],
   "overrides": [
     {
-      "files": ["src/app/*.ts"],
+      "files": ["frontend/app/*.ts"],
       "extends": [
         "eslint:recommended",
         "plugin:@typescript-eslint/recommended",

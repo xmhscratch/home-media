@@ -102,11 +102,11 @@ export class Tree implements ITree<ITreeArgs> {
         // fnResult = invokeFn(...fnArgs)
         const fnKeyGetter = (...fnArgs: unknown[]): any => !isEmpty(fnArgs) ? `${fnName}_${hashObject(fnArgs)}` : fnName
         if (!has(this._memoizer, `${fnKeyGetter(fnArgs)}`)) {
-            this._memoizer[`${fnKeyGetter(fnArgs)}`] = memoize<any>(invokeFn, fnKeyGetter)
+            this._memoizer[`${fnKeyGetter(fnArgs)}`] = memoize(invokeFn, fnKeyGetter)
         }
 
         if ((new RegExp(`^(${join(Tree.MODIFIER_FUNCTIONS, '|')})$`, 'g')).test(fnName)) {
-            forEach(this._memoizer, (v, k) => {
+            forEach(this._memoizer, (_v: object, k: string) => {
                 if (has(this._memoizer, k)) {
                     this._memoizer[k].cache.clear()
                 }

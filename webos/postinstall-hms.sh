@@ -28,15 +28,15 @@ setup_user() {
 		hms ALL=(ALL) NOPASSWD: ALL
 	EOF
 
-	makefile root:root 0644 /usr/sbin/autologin <<-EOF
+	makefile root:root 0755 /usr/sbin/autologin <<-EOF
 		#!/bin/sh
 		exec login -f hms
 	EOF
-
 	chmod +x /usr/sbin/autologin
+
 	sed -i 's@:respawn:/sbin/getty@:respawn:/sbin/getty -n -l /usr/sbin/autologin@g' /etc/inittab
 
-	for i in \
+	for grp in \
 		bin \
 		daemon \
 		sys \
@@ -61,12 +61,14 @@ setup_user() {
 		seat \
 		avahi \
 		pulse-access \
-		pulse; do
+		pulse
+	; do
 		in_group=0
-		for j in $(grep -E '^'$1':' /etc/group | sed -e 's/^.*://' | tr ',' ' '); do
+		[[ ! -z $(grep -E '^'$grp':' /etc/group) ]] || continue
+		for j in $(grep -E '^'$grp':' /etc/group | sed -e 's/^.*://' | tr ',' ' '); do
 			if [ $j == "hms" ]; then in_group=1; fi
 		done
-		if [ $in_group -eq 0 ]; then adduser hms $i; fi
+		if [ $in_group -eq 0 ]; then adduser hms $grp; fi
 	done
 }
 
@@ -74,69 +76,84 @@ cfg_xorg() {
 	[[ -z $(rc-status -q boot | grep dbus) ]] && rc_add dbus boot
 	[[ -z $(rc-status -q boot | grep seatd) ]] && rc_add seatd boot
 
+	mkdir -pv /etc/conf.d/
 	mkdir -pv /etc/X11/xinit/
 
+	makefile root:wheel 0644 /etc/conf.d/dbus <<-EOF
+	command_args="--system --nofork --nopidfile --syslog-only \${command_args:-}"
+	EOF
+
 	# linuxfb, wayland, eglfs, xcb, wayland-egl, minimalegl, minimal, offscreen, vkkhrdisplay, vnc
-	makefile root:root 0644 /etc/profile.d/01-default.sh <<-EOF
+	makefile root:wheel 0755 /etc/profile.d/01-default.sh <<-EOF
 	export DISPLAY=:20 
 	export QT_QPA_PLATFORM=xcb
 	export XDG_SESSION_TYPE=x11
 	export WLR_BACKENDS=x11
 	export XDG_RUNTIME_DIR=/var/run/user/\$(id -u)
 	export XDG_VTNR=1
-	[ -z \$XDG_RUNTIME_DIR ] || mkdir -p \$XDG_RUNTIME_DIR;
-	if [[ -z \$XDG_RUNTIME_DIR ]]; then
-		chmod 700 \$XDG_RUNTIME_DIR;
-		chown \$(id -un):\$(id -gn) \$XDG_RUNTIME_DIR;
-	fi
 	export \$(dbus-launch)
 	EOF
 
-	makefile root:root 0644 /etc/X11/xinit/xserverrc <<-EOF
+	makefile root:wheel 0755 /etc/X11/xinit/xserverrc <<-EOF
 	#!/bin/sh
 	exec /usr/bin/X \$DISPLAY -config /etc/X11/xorg.conf -keeptty -nolisten tcp -novtswitch "\$@" vt\$XDG_VTNR
 	EOF
 
-	makefile root:root 0644 /etc/X11/Xwrapper.config <<-EOF
+	makefile root:wheel 0644 /etc/X11/Xwrapper.config <<-EOF
 	needs_root_rights = no
 	allowed_users = anybody
 	EOF
 
-	makefile root:root 0644 /home/hms/.profile <<-EOF
-	dbus-update-activation-environment DISPLAY XDG_CURRENT_DESKTOP XCURSOR_SIZE XCURSOR_THEME
-	if [ -n "\$DISPLAY" ] && [ "\$XDG_VTNR" -eq 1 ]; then
-		startx ~/.xinitrc
-	fi
-	EOF
-
-	makefile root:root 0644 /home/hms/.xsession <<-EOF
-	#!/bin/sh
-	xinit ~/.xinitrc
-	EOF
-
-	makefile root:root 0644 /home/hms/.xinitrc <<-EOF
-	#!/bin/sh
-	exec dbus-launch --sh-syntax --exit-with-session chromium \
-		--app=https://www.youtube.com/ \
-		--no-sandbox \
-		--kiosk \
-		--start-fullscreen \
-		--enable-features=UseOzonePlatform \
-		--ozone-platform=x11 \
-		--enable-unsafe-swiftshader \
-		--enable-features=Vulkan,webgpu;
-	EOF
-
 	Xorg :20 -depth 16 -nolisten tcp -configure
-	makefile root:root 0644 /etc/X11/xorg.conf <<-EOF
+	makefile root:wheel 0644 /etc/X11/xorg.conf <<-EOF
 	EOF
 	cat ~/xorg.conf.new > /etc/X11/xorg.conf
+
+	for usr in \
+		root \
+		hms \
+	; do
+		local usr_home_dir=$(getent passwd "$usr" | cut -d: -f6)
+		local xdg_runtime_dir=/var/run/user/"$(id -u $usr)"
+
+		if [ -z $xdg_runtime_dir ]; then
+			mkdir -pv $xdg_runtime_dir
+
+			chmod 700 $xdg_runtime_dir;
+			chown $(id -un $usr):$(id -gn $usr) $xdg_runtime_dir;
+		fi
+
+		makefile root:wheel 0755 "$usr_home_dir"/.profile <<-EOF
+		dbus-update-activation-environment DISPLAY XDG_CURRENT_DESKTOP XCURSOR_SIZE XCURSOR_THEME
+		if [ -n "\$DISPLAY" ] && [ "\$XDG_VTNR" -eq 1 ]; then
+			startx ~/.xinitrc
+		fi
+		EOF
+
+		makefile root:wheel 0755 "$usr_home_dir"/.xsession <<-EOF
+		#!/bin/sh
+		xinit ~/.xinitrc
+		EOF
+
+		makefile root:wheel 0755 "$usr_home_dir"/.xinitrc <<-EOF
+		#!/bin/sh
+		exec dbus-launch --sh-syntax --exit-with-session chromium \
+			--app=https://www.youtube.com/ \
+			--no-sandbox \
+			--kiosk \
+			--start-fullscreen \
+			--enable-features=UseOzonePlatform \
+			--ozone-platform=x11 \
+			--enable-unsafe-swiftshader \
+			--enable-features=Vulkan,webgpu;
+		EOF
+	done
 }
 
 cfg_k8s_cluster() {
 	[[ -z $(rc-status -q default | grep docker) ]] && rc_add docker default
 
-	makefile root:root 0644 /etc/init.d/minikube <<-EOF
+	makefile root:wheel 0755 /etc/init.d/minikube <<-EOF
 	#!/sbin/openrc-run
 
 	name="Minikube Cluster"
@@ -197,34 +214,31 @@ cfg_k8s_cluster() {
 		minikube addons enable ingress-dns
 	fi
 
-	local app_dir="/home/data/dist/"
-	kubectl apply -f $app_dir/ci/
+	local app_dir=$(realpath "/home/data/dist/")
+	kubectl apply -f "$app_dir"/ci/
 }
 
 cfg_misc() {
 	[[ -z $(rc-status -q boot | grep chrony) ]] && rc_add chrony boot
+	local ntp_srvname=pool.ntp.org
+	local ntp_srvip=$(getent ahosts $ntp_srvname | head -n 1 | cut -d"STREAM $ntp_srvname" -f1)
+	sed -i "s@$ntp_srvname@$ntp_srvip@g" /etc/chrony/chrony.conf
+	sed -i "s@iburst@iburst offline@g" /etc/chrony/chrony.conf
 
-	mkdir -pv /etc/conf.d/
-
-	makefile root:root 0644 /etc/conf.d/pulseaudio <<-EOF
+	makefile root:wheel 0644 /etc/conf.d/pulseaudio <<-EOF
 	EOF
 	cat /etc/conf.d/pulseaudio >/etc/conf.d/pulseaudio
 	cat >>/etc/conf.d/pulseaudio <<-EOF
 	PULSEAUDIO_SHOULD_NOT_GO_SYSTEMWIDE=1
 	EOF
-
-	makefile root:root 0644 /etc/conf.d/dbus <<-EOF
-	command_args="--system --nofork --nopidfile --syslog-only \${command_args:-}"
-	EOF
-
 	[[ -z $(rc-status -q default | grep pulseaudio) ]] && rc_add pulseaudio default
 }
 
-[ -f "/home/.renovated" ] || exit 1
+# [ -f "/home/.renovated" ] || exit 1
 
-setup_user()
-cfg_xorg()
-cfg_k8s_cluster()
-cfg_misc()
+# setup_user
+# cfg_xorg
+# cfg_k8s_cluster
+# cfg_misc
 
-touch /home/.renovated
+# touch /home/.renovated

@@ -44,14 +44,14 @@ export default (context: ITree<ITreeArgs>): ITreeFuncContext => {
             dataSource: SqlValue,
             dataSourceType: SqlValue,
         } = {
-            nodeId: <SqlValue>metaItem.id,
-            rootId: <SqlValue>metaItem.root,
-            title: <SqlValue>metaItem.title,
-            description: <SqlValue>metaItem.description,
-            createdDate: <SqlValue>metaItem.createdDate || (new Date()).toISOString(),
-            modifiedDate: <SqlValue>metaItem.modifiedDate,
-            dataSource: <SqlValue>metaItem.dataSource,
-            dataSourceType: <SqlValue>metaItem.dataSourceType || 0,
+            nodeId: <SqlValue>metaItem!.id,
+            rootId: <SqlValue>metaItem!.root,
+            title: <SqlValue>metaItem!.title,
+            description: <SqlValue>metaItem!.description,
+            createdDate: <SqlValue>metaItem!.createdDate || (new Date()).toISOString(),
+            modifiedDate: <SqlValue>metaItem!.modifiedDate,
+            dataSource: <SqlValue>metaItem!.dataSource,
+            dataSourceType: <SqlValue>metaItem!.dataSourceType || 0,
         }
         stmt.bind(params)
         stmt.run()

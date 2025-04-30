@@ -3,19 +3,19 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "./dist/app/client",
+    "outDir": "./dist/app/frontend",
     "types": [
       "node"
     ]
   },
   "files": [
-    "src/main.ts",
-    "src/main.server.ts",
-    "src/polyfills.ts",
-    "src/server.ts"
+    "frontend/main.ts",
+    "frontend/main.server.ts",
+    "frontend/polyfills.ts",
+    "frontend/server.ts"
   ],
   "include": [
-    "src/**/*.d.ts",
-    "src/polyfills/*.ts"
+    "frontend/**/*.d.ts",
+    "frontend/polyfills/*.ts"
   ]
 }

@@ -22,7 +22,7 @@ import { StorageService } from '@/storage.service';
   standalone: true,
   imports: [
     NgIf,
-    NgClass,
+    // NgClass,
     RouterModule,
     Breadcrumb,
     MessageModule,
