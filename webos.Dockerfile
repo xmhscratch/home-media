@@ -1,38 +1,22 @@
-FROM localhost:5000/gonode:latest AS build-iso
+FROM localhost:5000/gonode-build:latest AS build-iso
 USER root
 ENV GIT_SSL_NO_VERIFY=false
+ENV ARCH=x86_64
 COPY \
     ./webos/*.sh \
     ./webos/apk-* \
+    ./webos/packages.txt \
     /tmp/build/
 COPY ./dist/bin/ /tmp/bin/
 COPY ./dist/app/ /tmp/app/
-RUN apk update && apk add --no-cache \
-        alpine-sdk \
-        build-base \
-        apk-tools \
-        alpine-conf \
-        ca-certificates \
-        busybox \
-        fakeroot \
-        xorriso \
-        squashfs-tools \
-        sudo \
-        mtools \
-        dosfstools \
-        grub-efi; \
-    \
-    apk add --no-cache \
-        python3 \
-        py3-pylspci \
-        xorg-server; \
-    \
-    # asdasd
+COPY ./.apks/ /tmp/apks/
+RUN \
+    ###########
     addgroup root abuild; \
     mkdir -pv $HOME/.mkimage/; \
     mkdir -pv /export/iso/; \
-    mkdir -pv $HOME/tmp/;
-RUN \
+    mkdir -pv $HOME/tmp/; \
+    \
     abuild-keygen -i -a -n; \
     ###########
     cd $HOME/.mkimage/; \
@@ -50,7 +34,27 @@ RUN \
         $APORTS/scripts/genapkovl-hms.sh \
         $APORTS/scripts/mkimg.hms.sh; \
     \
-    apk add --no-cache \
+    archdir="/tmp/apks/$ARCH"; \
+    mkdir -pv "$archdir"; \
+    apk update; \
+    \
+    pkgs=$(cat /tmp/build/packages.txt | tr '\n' ' '); \
+    apk fetch --link --recursive --output "$archdir" $pkgs; \
+    if [[ $(find "$archdir"/*.apk -type f | wc -l) -gt 0 ]]; then \
+        apk index \
+            --allow-untrusted \
+            --repository /tmp/apks/ \
+            --rewrite-arch "$ARCH" \
+            --index "$archdir"/APKINDEX.tar.gz \
+            --output "$archdir"/APKINDEX.tar.gz \
+            "$archdir"/*.apk; \
+        abuild-sign "$archdir"/APKINDEX.tar.gz; \
+    fi; \
+    echo "/tmp/apks/" > /etc/apk/repositories; \
+    apk update --allow-untrusted; \
+    apk fix --upgrade --allow-untrusted alpine-keys; \
+    \
+    apk add \
         pulseaudio \
         xorg-server \
         dbus \
@@ -59,7 +63,7 @@ RUN \
     $APORTS/scripts/mkimage.sh \
         --tag v3.21 \
         --outdir /export/iso/ \
-        --arch x86_64 \
+        --arch $ARCH \
         --repository https://dl-cdn.alpinelinux.org/alpine/v3.21/main/ \
         --repository https://dl-cdn.alpinelinux.org/alpine/v3.21/community/ \
         --profile hms;

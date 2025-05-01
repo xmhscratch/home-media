@@ -96,8 +96,17 @@ vendor/
 public/**/*
 package-lock.json
 **/tmp
+.apks/
 
 #yocto
 **/cache
 **/build/downloads
 **/build/sstate-cache
+
+# altium
+**/*.LOG
+**/*.*.Zip
+**/*.SchDocPreview
+**/*.SchDoc
+**/*.PrjPcb
+**/*.DsnWrk

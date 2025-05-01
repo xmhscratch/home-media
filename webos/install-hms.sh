@@ -214,6 +214,7 @@ install_mounted_root() {
 		backend \
 		frontend \
 	; do
+		mkdir -pv "$export_dir"/"$dir"
 		cp -vfr /usr/sbin/hms/"$dir"/* "$export_dir"/"$dir"
 	done
 

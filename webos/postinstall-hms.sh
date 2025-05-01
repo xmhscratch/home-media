@@ -61,7 +61,7 @@ setup_user() {
 		seat \
 		avahi \
 		pulse-access \
-		pulse
+		pulse \
 	; do
 		in_group=0
 		[[ ! -z $(grep -E '^'$grp':' /etc/group) ]] || continue
@@ -114,17 +114,18 @@ cfg_xorg() {
 		hms \
 	; do
 		local usr_home_dir=$(getent passwd "$usr" | cut -d: -f6)
-		local xdg_runtime_dir=/var/run/user/"$(id -u $usr)"
-
-		if [ -z $xdg_runtime_dir ]; then
-			mkdir -pv $xdg_runtime_dir
-
-			chmod 700 $xdg_runtime_dir;
-			chown $(id -un $usr):$(id -gn $usr) $xdg_runtime_dir;
-		fi
 
 		makefile root:wheel 0755 "$usr_home_dir"/.profile <<-EOF
-		dbus-update-activation-environment DISPLAY XDG_CURRENT_DESKTOP XCURSOR_SIZE XCURSOR_THEME
+		#!/bin/sh
+		if [ ! -d \$XDG_RUNTIME_DIR ]; then
+			sudo mkdir -pv \$XDG_RUNTIME_DIR;
+
+			sudo chmod 700 \$XDG_RUNTIME_DIR;
+			sudo chown \$(id -un):\$(id -gn) \$XDG_RUNTIME_DIR;
+		fi
+
+		dbus-update-activation-environment DISPLAY XDG_CURRENT_DESKTOP XCURSOR_SIZE XCURSOR_THEME;
+
 		if [ -n "\$DISPLAY" ] && [ "\$XDG_VTNR" -eq 1 ]; then
 			startx ~/.xinitrc
 		fi
@@ -234,11 +235,11 @@ cfg_misc() {
 	[[ -z $(rc-status -q default | grep pulseaudio) ]] && rc_add pulseaudio default
 }
 
-# [ -f "/home/.renovated" ] || exit 1
+[ -f "/home/.renovated" ] || exit 1
 
-# setup_user
-# cfg_xorg
+setup_user
+cfg_xorg
+cfg_misc
 # cfg_k8s_cluster
-# cfg_misc
 
-# touch /home/.renovated
+touch /home/.renovated
