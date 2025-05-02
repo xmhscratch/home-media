@@ -182,6 +182,30 @@ install_mounted_root() {
 	local keys_dir="$mnt"/etc/apk/keys
 
 	init_chroot_mounts "$mnt"
+	setup_app "$mnt"
+	setup_user "$mnt"
+	cfg_xorg "$mnt"
+	cfg_misc "$mnt"
+	cleanup_chroot_mounts "$mnt"
+	return $ret
+}
+
+native_disk_install() {
+	local root_part_type="$(partition_id linux)"
+	local root_dev=
+	init_progs $(select_bootloader_pkg) || return 1
+
+	$MOCK mdev -s
+
+	local index=1
+	root_dev=$(find_nth_non_boot_parts $index "$root_part_type" $@)
+
+	setup_root $root_dev $@
+}
+
+setup_app() {
+	local mnt="$1"
+	shift 1
 
 	printf "\n\n"
 	print_heading1 " Install home media software"
@@ -196,11 +220,6 @@ install_mounted_root() {
 	local export_dir="$mnt"/home/data/dist/
 	mkdir -pv "$export_dir"
 	export_dir=$(realpath "$export_dir")
-
-	makefile root:wheel 0644 "$mnt"/etc/profile.d/00-postinstall.sh <<-EOF
-	EOF
-	cat /usr/sbin/postinstall-hms.sh >>"$mnt"/etc/profile.d/00-postinstall.sh
-	chmod u+x "$mnt"/etc/profile.d/00-postinstall.sh
 
 	for exe in \
 		api \
@@ -227,21 +246,126 @@ install_mounted_root() {
 		--root "$mnt" --arch "$arch" \
 		$apkflags $pkgs
 	local ret=$?
-	cleanup_chroot_mounts "$mnt"
-	return $ret
 }
 
-native_disk_install() {
-	local root_part_type="$(partition_id linux)"
-	local root_dev=
-	init_progs $(select_bootloader_pkg) || return 1
+setup_user() {
+	local mnt="$1"
+	shift
 
-	$MOCK mdev -s
+	if [[ -z $( id "hms" &>/dev/null ) ]]; then
+		$MOCK adduser -D "hms" &>/dev/null
+	fi
 
-	local index=1
-	root_dev=$(find_nth_non_boot_parts $index "$root_part_type" $@)
+	$MOCK passwd -d hms
+	mkdir -pv "$mnt"/etc/sudoers.d/
 
-	setup_root $root_dev $@
+	makefile root:root 0440 "$mnt"/etc/sudoers.d/hms <<-EOF
+		hms ALL=(ALL) NOPASSWD: ALL
+	EOF
+
+	makefile root:root 0755 "$mnt"/usr/sbin/autologin <<-EOF
+		#!/bin/sh
+		exec login -f hms
+	EOF
+	chmod +x "$mnt"/usr/sbin/autologin
+
+	if [[ -z $(awk '/^:respawn:\/sbin\/getty -n -l \/usr\/sbin\/autologin/' "$mnt"/etc/inittab) ]] || [ $# -gt 0 ]; then
+		sed -i 's@:respawn:/sbin/getty@:respawn:/sbin/getty -n -l /usr/sbin/autologin@g' "$mnt"/etc/inittab
+	fi
+}
+
+cfg_xorg() {
+	local mnt="$1"
+	shift
+
+	mkdir -pv "$mnt"/etc/conf.d/
+	mkdir -pv "$mnt"/etc/X11/xinit/
+
+	makefile root:wheel 0644 "$mnt"/etc/conf.d/dbus <<-EOF
+	command_args="--system --nofork --nopidfile --syslog-only \${command_args:-}"
+	EOF
+
+	# linuxfb, wayland, eglfs, xcb, wayland-egl, minimalegl, minimal, offscreen, vkkhrdisplay, vnc
+	makefile root:wheel 0755 "$mnt"/etc/profile.d/01-default.sh <<-EOF
+	#!/bin/sh
+	export DISPLAY=:20 
+	export QT_QPA_PLATFORM=xcb
+	export WLR_BACKENDS=x11
+	export XDG_SESSION_TYPE=x11
+	export XDG_VTNR=1
+	export XDG_RUNTIME_DIR=/var/run/user/\$(id -u)
+	if [ ! -d \$XDG_RUNTIME_DIR ]; then
+		sudo mkdir -pv \$XDG_RUNTIME_DIR;
+
+		sudo chmod 0700 \$XDG_RUNTIME_DIR;
+		sudo chown \$(id -un):\$(id -gn) \$XDG_RUNTIME_DIR;
+	fi
+	export \$(dbus-launch)
+	EOF
+
+	makefile root:wheel 0755 "$mnt"/etc/X11/xinit/xserverrc <<-EOF
+	#!/bin/sh
+	exec /usr/bin/X \$DISPLAY -config /etc/X11/xorg.conf -nolisten tcp -novtswitch "\$@" vt\$XDG_VTNR
+	EOF
+
+	makefile root:wheel 0644 "$mnt"/etc/X11/Xwrapper.config <<-EOF
+	needs_root_rights = no
+	allowed_users = anybody
+	EOF
+
+	for usr in \
+		root \
+		hms \
+	; do
+		local usr_home_dir=$(getent passwd "$usr" | cut -d: -f6)
+
+		makefile root:wheel 0770 "$mnt"/"$usr_home_dir"/postinstall.sh <<-EOF
+		EOF
+		cat /usr/sbin/postinstall-hms.sh > "$mnt"/"$usr_home_dir"/postinstall.sh
+
+		makefile root:wheel 0755 "$mnt"/"$usr_home_dir"/.profile <<-EOF
+		#!/bin/sh
+		. ~/postinstall.sh
+
+		dbus-update-activation-environment DISPLAY QT_QPA_PLATFORM WLR_BACKENDS XDG_SESSION_TYPE XDG_VTNR XDG_RUNTIME_DIR XDG_CURRENT_DESKTOP XCURSOR_SIZE XCURSOR_THEME;
+		if [ -n "\$DISPLAY" ] && [ "\$XDG_VTNR" -eq 1 ]; then
+			sudo xinit ~/.xinitrc
+		fi
+		EOF
+
+		makefile root:wheel 0755 "$mnt"/"$usr_home_dir"/.xinitrc <<-EOF
+		#!/bin/sh
+		exec dbus-launch --sh-syntax --exit-with-session chromium \
+			--app=https://www.youtube.com/ \
+			--no-sandbox \
+			--kiosk \
+			--start-fullscreen \
+			--enable-features=UseOzonePlatform \
+			--ozone-platform=x11 \
+			--enable-unsafe-swiftshader \
+			--enable-features=Vulkan,webgpu;
+		EOF
+	done
+}
+
+cfg_misc() {
+	local mnt="$1"
+	shift
+
+	local ntp_srvname=pool.ntp.org
+	local ntp_srvip=$(getent ahosts $ntp_srvname | head -n 1 | cut -d"STREAM $ntp_srvname" -f1)
+	sed -i "s@$ntp_srvname@$ntp_srvip@g" "$mnt"/etc/chrony/chrony.conf
+
+	makefile root:wheel 0644 "$mnt"/etc/conf.d/pulseaudio <<-EOF
+	# Config file for /etc/init.d/pulseaudio
+	# \$Header: /var/cvsroot/gentoo-x86/media-sound/pulseaudio/files/pulseaudio.conf.d,v 1.6 2006/07/29 15:34:18 flameeyes Exp \$
+
+	# For more see "pulseaudio -h".
+
+	# Startup options
+	PA_OPTS="--log-target=syslog --disallow-module-loading=1"
+	PULSEAUDIO_SHOULD_NOT_GO_SYSTEMWIDE=1
+	EOF
 }
 
 if rc-service --exists networking; then

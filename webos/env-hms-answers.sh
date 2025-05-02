@@ -34,7 +34,7 @@ PROXYOPTS=none
 APKREPOSOPTS="-c -1"
 
 # Create admin user
-USEROPTS="-a -u -g audio,input,video,netdev hms"
+USEROPTS="-a -u -g wheel,audio,input,video,netdev hms"
 
 # Install Openssh
 SSHDOPTS=openssh
