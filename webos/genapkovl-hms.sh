@@ -59,15 +59,20 @@ cp -vrf \
 	/tmp/build/postinstall-hms.sh \
 	"$tmp"/usr/sbin/; \
 \
-cp -vrf /tmp/app/* "$tmp"/usr/sbin/hms/
-cp -vf /tmp/bin/minikube "$tmp"/usr/sbin/hms/minikube
+cp -vrf \
+	/tmp/app/* \
+	/tmp/build/cri-docker.service \
+	/tmp/build/cri-docker.socket \
+	"$tmp"/usr/sbin/hms/; \
+\
+
+cp -vrfT /tmp/bin/minikube "$tmp"/usr/sbin/hms/minikube;
+cp -vrfT /tmp/bin/cri-dockerd "$tmp"/usr/sbin/hms/cri-dockerd;
 
 chmod +x \
 	"$tmp"/usr/sbin/env-hms-answers.sh \
 	"$tmp"/usr/sbin/install-hms.sh \
-	"$tmp"/usr/sbin/postinstall-hms.sh; \
-\
-chmod +x "$tmp"/usr/sbin/hms/minikube
+	"$tmp"/usr/sbin/postinstall-hms.sh;
 ###########
 
 rc_add devfs sysinit

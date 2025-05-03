@@ -1,0 +1,30 @@
+#!/sbin/openrc-run
+
+description="CRI Docker Socket for the API"
+
+socket_path="${CRI_DOCKERD_SOCK:-/var/run/user/$(id -u)/${RC_SVCNAME}}"
+socket_user="${CRI_DOCKERD_USER:-$(id -un)}"
+socket_group="${CRI_DOCKERD_USER:-docker}"
+socket_mode="0660"
+
+depend() {
+    provide cri-docker-socket
+}
+
+start() {
+    ebegin "Creating CRI dockerd socket"
+    checkpath --file --mode $socket_mode --owner $socket_user:$socket_group "$socket_path"
+    # Ensure no leftover socket
+    if [ -S "$socket_path" ]; then
+        rm -f "$socket_path"
+    fi
+    # Create socket file
+    install -m $socket_mode -o $socket_user -g $socket_group /dev/null "$socket_path"
+    eend $?
+}
+
+stop() {
+    ebegin "Removing CRI dockerd socket"
+    rm -f "$socket_path"
+    eend $?
+}

@@ -172,6 +172,7 @@ install_mounted_root() {
 	local pkgs=
 
 	pkgs="$pkgs $(cat /usr/sbin/apk-xorg | tr '\n' ' ')"
+	pkgs="$pkgs $(cat /usr/sbin/apk-font | tr '\n' ' ')"
 	pkgs="$pkgs $(cat /usr/sbin/apk-docker | tr '\n' ' ')"
 	pkgs="$pkgs $(cat /usr/sbin/apk-pulseaudio | tr '\n' ' ')"
 	pkgs="$pkgs $(cat /usr/sbin/apk-chromium | tr '\n' ' ')"
@@ -215,8 +216,6 @@ setup_app() {
 	print_heading2 " Copying application"
 	print_heading2 "----------------------"
 
-	cp -vfrT /usr/sbin/hms/minikube "$mnt"/usr/bin/minikube
-
 	local export_dir="$mnt"/home/data/dist/
 	mkdir -pv "$export_dir"
 	export_dir=$(realpath "$export_dir")
@@ -235,6 +234,26 @@ setup_app() {
 	; do
 		mkdir -pv "$export_dir"/"$dir"
 		cp -vfr /usr/sbin/hms/"$dir"/* "$export_dir"/"$dir"
+	done
+
+	printf "\n\n"
+	print_heading2 " Installing docker"
+	print_heading2 "----------------------"
+
+	install -o root -g root -m 0755 /usr/sbin/hms/minikube "$mnt"/usr/bin/minikube
+	install -o root -g root -m 0755 /usr/sbin/hms/cri-dockerd "$mnt"/usr/bin/cri-dockerd
+
+	mkdir -pv "$mnt"/etc/runlevels/
+	for i in \
+		socket \
+		service \
+	; do
+		install /usr/sbin/hms/cri-docker.$i "$mnt"/etc/init.d/
+		if [ ! -f "$mnt"/etc/runlevels/default/cri-docker.$i ]; then
+			ln -sf /etc/init.d/cri-docker.$i "$mnt"/etc/runlevels/default/cri-docker.$i
+		fi
+		rc-update add --quiet cri-docker.$i
+		rc-service --ifstopped cri-docker.$i start
 	done
 
 	printf "\n\n"
@@ -309,12 +328,11 @@ cfg_xorg() {
 	EOF
 
 	makefile root:wheel 0644 "$mnt"/etc/X11/Xwrapper.config <<-EOF
-	needs_root_rights = no
-	allowed_users = anybody
+	needs_root_rights=yes
+	allowed_users=anybody
 	EOF
 
 	for usr in \
-		root \
 		hms \
 	; do
 		local usr_home_dir=$(getent passwd "$usr" | cut -d: -f6)
@@ -325,17 +343,20 @@ cfg_xorg() {
 
 		makefile root:wheel 0755 "$mnt"/"$usr_home_dir"/.profile <<-EOF
 		#!/bin/sh
-		. ~/postinstall.sh
+		sudo ~/postinstall.sh
 
 		dbus-update-activation-environment DISPLAY QT_QPA_PLATFORM WLR_BACKENDS XDG_SESSION_TYPE XDG_VTNR XDG_RUNTIME_DIR XDG_CURRENT_DESKTOP XCURSOR_SIZE XCURSOR_THEME;
 		if [ -n "\$DISPLAY" ] && [ "\$XDG_VTNR" -eq 1 ]; then
-			sudo xinit ~/.xinitrc
+			xinit ~/.xinitrc -- \$DISPLAY
 		fi
 		EOF
 
 		makefile root:wheel 0755 "$mnt"/"$usr_home_dir"/.xinitrc <<-EOF
 		#!/bin/sh
+		{ sleep 1; xrandr --output Virtual-1 --mode "1368x768R"; } &
 		exec dbus-launch --sh-syntax --exit-with-session chromium \
+			--window-size=1368,768 \
+			--window-position=0,0 \
 			--app=https://www.youtube.com/ \
 			--no-sandbox \
 			--kiosk \
@@ -351,10 +372,6 @@ cfg_xorg() {
 cfg_misc() {
 	local mnt="$1"
 	shift
-
-	local ntp_srvname=pool.ntp.org
-	local ntp_srvip=$(getent ahosts $ntp_srvname | head -n 1 | cut -d"STREAM $ntp_srvname" -f1)
-	sed -i "s@$ntp_srvname@$ntp_srvip@g" "$mnt"/etc/chrony/chrony.conf
 
 	makefile root:wheel 0644 "$mnt"/etc/conf.d/pulseaudio <<-EOF
 	# Config file for /etc/init.d/pulseaudio

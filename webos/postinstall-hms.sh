@@ -4,18 +4,20 @@ makefile() {
 	OWNER="$1"
 	PERMS="$2"
 	FILENAME="$3"
-	cat >"$FILENAME"
+	cat > "$FILENAME"
 	chown "$OWNER" "$FILENAME"
 	chmod "$PERMS" "$FILENAME"
 }
 
 rc_add() {
-	mkdir -p /etc/runlevels/"$2"
-	ln -sf /etc/init.d/"$1" /etc/runlevels/"$2"/"$1"
+	mkdir -pv /etc/runlevels/"$2"
+	if [ ! -f /etc/runlevels/"$2"/"$1" ]; then
+		ln -sf /etc/init.d/"$1" /etc/runlevels/"$2"/"$1"
+	fi
 }
 
 setup_user() {
-	[[ -z $(rc-status -q boot | grep polkit) ]] && rc_add polkit boot
+	[[ -z "$(rc-status -q boot | grep polkit)" ]] && rc_add polkit boot
 
 	for grp in \
 		bin \
@@ -28,6 +30,7 @@ setup_user() {
 		audio \
 		cdrom \
 		dialout \
+		tty \
 		input \
 		tape \
 		video \
@@ -45,7 +48,7 @@ setup_user() {
 		pulse \
 	; do
 		in_group=0
-		[[ ! -z $(grep -E '^'$grp':' /etc/group) ]] || continue
+		[[ ! -z "$(grep -E '^'$grp':' /etc/group)" ]] || continue
 		for j in $(grep -E '^'$grp':' /etc/group | sed -e 's/^.*://' | tr ',' ' '); do
 			if [ $j == "hms" ]; then in_group=1; fi
 		done
@@ -56,17 +59,120 @@ setup_user() {
 }
 
 cfg_xorg() {
-	[[ -z $(rc-status -q boot | grep dbus) ]] && rc_add dbus boot
-	[[ -z $(rc-status -q boot | grep seatd) ]] && rc_add seatd boot
+	[[ -z "$(rc-status -q boot | grep dbus)" ]] && rc_add dbus boot
+	[[ -z "$(rc-status -q boot | grep seatd)" ]] && rc_add seatd boot
 
-	Xorg :20 -depth 16 -nolisten tcp -configure
 	makefile root:wheel 0644 /etc/X11/xorg.conf <<-EOF
+	Section "ServerLayout"
+	    Identifier     "X.org Configured"
+	    Screen      0  "Screen0" 0 0
+	    InputDevice    "Mouse0" "CorePointer"
+	    InputDevice    "Keyboard0" "CoreKeyboard"
+	EndSection
+
+	Section "Files"
+	    ModulePath   "/usr/lib/xorg/modules"
+	    FontPath     "/usr/share/fonts/100dpi:unscaled"
+        FontPath     "/usr/share/fonts/75dpi:unscaled"
+		FontPath     "/usr/share/fonts/TTF"
+        FontPath     "/usr/share/fonts/Type1"
+	    FontPath     "/usr/share/fonts/cyrillic"
+	    FontPath     "/usr/share/fonts/encodings"
+	    FontPath     "/usr/share/fonts/misc"
+	    FontPath     "/usr/share/fonts/noto"
+	    FontPath     "/usr/share/fonts/opensans"
+	EndSection
+
+	Section "Module"
+	    Load  "extmod"
+	    Load  "glx"
+	    Load  "dri"
+	    Load  "dri2"
+	    Load  "dbe"
+	    Load  "record"
+	EndSection
+
+	Section "InputDevice"
+	    Identifier  "Keyboard0"
+	    Driver      "kbd"
+	EndSection
+
+	Section "InputDevice"
+	    Identifier  "Mouse0"
+	    Driver      "mouse"
+	    Option      "Protocol" "auto"
+	    Option      "Device" "/dev/input/mice"
+	    Option      "ZAxisMapping" "4 5 6 7"
+	EndSection
 	EOF
-	cat ~/xorg.conf.new > /etc/X11/xorg.conf
+
+	mkdir -pv /etc/X11/xorg.conf.d/
+
+	makefile root:wheel 0644 /etc/X11/xorg.conf.d/10-monitor.conf <<-EOF
+	Section "Monitor"
+	    Identifier "Virtual-1"
+	    UseModes "Modes-0"
+	    Option "PreferredMode" "1366x768R"
+	EndSection
+
+	Section "Modes"
+	    Identifier "Modes-0"
+	    Modeline "4096x2160R"  567.00  4096 4144 4176 4256  2160 2163 2173 2222 +hsync -vsync
+	    Modeline "2560x1600R"  268.50  2560 2608 2640 2720  1600 1603 1609 1646 +hsync -vsync
+	    Modeline "1920x1200R"  154.00  1920 1968 2000 2080  1200 1203 1209 1235 +hsync -vsync
+	    Modeline "1680x1050R"  119.00  1680 1728 1760 1840  1050 1053 1059 1080 +hsync -vsync
+	    Modeline "1400x1050R"  101.00  1400 1448 1480 1560  1050 1053 1057 1080 +hsync -vsync
+	    Modeline "1440x900R"   88.75  1440 1488 1520 1600  900 903 909 926 +hsync -vsync
+	    Modeline "1368x768R"   72.25  1368 1416 1448 1528  768 771 781 790 +hsync -vsync
+	    Modeline "1280x768R"   68.00  1280 1328 1360 1440  768 771 781 790 +hsync -vsync
+	    Modeline "800x600R"   35.50  800 848 880 960  600 603 607 618 +hsync -vsync
+	EndSection
+
+	Section "Screen"
+	    Identifier "Screen0"
+	    Monitor "Virtual-1"
+	    DefaultDepth 24
+	    SubSection "Display"
+	        Modes "4096x2160R"
+	    EndSubSection
+	    SubSection "Display"
+	        Modes "2560x1600R"
+	    EndSubSection
+	    SubSection "Display"
+	        Modes "1920x1200R"
+	    EndSubSection
+	    SubSection "Display"
+	        Modes "1680x1050R"
+	    EndSubSection
+	    SubSection "Display"
+	        Modes "1400x1050R"
+	    EndSubSection
+	    SubSection "Display"
+	        Modes "1440x900R"
+	    EndSubSection
+	    SubSection "Display"
+	        Modes "1368x768R"
+	    EndSubSection
+	    SubSection "Display"
+	        Modes "1280x768R"
+	    EndSubSection
+	    SubSection "Display"
+	        Modes "800x600R"
+	    EndSubSection
+	EndSection
+	EOF
+
+	makefile root:wheel 0644 /etc/X11/xorg.conf.d/20-gpu.conf <<-EOF
+	Section "Device"
+	    Identifier  "Card0"
+	    Driver      "modesetting"
+	    BusID       "PCI:0:2:0"
+	EndSection
+	EOF
 }
 
 cfg_k8s_cluster() {
-	[[ -z $(rc-status -q default | grep docker) ]] && rc_add docker default
+	[[ -z "$(rc-status -q default | grep docker)" ]] && rc_add docker default
 
 	makefile root:wheel 0755 /etc/init.d/minikube <<-EOF
 	#!/sbin/openrc-run
@@ -100,14 +206,14 @@ cfg_k8s_cluster() {
 
 	start_pre() {
 		checkpath -f -m 0644 -o root:docker "\$MINIKUBE_LOGFILE"
-		if [ -z \$(lsmod | grep br_netfilter) ]; then
+		if [ -z "\$(lsmod | grep br_netfilter)" ]; then
 			modprobe br_netfilter;
 		fi
 	}
 
 	start() {
 		ebegin "Starting minikube"
-		"\$command" start --driver=none --cpus=max --memory=max \$command_args
+		\${MINIKUBE_BINARY} start --driver=none --cpus=max --memory=max \$command_args
 		eend \$?
 	}
 
@@ -118,10 +224,10 @@ cfg_k8s_cluster() {
 	}
 	EOF
 
-	[[ -z $(rc-status -q default | grep minikube) ]] && rc_add minikube default
+	[[ -z "$(rc-status -q default | grep minikube)" ]] && rc_add minikube default
 	rc-service --quiet minikube start
 
-	if [[ -z $(which kubectl) ]]; then
+	if [[ -z "$(which kubectl)" ]]; then
 		minikube kubectl -- get po -A
 		alias kubectl="minikube kubectl --"
 
@@ -136,17 +242,21 @@ cfg_k8s_cluster() {
 cfg_misc() {
 	mkdir -pv /etc/runlevels/async
 	rc-update add -s default async
-	if [[ -z $(awk '/^::once:\/sbin\/openrc\ async -q/a' /etc/inittab) ]] || [ $# -gt 0 ]; then
+	if [[ -z "$(awk '/^::once:\/sbin\/openrc\ async -q/a' /etc/inittab)" ]] || [ $# -gt 0 ]; then
 		sed -i "/::wait:\/sbin\/openrc default/a ::once:\/sbin\/openrc async -q" /etc/inittab
 	fi
 
-	[[ -z $(rc-status -q default | grep chrony) ]] || rc-update del chronyd
-	[[ -z $(rc-status -q async | grep chrony) ]] && rc_add chrony async
-	[[ -z $(rc-status -q default | grep pulseaudio) ]] && rc_add pulseaudio default
+	local ntp_srvname=pool.ntp.org
+	local ntp_srvip=$(getent ahosts $ntp_srvname | head -n 1 | cut -d"STREAM $ntp_srvname" -f1)
+	sed -i "s@$ntp_srvname@$ntp_srvip@g" "$mnt"/etc/chrony/chrony.conf
+
+	[[ -z "$(rc-status -q default | grep chrony)" ]] || rc-update del chronyd
+	[[ -z "$(rc-status -q async | grep chrony)" ]] && rc_add chrony async
+	[[ -z "$(rc-status -q default | grep pulseaudio)" ]] && rc_add pulseaudio default
 }
 
 postinstall() {
-	[ -f "/home/.renovated" ] || return $?
+	[ ! -f "/home/.renovated" ] || return $?
 
 	setup_user
 	cfg_xorg

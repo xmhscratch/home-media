@@ -6,10 +6,12 @@ COPY \
     ./webos/*.sh \
     ./webos/apk-* \
     ./webos/packages.txt \
+    ./webos/cri-docker.service \
+	./webos/cri-docker.socket \
     /tmp/build/
 COPY ./dist/bin/ /tmp/bin/
 COPY ./dist/app/ /tmp/app/
-COPY ./.apks/ /tmp/apks/
+COPY ./dist/iso/.apks/ /export/iso/.apks/
 RUN \
     ###########
     addgroup root abuild; \
@@ -34,7 +36,7 @@ RUN \
         $APORTS/scripts/genapkovl-hms.sh \
         $APORTS/scripts/mkimg.hms.sh; \
     \
-    archdir="/tmp/apks/$ARCH"; \
+    archdir="/export/iso/.apks/$ARCH"; \
     mkdir -pv "$archdir"; \
     apk update; \
     \
@@ -43,14 +45,14 @@ RUN \
     if [[ $(find "$archdir"/*.apk -type f | wc -l) -gt 0 ]]; then \
         apk index \
             --allow-untrusted \
-            --repository /tmp/apks/ \
+            --repository /export/iso/.apks/ \
             --rewrite-arch "$ARCH" \
             --index "$archdir"/APKINDEX.tar.gz \
             --output "$archdir"/APKINDEX.tar.gz \
             "$archdir"/*.apk; \
         abuild-sign "$archdir"/APKINDEX.tar.gz; \
     fi; \
-    echo "/tmp/apks/" > /etc/apk/repositories; \
+    echo "/export/iso/.apks/" > /etc/apk/repositories; \
     apk update --allow-untrusted; \
     apk fix --upgrade --allow-untrusted alpine-keys; \
     \
