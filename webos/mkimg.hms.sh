@@ -3,7 +3,7 @@ section_apks() {
 
     apks="$apks $(cat /tmp/build/apk-xorg | tr '\n' ' ')"
     apks="$apks $(cat /tmp/build/apk-font | tr '\n' ' ')"
-    apks="$apks $(cat /tmp/build/apk-docker | tr '\n' ' ')"
+    apks="$apks $(cat /tmp/build/apk-kube | tr '\n' ' ')"
     apks="$apks $(cat /tmp/build/apk-pulseaudio | tr '\n' ' ')"
     apks="$apks $(cat /tmp/build/apk-chromium | tr '\n' ' ')"
     apks="$apks $(cat /tmp/build/apk-auth | tr '\n' ' ')"
@@ -20,7 +20,7 @@ profile_hms() {
     syslinux_serial="0 115200"
     arch="x86_64"
     kernel_flavors="lts"
-    initfs_cmdline="modules=loop,squashfs,sd-mod,usb-storage video=nouveaudrmfb nouveau.config=\"NvGspRm=1,tv_norm=hd1080i\""
+    initfs_cmdline="modules=loop,squashfs,sd-mod,usb-storage video=nouveaudrmfb nouveau.config=\"NvGspRm=1,tv_norm=hd1080i\" pax_nouderef cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory"
     initfs_features="ata base bootchart cdrom ext4 mmc nvme raid scsi squashfs usb virtio"
     modloop_sign=yes
     grub_mod="all_video disk part_gpt part_msdos linux normal configfile search search_label efi_gop fat iso9660 cat echo ls test true help gzio"

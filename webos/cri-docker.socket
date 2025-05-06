@@ -2,7 +2,7 @@
 
 description="CRI Docker Socket for the API"
 
-socket_path="${CRI_DOCKERD_SOCK:-/var/run/user/$(id -u)/${RC_SVCNAME}}"
+socket_path="${CRI_DOCKERD_SOCK:-/var/run/cri-dockerd.sock}"
 socket_user="${CRI_DOCKERD_USER:-$(id -un)}"
 socket_group="${CRI_DOCKERD_USER:-docker}"
 socket_mode="0660"

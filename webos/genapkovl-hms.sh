@@ -41,6 +41,13 @@ auto eth0
 iface eth0 inet dhcp
 EOF
 
+makefile root:root 0644 "$tmp"/etc/modules <<EOF
+br_netfilter
+nouveau
+autofs4
+configs
+EOF
+
 mkdir -p "$tmp"/etc/apk
 makefile root:root 0644 "$tmp"/etc/apk/world <<EOF
 alpine-base
@@ -51,6 +58,7 @@ cat /tmp/build/apk-common >> "$tmp"/etc/apk/world
 echo "nameserver 1.1.1.1" >> "$tmp"/etc/resolv.conf
 ###########
 mkdir -pv "$tmp"/usr/sbin/hms/
+mkdir -pv "$tmp"/etc/init.d/
 
 cp -vrf \
 	/tmp/build/apk-* \
@@ -60,16 +68,14 @@ cp -vrf \
 	"$tmp"/usr/sbin/; \
 \
 cp -vrf \
-	/tmp/app/* \
-	/tmp/build/cri-docker.service \
-	/tmp/build/cri-docker.socket \
+    /tmp/build/cri-docker.socket \
+    /tmp/build/cri-docker.service \
 	"$tmp"/usr/sbin/hms/; \
 \
-
-cp -vrfT /tmp/bin/minikube "$tmp"/usr/sbin/hms/minikube;
-cp -vrfT /tmp/bin/cri-dockerd "$tmp"/usr/sbin/hms/cri-dockerd;
-
+cp -vrf /tmp/bin/ "$tmp"/usr/sbin/hms/bin/
 chmod +x \
+    "$tmp"/usr/sbin/hms/cri-docker.socket \
+    "$tmp"/usr/sbin/hms/cri-docker.service \
 	"$tmp"/usr/sbin/env-hms-answers.sh \
 	"$tmp"/usr/sbin/install-hms.sh \
 	"$tmp"/usr/sbin/postinstall-hms.sh;

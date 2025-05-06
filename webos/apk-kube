@@ -1,0 +1,16 @@
+docker
+docker-cli
+docker-engine
+docker-openrc
+containerd
+containerd-openrc
+cri-tools
+conntrack-tools
+conntrack-tools-openrc
+findutils
+util-linux
+iproute2
+nftables
+ethtool
+gcompat
+crun

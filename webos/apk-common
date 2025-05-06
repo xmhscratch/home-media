@@ -10,3 +10,8 @@ dbus-daemon-launch-helper
 syslinux
 sfdisk
 lvm2
+chrony
+chrony-openrc
+curl
+cgroup-tools
+libcgroup

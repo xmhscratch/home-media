@@ -173,7 +173,7 @@ install_mounted_root() {
 
 	pkgs="$pkgs $(cat /usr/sbin/apk-xorg | tr '\n' ' ')"
 	pkgs="$pkgs $(cat /usr/sbin/apk-font | tr '\n' ' ')"
-	pkgs="$pkgs $(cat /usr/sbin/apk-docker | tr '\n' ' ')"
+	pkgs="$pkgs $(cat /usr/sbin/apk-kube | tr '\n' ' ')"
 	pkgs="$pkgs $(cat /usr/sbin/apk-pulseaudio | tr '\n' ' ')"
 	pkgs="$pkgs $(cat /usr/sbin/apk-chromium | tr '\n' ' ')"
 	pkgs="$pkgs $(cat /usr/sbin/apk-auth | tr '\n' ' ')"
@@ -183,10 +183,27 @@ install_mounted_root() {
 	local keys_dir="$mnt"/etc/apk/keys
 
 	init_chroot_mounts "$mnt"
+	
+	printf "\n\n"
+	print_heading1 " Install application"
+	print_heading1 "----------------------"
 	setup_app "$mnt"
+
+	printf "\n\n"
+	print_heading1 " Register user"
+	print_heading1 "----------------------"
 	setup_user "$mnt"
+
+	printf "\n\n"
+	print_heading1 " Setup Xorg"
+	print_heading1 "----------------------"
 	cfg_xorg "$mnt"
+
+	printf "\n\n"
+	print_heading1 " Finish installation"
+	print_heading1 "----------------------"
 	cfg_misc "$mnt"
+
 	cleanup_chroot_mounts "$mnt"
 	return $ret
 }
@@ -209,12 +226,14 @@ setup_app() {
 	shift 1
 
 	printf "\n\n"
-	print_heading1 " Install home media software"
-	print_heading1 "----------------------"
-
-	printf "\n\n"
-	print_heading2 " Copying application"
+	print_heading2 " Copy HMS files"
 	print_heading2 "----------------------"
+
+	mkdir -pv "$mnt"/etc/docker/
+	mkdir -pv "$mnt"/etc/runlevels/async/
+	mkdir -pv "$mnt"/etc/runlevels/default/
+	mkdir -pv "$mnt"/opt/cni/bin/
+	mkdir -pv "$mnt"/var/lib/minikube/binaries/v1.31.5/
 
 	local export_dir="$mnt"/home/data/dist/
 	mkdir -pv "$export_dir"
@@ -236,35 +255,24 @@ setup_app() {
 		cp -vfr /usr/sbin/hms/"$dir"/* "$export_dir"/"$dir"
 	done
 
-	printf "\n\n"
-	print_heading2 " Installing docker"
-	print_heading2 "----------------------"
-
-	install -o root -g root -m 0755 /usr/sbin/hms/minikube "$mnt"/usr/bin/minikube
-	install -o root -g root -m 0755 /usr/sbin/hms/cri-dockerd "$mnt"/usr/bin/cri-dockerd
-
-	mkdir -pv "$mnt"/etc/runlevels/
-	for i in \
-		socket \
-		service \
-	; do
-		install /usr/sbin/hms/cri-docker.$i "$mnt"/etc/init.d/
-		if [ ! -f "$mnt"/etc/runlevels/default/cri-docker.$i ]; then
-			ln -sf /etc/init.d/cri-docker.$i "$mnt"/etc/runlevels/default/cri-docker.$i
-		fi
-		rc-update add --quiet cri-docker.$i
-		rc-service --ifstopped cri-docker.$i start
+	for exe in $(find /usr/sbin/hms/bin/* -type f | xargs basename -a); do
+		case $exe in
+			minikube | kube*)
+				install -o root -g root -m 0755 /usr/sbin/hms/bin/"$exe" "$mnt"/usr/bin/"$exe"
+				ln -sf "$mnt"/usr/bin/"$exe" "$mnt"/var/lib/minikube/binaries/v1.31.5/"$exe"
+			;;
+			*) install -o root -g root -m 0755 /usr/sbin/hms/bin/"$exe" "$mnt"/opt/cni/bin/"$exe" ;;
+		esac
 	done
 
 	printf "\n\n"
-	print_heading2 " Installing packages"
+	print_heading2 " Install system apks"
 	print_heading2 "----------------------"
 
 	apk add --keys-dir "$keys_dir" \
 		--repositories-file "$repositories_file" \
 		--root "$mnt" --arch "$arch" \
 		$apkflags $pkgs
-	local ret=$?
 }
 
 setup_user() {
@@ -279,12 +287,12 @@ setup_user() {
 	mkdir -pv "$mnt"/etc/sudoers.d/
 
 	makefile root:root 0440 "$mnt"/etc/sudoers.d/hms <<-EOF
-		hms ALL=(ALL) NOPASSWD: ALL
+	hms ALL=(ALL) NOPASSWD: ALL
 	EOF
 
 	makefile root:root 0755 "$mnt"/usr/sbin/autologin <<-EOF
-		#!/bin/sh
-		exec login -f hms
+	#!/bin/sh
+	exec login -f hms
 	EOF
 	chmod +x "$mnt"/usr/sbin/autologin
 
@@ -299,6 +307,7 @@ cfg_xorg() {
 
 	mkdir -pv "$mnt"/etc/conf.d/
 	mkdir -pv "$mnt"/etc/X11/xinit/
+	mkdir -pv "$mnt"/etc/X11/xorg.conf.d/
 
 	makefile root:wheel 0644 "$mnt"/etc/conf.d/dbus <<-EOF
 	command_args="--system --nofork --nopidfile --syslog-only \${command_args:-}"
@@ -314,12 +323,13 @@ cfg_xorg() {
 	export XDG_VTNR=1
 	export XDG_RUNTIME_DIR=/var/run/user/\$(id -u)
 	if [ ! -d \$XDG_RUNTIME_DIR ]; then
-		sudo mkdir -pv \$XDG_RUNTIME_DIR;
+	    sudo mkdir -pv \$XDG_RUNTIME_DIR;
 
-		sudo chmod 0700 \$XDG_RUNTIME_DIR;
-		sudo chown \$(id -un):\$(id -gn) \$XDG_RUNTIME_DIR;
+	    sudo chmod 0700 \$XDG_RUNTIME_DIR;
+	    sudo chown \$(id -un):\$(id -gn) \$XDG_RUNTIME_DIR;
 	fi
 	export \$(dbus-launch)
+	export PATH=\$PATH:/opt/cni/bin/:/root/go/bin:/var/lib/minikube/binaries/v1.31.5
 	EOF
 
 	makefile root:wheel 0755 "$mnt"/etc/X11/xinit/xserverrc <<-EOF
@@ -330,6 +340,112 @@ cfg_xorg() {
 	makefile root:wheel 0644 "$mnt"/etc/X11/Xwrapper.config <<-EOF
 	needs_root_rights=yes
 	allowed_users=anybody
+	EOF
+
+	makefile root:wheel 0644 "$mnt"/etc/X11/xorg.conf <<-EOF
+	Section "ServerLayout"
+	    Identifier     "X.org Configured"
+	    Screen      0  "Screen0" 0 0
+	    InputDevice    "Mouse0" "CorePointer"
+	    InputDevice    "Keyboard0" "CoreKeyboard"
+	EndSection
+
+	Section "Files"
+	    ModulePath   "/usr/lib/xorg/modules"
+	    FontPath     "/usr/share/fonts/100dpi:unscaled"
+        FontPath     "/usr/share/fonts/75dpi:unscaled"
+	    FontPath     "/usr/share/fonts/TTF"
+        FontPath     "/usr/share/fonts/Type1"
+	    FontPath     "/usr/share/fonts/cyrillic"
+	    FontPath     "/usr/share/fonts/encodings"
+	    FontPath     "/usr/share/fonts/misc"
+	    FontPath     "/usr/share/fonts/noto"
+	    FontPath     "/usr/share/fonts/opensans"
+	EndSection
+
+	Section "Module"
+	    Load  "extmod"
+	    Load  "glx"
+	    Load  "dri"
+	    Load  "dri2"
+	    Load  "dbe"
+	    Load  "record"
+	EndSection
+
+	Section "InputDevice"
+	    Identifier  "Keyboard0"
+	    Driver      "kbd"
+	EndSection
+
+	Section "InputDevice"
+	    Identifier  "Mouse0"
+	    Driver      "mouse"
+	    Option      "Protocol" "auto"
+	    Option      "Device" "/dev/input/mice"
+	    Option      "ZAxisMapping" "4 5 6 7"
+	EndSection
+	EOF
+
+	makefile root:wheel 0644 "$mnt"/etc/X11/xorg.conf.d/10-monitor.conf <<-EOF
+	Section "Monitor"
+	    Identifier "Virtual-1"
+	    UseModes "Modes-0"
+	    Option "PreferredMode" "1366x768R"
+	EndSection
+
+	Section "Modes"
+	    Identifier "Modes-0"
+	    Modeline "4096x2160R"  567.00  4096 4144 4176 4256  2160 2163 2173 2222 +hsync -vsync
+	    Modeline "2560x1600R"  268.50  2560 2608 2640 2720  1600 1603 1609 1646 +hsync -vsync
+	    Modeline "1920x1200R"  154.00  1920 1968 2000 2080  1200 1203 1209 1235 +hsync -vsync
+	    Modeline "1680x1050R"  119.00  1680 1728 1760 1840  1050 1053 1059 1080 +hsync -vsync
+	    Modeline "1400x1050R"  101.00  1400 1448 1480 1560  1050 1053 1057 1080 +hsync -vsync
+	    Modeline "1440x900R"   88.75  1440 1488 1520 1600  900 903 909 926 +hsync -vsync
+	    Modeline "1368x768R"   72.25  1368 1416 1448 1528  768 771 781 790 +hsync -vsync
+	    Modeline "1280x768R"   68.00  1280 1328 1360 1440  768 771 781 790 +hsync -vsync
+	    Modeline "800x600R"   35.50  800 848 880 960  600 603 607 618 +hsync -vsync
+	EndSection
+
+	Section "Screen"
+	    Identifier "Screen0"
+	    Monitor "Virtual-1"
+	    DefaultDepth 24
+	    SubSection "Display"
+	        Modes "4096x2160R"
+	    EndSubSection
+	    SubSection "Display"
+	        Modes "2560x1600R"
+	    EndSubSection
+	    SubSection "Display"
+	        Modes "1920x1200R"
+	    EndSubSection
+	    SubSection "Display"
+	        Modes "1680x1050R"
+	    EndSubSection
+	    SubSection "Display"
+	        Modes "1400x1050R"
+	    EndSubSection
+	    SubSection "Display"
+	        Modes "1440x900R"
+	    EndSubSection
+	    SubSection "Display"
+	        Modes "1368x768R"
+	    EndSubSection
+	    SubSection "Display"
+	        Modes "1280x768R"
+	    EndSubSection
+	    SubSection "Display"
+	        Modes "800x600R"
+	    EndSubSection
+	EndSection
+	EOF
+
+	makefile root:wheel 0644 "$mnt"/etc/X11/xorg.conf.d/20-gpu.conf <<-EOF
+	Section "Device"
+	    Identifier  "Card0"
+	    Driver      "modesetting"
+	    BusID       "PCI:0:2:0"
+	EndSection
 	EOF
 
 	for usr in \
@@ -347,7 +463,7 @@ cfg_xorg() {
 
 		dbus-update-activation-environment DISPLAY QT_QPA_PLATFORM WLR_BACKENDS XDG_SESSION_TYPE XDG_VTNR XDG_RUNTIME_DIR XDG_CURRENT_DESKTOP XCURSOR_SIZE XCURSOR_THEME;
 		if [ -n "\$DISPLAY" ] && [ "\$XDG_VTNR" -eq 1 ]; then
-			xinit ~/.xinitrc -- \$DISPLAY
+		    xinit ~/.xinitrc -- \$DISPLAY
 		fi
 		EOF
 
@@ -355,16 +471,16 @@ cfg_xorg() {
 		#!/bin/sh
 		{ sleep 1; xrandr --output Virtual-1 --mode "1368x768R"; } &
 		exec dbus-launch --sh-syntax --exit-with-session chromium \
-			--window-size=1368,768 \
-			--window-position=0,0 \
-			--app=https://www.youtube.com/ \
-			--no-sandbox \
-			--kiosk \
-			--start-fullscreen \
-			--enable-features=UseOzonePlatform \
-			--ozone-platform=x11 \
-			--enable-unsafe-swiftshader \
-			--enable-features=Vulkan,webgpu;
+		    --window-size=1368,768 \
+		    --window-position=0,0 \
+		    --app=https://www.youtube.com/ \
+		    --no-sandbox \
+		    --kiosk \
+		    --start-fullscreen \
+		    --enable-features=UseOzonePlatform \
+		    --ozone-platform=x11 \
+		    --enable-unsafe-swiftshader \
+		    --enable-features=Vulkan,webgpu;
 		EOF
 	done
 }
@@ -372,6 +488,109 @@ cfg_xorg() {
 cfg_misc() {
 	local mnt="$1"
 	shift
+
+	echo "net.bridge.bridge-nf-call-iptables = 1" | tee -a "$mnt"/etc/sysctl.conf
+	echo "net.bridge.bridge-nf-call-ip6tables = 1" | tee -a "$mnt"/etc/sysctl.conf
+	echo "net.netfilter.nf_conntrack_tcp_be_liberal = 1" | tee -a "$mnt"/etc/sysctl.conf
+
+	sed -i 's/^\([^#]\+swap\)/#\1/' "$mnt"/etc/fstab
+	# cat >> "$mnt"/etc/fstab <<-EOF
+	# cgroup2	/sys/fs/cgroup			cgroup2	rw,nosuid,nodev,noexec,relatime,X-mount.mkdir=0775	0 0
+	# EOF
+
+	makefile root:wheel 644 "$mnt"/etc/cgconfig.conf <<-EOF
+	mount {
+	    blkio = /sys/fs/cgroup/blkio;
+	    memory = /sys/fs/cgroup/memory;
+	    cpu = /sys/fs/cgroup/cpu;
+	    cpuacct = /sys/fs/cgroup/cpuacct;
+	    cpuset = /sys/fs/cgroup/cpuset;
+	    devices = /sys/fs/cgroup/devices;
+	    hugetlb = /sys/fs/cgroup/hugetlb;
+	    freezer = /sys/fs/cgroup/freezer;
+	    net_cls = /sys/fs/cgroup/net_cls;
+	    pids = /sys/fs/cgroup/pids;
+	}
+	EOF
+	sed -Ei "s@#rc_ulimit=\".+\"@rc_ulimit=\"-u unlimited -c unlimited\"@g" "$mnt"/etc/rc.conf
+	sed -Ei "s@#rc_cgroup_mode=\".+\"@rc_cgroup_mode=\"unified\"@g" "$mnt"/etc/rc.conf
+	# sed -i "s@#rc_cgroup_controllers=\"\"@rc_cgroup_controllers=\"blkio cpu cpuacct cpuset devices hugetlb memory net_cls net_prio pids\"@g" "$mnt"/etc/rc.conf
+	sed -i "s@#rc_controller_cgroups=@rc_controller_cgroups=@g" "$mnt"/etc/rc.conf
+	sed -i "s@#rc_default_runlevel=@rc_default_runlevel=@g" "$mnt"/etc/rc.conf
+	# sed -i "s@#rc_cgroup_memory=\"\"@rc_cgroup_memory=\"memory.memsw.limit_in_bytes 4194304\"@g" "$mnt"/etc/rc.conf
+
+	makefile root:wheel 644 "$mnt"/etc/docker/daemon.json <<-EOF
+	{
+	    "exec-opts": [
+	        "native.cgroupdriver=cgroupfs"
+	    ],
+	    "log-driver": "json-file",
+	    "log-opts": {
+	        "max-size": "100m"
+	    },
+	    "storage-driver": "overlay2"
+	}
+	EOF
+
+	for mod in \
+		autofs4 \
+		configs \
+		nf_conntrack \
+		br_netfilter \
+	; do
+		if [[ -z "$(grep -qxF "$mod" "$mnt"/etc/modules)" ]]; then
+			echo "$mod" | tee -a "$mnt"/etc/modules
+		fi
+	done
+
+	makefile root:wheel 0755 "$mnt"/etc/init.d/mkubed <<-EOF
+	#!/sbin/openrc-run
+
+	supervisor=supervise-daemon
+	respawn_delay=2
+	respawn_max=3
+	respawn_period=60
+
+	name="Minikube Cluster"
+	description="Minikube is local Kubernetes, focusing on making it easy to learn and develop for Kubernetes."
+
+	command="\${MINIKUBE_BINARY:-/usr/bin/minikube start}"
+	command_args="\${--force --alsologtostderr -v=1 --driver=none --container-runtime=containerd --kubernetes-version=v1.31.5 --force-systemd=false --extra-config=kubelet.cgroup-driver=cgroupfs --cpus=max --memory=max --addons=metrics-server,ingress,ingress-dns command_args:-\${MINIKUBE_OPTS:-}}"
+	command_background="yes"
+
+	MINIKUBE_LOGFILE="\${MINIKUBE_LOGFILE:-/var/log/\${RC_SVCNAME}.log}"
+	MINIKUBE_LOGPROXY_OPTS="\$MINIKUBE_LOGPROXY_OPTS -m"
+
+	export MINIKUBE_LOGPROXY_CHMOD="\${MINIKUBE_LOGPROXY_CHMOD:-0644}"
+	export MINIKUBE_LOGPROXY_LOG_DIRECTORY="\${MINIKUBE_LOGPROXY_LOG_DIRECTORY:-/var/log}"
+	export MINIKUBE_LOGPROXY_ROTATION_SIZE="\${MINIKUBE_LOGPROXY_ROTATION_SIZE:-104857600}"
+	export MINIKUBE_LOGPROXY_ROTATION_TIME="\${MINIKUBE_LOGPROXY_ROTATION_TIME:-86400}"
+	export MINIKUBE_LOGPROXY_ROTATION_SUFFIX="\${MINIKUBE_LOGPROXY_ROTATION_SUFFIX:-.%Y%m%d%H%M%S}"
+	export MINIKUBE_LOGPROXY_ROTATED_FILES="\${MINIKUBE_LOGPROXY_ROTATED_FILES:-5}"
+
+	pidfile="\${MINIKUBE_PIDFILE:-/var/run/user/\$(id -u)/\$RC_SVCNAME.pid}"
+	output_logger="log_proxy \$MINIKUBE_LOGPROXY_OPTS \$MINIKUBE_LOGFILE"
+	rc_ulimit="\${MINIKUBE_ULIMIT:--c unlimited -u unlimited}"
+	retry="\${MINIKUBE_RETRY:-TERM/60/KILL/10}"
+
+	depend() {
+	    need localmount
+	    need docker
+	    need net
+	    after docker
+	    provide mkubed
+	}
+
+	start_pre() {
+	    checkpath -f -m 0644 -o root:docker "\$MINIKUBE_LOGFILE"
+	}
+
+	reload() {
+	    ebegin "Reloading \${RC_SVCNAME}"
+	    \${supervisor} \${RC_SVCNAME} --signal HUP --pidfile "\${pidfile}"
+	    eend \$?
+	}
+	EOF
 
 	makefile root:wheel 0644 "$mnt"/etc/conf.d/pulseaudio <<-EOF
 	# Config file for /etc/init.d/pulseaudio
@@ -383,6 +602,53 @@ cfg_misc() {
 	PA_OPTS="--log-target=syslog --disallow-module-loading=1"
 	PULSEAUDIO_SHOULD_NOT_GO_SYSTEMWIDE=1
 	EOF
+
+	if [[ -z "$(awk '/^::once:\/sbin\/openrc\ async -q/a' "$mnt"/etc/inittab)" ]] || [ $# -gt 0 ]; then
+		sed -i "/::wait:\/sbin\/openrc default/a ::once:\/sbin\/openrc async -q" "$mnt"/etc/inittab
+	fi
+
+	local ntp_srvname=pool.ntp.org
+	local ntp_srvip=$(getent ahosts $ntp_srvname | head -n 1 | cut -d"STREAM $ntp_srvname" -f1)
+	sed -i "s@$ntp_srvname@$ntp_srvip@g" "$mnt"/etc/chrony/chrony.conf
+
+	if [ -f "$mnt"/etc/runlevels/default/chronyd ]; then
+		unlink "$mnt"/etc/runlevels/default/chronyd
+		ln -sf /etc/init.d/chronyd "$mnt"/etc/runlevels/async/chronyd
+	fi
+
+	# mkubed \
+	for srv in \
+		docker \
+		kubelet \
+		containerd \
+		conntrackd \
+		pulseaudio \
+	; do
+		if [ ! -f "$mnt"/etc/runlevels/default/"$srv" ]; then
+			ln -sf /etc/init.d/"$srv" "$mnt"/etc/runlevels/default/"$srv"
+		fi
+	done
+
+	# for srv in \
+	# 	cri-docker.socket \
+	# 	cri-docker.service \
+	# ; do
+	# 	cp -vfrT /usr/sbin/hms/"$srv" "$mnt"/etc/init.d/"$srv"
+	# 	if [ ! -f "$mnt"/etc/runlevels/default/"$srv" ]; then
+	# 		ln -sf /etc/init.d/"$srv" "$mnt"/etc/runlevels/default/"$srv"
+	# 	fi
+	# done
+
+	# polkit \
+	for srv in \
+		dbus \
+		seatd \
+		cgroups \
+	; do
+		if [ ! -f "$mnt"/etc/runlevels/boot/"$srv" ]; then
+			ln -sf /etc/init.d/"$srv" "$mnt"/etc/runlevels/boot/"$srv"
+		fi
+	done
 }
 
 if rc-service --exists networking; then

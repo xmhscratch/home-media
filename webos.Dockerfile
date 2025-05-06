@@ -1,4 +1,4 @@
-FROM localhost:5000/gonode-build:latest AS build-iso
+FROM localhost:5000/builder:latest AS build-iso
 USER root
 ENV GIT_SSL_NO_VERIFY=false
 ENV ARCH=x86_64
@@ -6,8 +6,8 @@ COPY \
     ./webos/*.sh \
     ./webos/apk-* \
     ./webos/packages.txt \
-    ./webos/cri-docker.service \
-	./webos/cri-docker.socket \
+    # ./webos/cri-docker.socket \
+    # ./webos/cri-docker.service \
     /tmp/build/
 COPY ./dist/bin/ /tmp/bin/
 COPY ./dist/app/ /tmp/app/
