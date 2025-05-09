@@ -3,15 +3,17 @@ USER root
 ENV GIT_SSL_NO_VERIFY=false
 ENV ARCH=x86_64
 COPY \
-    ./webos/*.sh \
-    ./webos/apk-* \
-    ./webos/packages.txt \
-    # ./webos/cri-docker.socket \
-    # ./webos/cri-docker.service \
+    webos/*.sh \
+    webos/apk-* \
+    webos/packages.txt \
+    webos/dashboard-deploy.yaml \
+    # webos/cri-docker.socket \
+    # webos/cri-docker.service \
     /tmp/build/
-COPY ./dist/bin/ /tmp/bin/
-COPY ./dist/app/ /tmp/app/
-COPY ./dist/iso/.apks/ /export/iso/.apks/
+COPY dist/app/ /tmp/app/
+COPY dist/bin/ /tmp/bin/
+COPY dist/docker/preload-images.tar.gz /tmp/docker/
+COPY dist/iso/.apks/ /export/iso/.apks/
 RUN \
     ###########
     addgroup root abuild; \
@@ -41,6 +43,7 @@ RUN \
     apk update; \
     \
     pkgs=$(cat /tmp/build/packages.txt | tr '\n' ' '); \
+    echo $pkgs; \
     apk fetch --link --recursive --output "$archdir" $pkgs; \
     if [[ $(find "$archdir"/*.apk -type f | wc -l) -gt 0 ]]; then \
         apk index \
@@ -55,12 +58,6 @@ RUN \
     echo "/export/iso/.apks/" > /etc/apk/repositories; \
     apk update --allow-untrusted; \
     apk fix --upgrade --allow-untrusted alpine-keys; \
-    \
-    apk add \
-        pulseaudio \
-        xorg-server \
-        dbus \
-        dbus-x11; \
     \
     $APORTS/scripts/mkimage.sh \
         --tag v3.21 \

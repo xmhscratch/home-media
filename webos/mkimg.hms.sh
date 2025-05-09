@@ -8,7 +8,6 @@ section_apks() {
     apks="$apks $(cat /tmp/build/apk-chromium | tr '\n' ' ')"
     apks="$apks $(cat /tmp/build/apk-auth | tr '\n' ' ')"
 
-    echo "$apks"
 	build_section apks $ARCH $(apk fetch --progress --root "$APKROOT" --simulate --recursive $apks | sort | checksum)
 }
 

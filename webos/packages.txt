@@ -810,3 +810,14 @@ xz-libs
 yaml
 zlib
 zstd-libs
+k3s
+cni-plugin-flannel
+coreutils-env
+coreutils
+coreutils-fmt
+coreutils-sha512sum
+libattr
+findutils
+ipset
+slirp4netns
+libslirp

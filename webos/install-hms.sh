@@ -183,7 +183,13 @@ install_mounted_root() {
 	local keys_dir="$mnt"/etc/apk/keys
 
 	init_chroot_mounts "$mnt"
-	
+
+	if [ "$DEBUG" -eq 1 ]; then
+		sed -Ei "s@[\#]{0,}PermitRootLogin.+@PermitRootLogin yes@g" "$mnt"/etc/ssh/sshd_config
+		sed -Ei "s@[\#]{0,}PasswordAuthentication.+@PasswordAuthentication yes@g" "$mnt"/etc/ssh/sshd_config
+		sed -Ei "s@[\#]{0,}PermitEmptyPasswords.+@PermitEmptyPasswords yes@g" "$mnt"/etc/ssh/sshd_config
+	fi
+
 	printf "\n\n"
 	print_heading1 " Install application"
 	print_heading1 "----------------------"
@@ -203,6 +209,7 @@ install_mounted_root() {
 	print_heading1 " Finish installation"
 	print_heading1 "----------------------"
 	cfg_misc "$mnt"
+	cfg_k3s "$mnt"
 
 	cleanup_chroot_mounts "$mnt"
 	return $ret
@@ -229,11 +236,7 @@ setup_app() {
 	print_heading2 " Copy HMS files"
 	print_heading2 "----------------------"
 
-	mkdir -pv "$mnt"/etc/docker/
-	mkdir -pv "$mnt"/etc/runlevels/async/
 	mkdir -pv "$mnt"/etc/runlevels/default/
-	mkdir -pv "$mnt"/opt/cni/bin/
-	mkdir -pv "$mnt"/var/lib/minikube/binaries/v1.31.5/
 
 	local export_dir="$mnt"/home/data/dist/
 	mkdir -pv "$export_dir"
@@ -257,11 +260,7 @@ setup_app() {
 
 	for exe in $(find /usr/sbin/hms/bin/* -type f | xargs basename -a); do
 		case $exe in
-			minikube | kube*)
-				install -o root -g root -m 0755 /usr/sbin/hms/bin/"$exe" "$mnt"/usr/bin/"$exe"
-				ln -sf "$mnt"/usr/bin/"$exe" "$mnt"/var/lib/minikube/binaries/v1.31.5/"$exe"
-			;;
-			*) install -o root -g root -m 0755 /usr/sbin/hms/bin/"$exe" "$mnt"/opt/cni/bin/"$exe" ;;
+			*) install -o root -g root -m 0755 /usr/sbin/hms/bin/"$exe" "$mnt"/usr/bin/"$exe" ;;
 		esac
 	done
 
@@ -280,14 +279,15 @@ setup_user() {
 	shift
 
 	if [[ -z $( id "hms" &>/dev/null ) ]]; then
-		$MOCK adduser -D "hms" &>/dev/null
+		adduser -D "hms" &>/dev/null
 	fi
 
-	$MOCK passwd -d hms
+	passwd -d hms
 	mkdir -pv "$mnt"/etc/sudoers.d/
 
 	makefile root:root 0440 "$mnt"/etc/sudoers.d/hms <<-EOF
 	hms ALL=(ALL) NOPASSWD: ALL
+	Defaults env_keep += "DISPLAY QT_QPA_PLATFORM WLR_BACKENDS XDG_SESSION_TYPE XDG_VTNR XDG_RUNTIME_DIR DBUS_SESSION_BUS_ADDRESS DBUS_SESSION_BUS_PID K3S_KUBECONFIG_MODE INSTALL_K3S_SKIP_DOWNLOAD INSTALL_K3S_VERSION CONTAINER_RUNTIME_ENDPOINT XDG_CURRENT_DESKTOP XCURSOR_SIZE XCURSOR_THEME"
 	EOF
 
 	makefile root:root 0755 "$mnt"/usr/sbin/autologin <<-EOF
@@ -299,6 +299,43 @@ setup_user() {
 	if [[ -z $(awk '/^:respawn:\/sbin\/getty -n -l \/usr\/sbin\/autologin/' "$mnt"/etc/inittab) ]] || [ $# -gt 0 ]; then
 		sed -i 's@:respawn:/sbin/getty@:respawn:/sbin/getty -n -l /usr/sbin/autologin@g' "$mnt"/etc/inittab
 	fi
+
+	for grp in \
+		bin \
+		daemon \
+		sys \
+		adm \
+		disk \
+		kmem \
+		wheel \
+		audio \
+		cdrom \
+		dialout \
+		tty \
+		input \
+		tape \
+		video \
+		netdev \
+		kvm \
+		games \
+		www-data \
+		users \
+		messagebus \
+		polkitd \
+		seat \
+		avahi \
+		pulse-access \
+		pulse \
+	; do
+		in_group=0
+		[[ ! -z "$(grep -E '^'$grp':' /etc/group)" ]] || continue
+		for j in $(grep -E '^'$grp':' /etc/group | sed -e 's/^.*://' | tr ',' ' '); do
+			if [ $j == "hms" ]; then in_group=1; fi
+		done
+		if [ $in_group -eq 0 ]; then
+			adduser hms $grp
+		fi
+	done
 }
 
 cfg_xorg() {
@@ -329,8 +366,14 @@ cfg_xorg() {
 	    sudo chown \$(id -un):\$(id -gn) \$XDG_RUNTIME_DIR;
 	fi
 	export \$(dbus-launch)
-	export PATH=\$PATH:/opt/cni/bin/:/root/go/bin:/var/lib/minikube/binaries/v1.31.5
+	export PATH=\$PATH:/usr/libexec/cni:/root/go/bin
+	export K3S_KUBECONFIG_MODE=0644
+	export INSTALL_K3S_SKIP_DOWNLOAD=true
+	export INSTALL_K3S_VERSION=1.31.3
+	export CONTAINER_RUNTIME_ENDPOINT=unix:///run/containerd/containerd.sock
 	EOF
+
+	sed -Ei "s@Defaults secure_path=\"(.+)\"@Defaults secure_path=\"\1:/usr/libexec/cni:/root/go/bin\"@g" "$mnt"/etc/sudoers
 
 	makefile root:wheel 0755 "$mnt"/etc/X11/xinit/xserverrc <<-EOF
 	#!/bin/sh
@@ -471,9 +514,9 @@ cfg_xorg() {
 		#!/bin/sh
 		{ sleep 1; xrandr --output Virtual-1 --mode "1368x768R"; } &
 		exec dbus-launch --sh-syntax --exit-with-session chromium \
-		    --window-size=1368,768 \
-		    --window-position=0,0 \
-		    --app=https://www.youtube.com/ \
+		    --window-size="1368,768" \
+		    --window-position="0,0" \
+		    --app="http://127.0.0.1:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/" \
 		    --no-sandbox \
 		    --kiosk \
 		    --start-fullscreen \
@@ -489,14 +532,17 @@ cfg_misc() {
 	local mnt="$1"
 	shift
 
+	echo "net.ipv4.ip_forward = 1" | tee -a "$mnt"/etc/sysctl.conf
+	echo "net.ipv6.conf.all.forwarding = 1" | tee -a "$mnt"/etc/sysctl.conf
 	echo "net.bridge.bridge-nf-call-iptables = 1" | tee -a "$mnt"/etc/sysctl.conf
 	echo "net.bridge.bridge-nf-call-ip6tables = 1" | tee -a "$mnt"/etc/sysctl.conf
 	echo "net.netfilter.nf_conntrack_tcp_be_liberal = 1" | tee -a "$mnt"/etc/sysctl.conf
 
 	sed -i 's/^\([^#]\+swap\)/#\1/' "$mnt"/etc/fstab
-	# cat >> "$mnt"/etc/fstab <<-EOF
-	# cgroup2	/sys/fs/cgroup			cgroup2	rw,nosuid,nodev,noexec,relatime,X-mount.mkdir=0775	0 0
-	# EOF
+	cat >> "$mnt"/etc/fstab <<-EOF
+	cgroup2	/sys/fs/cgroup			cgroup2	rw,nosuid,nodev,noexec,relatime,X-mount.mkdir=0775			0 0
+	cgroup	/sys/fs/cgroup/freezer	cgroup	rw,nosuid,nodev,noexec,relatime,X-mount.mkdir=0775,freezer	0 0
+	EOF
 
 	makefile root:wheel 644 "$mnt"/etc/cgconfig.conf <<-EOF
 	mount {
@@ -514,23 +560,10 @@ cfg_misc() {
 	EOF
 	sed -Ei "s@#rc_ulimit=\".+\"@rc_ulimit=\"-u unlimited -c unlimited\"@g" "$mnt"/etc/rc.conf
 	sed -Ei "s@#rc_cgroup_mode=\".+\"@rc_cgroup_mode=\"unified\"@g" "$mnt"/etc/rc.conf
-	# sed -i "s@#rc_cgroup_controllers=\"\"@rc_cgroup_controllers=\"blkio cpu cpuacct cpuset devices hugetlb memory net_cls net_prio pids\"@g" "$mnt"/etc/rc.conf
+	sed -i "s@#rc_cgroup_controllers=\"\"@rc_cgroup_controllers=\"blkio cpu cpuacct cpuset io devices hugetlb memory net_cls net_prio pids\"@g" "$mnt"/etc/rc.conf
 	sed -i "s@#rc_controller_cgroups=@rc_controller_cgroups=@g" "$mnt"/etc/rc.conf
-	sed -i "s@#rc_default_runlevel=@rc_default_runlevel=@g" "$mnt"/etc/rc.conf
+	# sed -i "s@#rc_default_runlevel=@rc_default_runlevel=@g" "$mnt"/etc/rc.conf
 	# sed -i "s@#rc_cgroup_memory=\"\"@rc_cgroup_memory=\"memory.memsw.limit_in_bytes 4194304\"@g" "$mnt"/etc/rc.conf
-
-	makefile root:wheel 644 "$mnt"/etc/docker/daemon.json <<-EOF
-	{
-	    "exec-opts": [
-	        "native.cgroupdriver=cgroupfs"
-	    ],
-	    "log-driver": "json-file",
-	    "log-opts": {
-	        "max-size": "100m"
-	    },
-	    "storage-driver": "overlay2"
-	}
-	EOF
 
 	for mod in \
 		autofs4 \
@@ -543,55 +576,6 @@ cfg_misc() {
 		fi
 	done
 
-	makefile root:wheel 0755 "$mnt"/etc/init.d/mkubed <<-EOF
-	#!/sbin/openrc-run
-
-	supervisor=supervise-daemon
-	respawn_delay=2
-	respawn_max=3
-	respawn_period=60
-
-	name="Minikube Cluster"
-	description="Minikube is local Kubernetes, focusing on making it easy to learn and develop for Kubernetes."
-
-	command="\${MINIKUBE_BINARY:-/usr/bin/minikube start}"
-	command_args="\${--force --alsologtostderr -v=1 --driver=none --container-runtime=containerd --kubernetes-version=v1.31.5 --force-systemd=false --extra-config=kubelet.cgroup-driver=cgroupfs --cpus=max --memory=max --addons=metrics-server,ingress,ingress-dns command_args:-\${MINIKUBE_OPTS:-}}"
-	command_background="yes"
-
-	MINIKUBE_LOGFILE="\${MINIKUBE_LOGFILE:-/var/log/\${RC_SVCNAME}.log}"
-	MINIKUBE_LOGPROXY_OPTS="\$MINIKUBE_LOGPROXY_OPTS -m"
-
-	export MINIKUBE_LOGPROXY_CHMOD="\${MINIKUBE_LOGPROXY_CHMOD:-0644}"
-	export MINIKUBE_LOGPROXY_LOG_DIRECTORY="\${MINIKUBE_LOGPROXY_LOG_DIRECTORY:-/var/log}"
-	export MINIKUBE_LOGPROXY_ROTATION_SIZE="\${MINIKUBE_LOGPROXY_ROTATION_SIZE:-104857600}"
-	export MINIKUBE_LOGPROXY_ROTATION_TIME="\${MINIKUBE_LOGPROXY_ROTATION_TIME:-86400}"
-	export MINIKUBE_LOGPROXY_ROTATION_SUFFIX="\${MINIKUBE_LOGPROXY_ROTATION_SUFFIX:-.%Y%m%d%H%M%S}"
-	export MINIKUBE_LOGPROXY_ROTATED_FILES="\${MINIKUBE_LOGPROXY_ROTATED_FILES:-5}"
-
-	pidfile="\${MINIKUBE_PIDFILE:-/var/run/user/\$(id -u)/\$RC_SVCNAME.pid}"
-	output_logger="log_proxy \$MINIKUBE_LOGPROXY_OPTS \$MINIKUBE_LOGFILE"
-	rc_ulimit="\${MINIKUBE_ULIMIT:--c unlimited -u unlimited}"
-	retry="\${MINIKUBE_RETRY:-TERM/60/KILL/10}"
-
-	depend() {
-	    need localmount
-	    need docker
-	    need net
-	    after docker
-	    provide mkubed
-	}
-
-	start_pre() {
-	    checkpath -f -m 0644 -o root:docker "\$MINIKUBE_LOGFILE"
-	}
-
-	reload() {
-	    ebegin "Reloading \${RC_SVCNAME}"
-	    \${supervisor} \${RC_SVCNAME} --signal HUP --pidfile "\${pidfile}"
-	    eend \$?
-	}
-	EOF
-
 	makefile root:wheel 0644 "$mnt"/etc/conf.d/pulseaudio <<-EOF
 	# Config file for /etc/init.d/pulseaudio
 	# \$Header: /var/cvsroot/gentoo-x86/media-sound/pulseaudio/files/pulseaudio.conf.d,v 1.6 2006/07/29 15:34:18 flameeyes Exp \$
@@ -603,43 +587,6 @@ cfg_misc() {
 	PULSEAUDIO_SHOULD_NOT_GO_SYSTEMWIDE=1
 	EOF
 
-	if [[ -z "$(awk '/^::once:\/sbin\/openrc\ async -q/a' "$mnt"/etc/inittab)" ]] || [ $# -gt 0 ]; then
-		sed -i "/::wait:\/sbin\/openrc default/a ::once:\/sbin\/openrc async -q" "$mnt"/etc/inittab
-	fi
-
-	local ntp_srvname=pool.ntp.org
-	local ntp_srvip=$(getent ahosts $ntp_srvname | head -n 1 | cut -d"STREAM $ntp_srvname" -f1)
-	sed -i "s@$ntp_srvname@$ntp_srvip@g" "$mnt"/etc/chrony/chrony.conf
-
-	if [ -f "$mnt"/etc/runlevels/default/chronyd ]; then
-		unlink "$mnt"/etc/runlevels/default/chronyd
-		ln -sf /etc/init.d/chronyd "$mnt"/etc/runlevels/async/chronyd
-	fi
-
-	# mkubed \
-	for srv in \
-		docker \
-		kubelet \
-		containerd \
-		conntrackd \
-		pulseaudio \
-	; do
-		if [ ! -f "$mnt"/etc/runlevels/default/"$srv" ]; then
-			ln -sf /etc/init.d/"$srv" "$mnt"/etc/runlevels/default/"$srv"
-		fi
-	done
-
-	# for srv in \
-	# 	cri-docker.socket \
-	# 	cri-docker.service \
-	# ; do
-	# 	cp -vfrT /usr/sbin/hms/"$srv" "$mnt"/etc/init.d/"$srv"
-	# 	if [ ! -f "$mnt"/etc/runlevels/default/"$srv" ]; then
-	# 		ln -sf /etc/init.d/"$srv" "$mnt"/etc/runlevels/default/"$srv"
-	# 	fi
-	# done
-
-	# polkit \
 	for srv in \
 		dbus \
 		seatd \
@@ -647,6 +594,61 @@ cfg_misc() {
 	; do
 		if [ ! -f "$mnt"/etc/runlevels/boot/"$srv" ]; then
 			ln -sf /etc/init.d/"$srv" "$mnt"/etc/runlevels/boot/"$srv"
+		fi
+	done
+}
+
+cfg_k3s() {
+	local mnt="$1"
+	shift
+
+	local usr_home_dir="$mnt"/home/hms
+	local dashboard_dir="$usr_home_dir"/.rancher/k3s/dashboard
+
+	mkdir -pv "$mnt"/var/lib/rancher/k3s/agent/images/
+	cp -vfrT \
+		/usr/sbin/hms/k3s-airgap-images-amd64.tar.zst \
+		"$mnt"/var/lib/rancher/k3s/agent/images/k3s-airgap-images-amd64.tar.zst
+
+	mkdir -pv "$dashboard_dir"
+	cp -vfrT \
+		/usr/sbin/hms/preload-images.tar.gz \
+		"$usr_home_dir"/preload-images.tar.gz
+	gzip -d "$usr_home_dir"/preload-images.tar.gz
+
+	chown $(id -un):$(id -gn) "$dashboard_dir"
+	cp -vfrT /usr/sbin/hms/dashboard-deploy.yaml "$dashboard_dir"/deploy.yaml
+
+	makefile root:wheel 0644 "$dashboard_dir"/admin-user.yaml <<-EOF
+	apiVersion: v1
+	kind: ServiceAccount
+	metadata:
+	    name: admin-user
+	    namespace: kubernetes-dashboard
+	EOF
+
+	makefile root:wheel 0644 "$dashboard_dir"/admin-user-role.yaml <<-EOF
+	apiVersion: rbac.authorization.k8s.io/v1
+	kind: ClusterRoleBinding
+	metadata:
+	    name: admin-user
+	roleRef:
+	    apiGroup: rbac.authorization.k8s.io
+	    kind: ClusterRole
+	    name: cluster-admin
+	subjects:
+	- kind: ServiceAccount
+	  name: admin-user
+	  namespace: kubernetes-dashboard
+	EOF
+
+	for srv in \
+		k3s \
+		containerd \
+		conntrackd \
+	; do
+		if [ ! -f "$mnt"/etc/runlevels/default/"$srv" ]; then
+			ln -sf /etc/init.d/"$srv" "$mnt"/etc/runlevels/default/"$srv"
 		fi
 	done
 }

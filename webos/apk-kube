@@ -1,7 +1,3 @@
-docker
-docker-cli
-docker-engine
-docker-openrc
 containerd
 containerd-openrc
 cri-tools
@@ -14,3 +10,10 @@ nftables
 ethtool
 gcompat
 crun
+cni-plugins
+cni-plugin-flannel
+coreutils
+ipset
+iptables
+k3s
+k3s-openrc

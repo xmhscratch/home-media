@@ -67,15 +67,13 @@ cp -vrf \
 	/tmp/build/postinstall-hms.sh \
 	"$tmp"/usr/sbin/; \
 \
-cp -vrf \
-    /tmp/build/cri-docker.socket \
-    /tmp/build/cri-docker.service \
-	"$tmp"/usr/sbin/hms/; \
-\
+cp -vrf /tmp/app/* "$tmp"/usr/sbin/hms/
 cp -vrf /tmp/bin/ "$tmp"/usr/sbin/hms/bin/
+cp -vrf \
+	/tmp/build/dashboard-deploy.yaml \
+	/tmp/docker/preload-images.tar.gz \
+	"$tmp"/usr/sbin/hms/
 chmod +x \
-    "$tmp"/usr/sbin/hms/cri-docker.socket \
-    "$tmp"/usr/sbin/hms/cri-docker.service \
 	"$tmp"/usr/sbin/env-hms-answers.sh \
 	"$tmp"/usr/sbin/install-hms.sh \
 	"$tmp"/usr/sbin/postinstall-hms.sh;

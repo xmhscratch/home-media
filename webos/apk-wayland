@@ -1,6 +1,5 @@
 wayland
 wayland-dbg
-wayland-dev
 wayland-libs-client
 wayland-libs-cursor
 wayland-libs-egl
@@ -9,14 +8,9 @@ wayland-pipewire-idle-inhibit
 wayland-protocols
 wayland-static
 wayland-utils
-wayland-utils-doc
 waylandpp
-waylandpp-dev
-waylandpp-doc
 xwayland
 xwayland-dbg
-xwayland-dev
-xwayland-doc
 wl-clipboard
 grim
 foot

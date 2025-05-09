@@ -104,7 +104,7 @@ RUN set -eux; \
 FROM node:22-alpine3.21
 USER root
 WORKDIR /export
-COPY "./certs" "/tmp/certs/"
+# COPY "./certs" "/tmp/certs/"
 RUN set -eux; \
     ( \
         adduser -u 82 -D -S -G www-data www-data; \
@@ -132,16 +132,8 @@ RUN set -eux; \
 	[ ! -e /etc/nsswitch.conf ] && echo 'hosts: files dns' > /etc/nsswitch.conf; \
     echo "@3.10 http://dl-cdn.alpinelinux.org/alpine/v3.10/main" >> /etc/apk/repositories; \
     echo "@3.10 http://dl-cdn.alpinelinux.org/alpine/v3.10/community" >> /etc/apk/repositories; \
-    echo "@3.11 http://dl-cdn.alpinelinux.org/alpine/v3.11/main" >> /etc/apk/repositories; \
-    echo "@3.11 http://dl-cdn.alpinelinux.org/alpine/v3.11/community" >> /etc/apk/repositories; \
-    echo "@3.12 http://dl-cdn.alpinelinux.org/alpine/v3.12/main" >> /etc/apk/repositories; \
-    echo "@3.12 http://dl-cdn.alpinelinux.org/alpine/v3.12/community" >> /etc/apk/repositories; \
-    echo "@3.13 http://dl-cdn.alpinelinux.org/alpine/v3.13/main" >> /etc/apk/repositories; \
-    echo "@3.13 http://dl-cdn.alpinelinux.org/alpine/v3.13/community" >> /etc/apk/repositories; \
     echo "@3.14 http://dl-cdn.alpinelinux.org/alpine/v3.14/main" >> /etc/apk/repositories; \
     echo "@3.14 http://dl-cdn.alpinelinux.org/alpine/v3.14/community" >> /etc/apk/repositories; \
-    echo "@3.15 http://dl-cdn.alpinelinux.org/alpine/v3.15/main" >> /etc/apk/repositories; \
-    echo "@3.15 http://dl-cdn.alpinelinux.org/alpine/v3.15/community" >> /etc/apk/repositories; \
     echo "@3.16 http://dl-cdn.alpinelinux.org/alpine/v3.16/main" >> /etc/apk/repositories; \
     echo "@3.16 http://dl-cdn.alpinelinux.org/alpine/v3.16/community" >> /etc/apk/repositories; \
     echo "@edge http://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories; \
@@ -149,45 +141,44 @@ RUN set -eux; \
     rm -rf /var/cache/apk/*; \
     \
     apk update && apk upgrade; \
-    apk fix --allow-untrusted alpine-keys; \
-    apk add --upgrade \
+    # apk fix --allow-untrusted alpine-keys; \
+    apk add \
         bash \
         ca-certificates \
-        msttcorefonts-installer \
         fontconfig \
-        openssh-client \
         openssl \
-        openssl-dev; \
-    \
-    apk add --virtual .build-deps \
-        alpine-sdk \
-        autoconf \
-        automake \
-        bash \
-        binutils-gold \
-        build-base \
-        cmake \
-        file \
-        file-dev \
-        g++ \
-        gcc \
-        gnu-libiconv \
-        gnu-libiconv-dev \
-        gnupg \
-        go \
-        libgcc \
-        libstdc++ \
-        libtool \
-        linux-headers \
-        m4 \
-        make \
-        musl \
-        musl-dev \
-        nasm \
-        pkgconf \
-        pkgconf-dev \
-        slibtool; \
-    \
+        openssh-client \
+    ; \
+    # apk add --virtual .build \
+    #     alpine-sdk \
+    #     autoconf \
+    #     automake \
+    #     bash \
+    #     binutils-gold \
+    #     build-base \
+    #     cmake \
+    #     file \
+    #     file-dev \
+    #     g++ \
+    #     gcc \
+    #     gnu-libiconv \
+    #     gnu-libiconv-dev \
+    #     gnupg \
+    #     go \
+    #     libgcc \
+    #     libstdc++ \
+    #     libtool \
+    #     linux-headers \
+    #     m4 \
+    #     make \
+    #     musl \
+    #     musl-dev \
+    #     nasm \
+    #     openssl-dev \
+    #     pkgconf \
+    #     pkgconf-dev \
+    #     slibtool \
+    # ; \
     # Google fonts
     # cd /tmp; \
     # wget --progress=bar:force:noscroll https://github.com/google/fonts/archive/master.tar.gz -O /tmp/fonts-main.tar.gz; \
@@ -195,10 +186,9 @@ RUN set -eux; \
     # tar -xfv /tmp/fonts-main.tar.gz /tmp/fonts-main; \
     # find /tmp/fonts-main -name "*.ttf" -exec install -m644 {} /usr/share/fonts \; || return 1; \
     # update font cache
-    update-ms-fonts; \
     fc-cache -fv; \
     # cleanup
-    apk del .build-deps; \
+    # apk del .build; \
     rm -rf /var/cache/apk/*; \
     rm -rf /tmp/*;
 ENV GOLANG_VERSION 1.23.4

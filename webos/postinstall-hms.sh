@@ -1,50 +1,10 @@
 #!/bin/sh
 
-setup_user() {
-	for grp in \
-		bin \
-		daemon \
-		sys \
-		adm \
-		disk \
-		kmem \
-		wheel \
-		audio \
-		cdrom \
-		dialout \
-		tty \
-		input \
-		tape \
-		video \
-		netdev \
-		kvm \
-		games \
-		www-data \
-		users \
-		messagebus \
-		docker \
-		polkitd \
-		seat \
-		avahi \
-		pulse-access \
-		pulse \
-	; do
-		in_group=0
-		[[ ! -z "$(grep -E '^'$grp':' /etc/group)" ]] || continue
-		for j in $(grep -E '^'$grp':' /etc/group | sed -e 's/^.*://' | tr ',' ' '); do
-			if [ $j == "hms" ]; then in_group=1; fi
-		done
-		if [ $in_group -eq 0 ]; then
-			adduser hms $grp
-		fi
-	done
-}
+# setup_user() { }
 
 # cfg_xorg() { }
 
 cfg_k8s_cluster() {
-	echo THAWED > /sys/fs/cgroup/freezer/freezer.state
-
 	for mod in \
 		autofs4 \
 		configs \
@@ -57,21 +17,48 @@ cfg_k8s_cluster() {
 	done
 	sysctl -p /etc/sysctl.conf
 
-	# if [[ -z "$(which kubectl)" ]]; then
-	# 	minikube kubectl -- get po -A
-	# 	alias kubectl="minikube kubectl --"
-	# fi
+	# local usr_home_dir="$mnt"/home/hms
+	# local dashboard_dir="$usr_home_dir"/.rancher/k3s/dashboard
+
+	# ctr image import /home/hms/preload-images.tar
+	# kubectl create -f "$dashboard_dir"/deploy.yaml -f "$dashboard_dir"/admin-user.yaml -f "$dashboard_dir"/admin-user-role.yaml
+	# kubectl -n kubernetes-dashboard create token admin-user > "$dashboard_dir"/token.txt
+	# kubectl proxy >/dev/null &
 
 	# local app_dir=$(realpath "/home/data/dist/")
 	# kubectl apply -f "$app_dir"/ci/
 }
 
+# cfg_async() {
+# 	mkdir -pv "$mnt"/etc/runlevels/async/
+	
+# 	if [[ -z "$(awk '/^::once:\/sbin\/openrc\ async -q/a' "$mnt"/etc/inittab)" ]] || [ $# -gt 0 ]; then
+# 		sed -i "/::wait:\/sbin\/openrc default/a ::once:\/sbin\/openrc async -q" "$mnt"/etc/inittab
+# 	fi
+
+# 	local ntp_srvname=pool.ntp.org
+# 	local ntp_srvip=$(getent ahosts $ntp_srvname | head -n 1 | cut -d"STREAM $ntp_srvname" -f1)
+# 	sed -i "s@$ntp_srvname@$ntp_srvip@g" "$mnt"/etc/chrony/chrony.conf
+
+# 	if [ -f "$mnt"/etc/runlevels/default/chronyd ]; then
+# 		unlink "$mnt"/etc/runlevels/default/chronyd
+# 		ln -sf /etc/init.d/chronyd "$mnt"/etc/runlevels/async/chronyd
+# 	fi
+
+# 	for srv in \
+# 		pulseaudio \
+# 	; do
+# 		if [ ! -f "$mnt"/etc/runlevels/default/"$srv" ]; then
+# 			ln -sf /etc/init.d/"$srv" "$mnt"/etc/runlevels/default/"$srv"
+# 		fi
+# 	done
+# }
+
 postinstall() {
 	[ ! -f "/home/.renovated" ] || return $?
-	setup_user
+	# setup_user
 	# cfg_xorg
 	cfg_k8s_cluster
-	rc-update add -s default async
 	touch /home/.renovated
 }
 

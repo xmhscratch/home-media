@@ -15,3 +15,5 @@ chrony-openrc
 curl
 cgroup-tools
 libcgroup
+pam-rundir
+capitaine-cursors
