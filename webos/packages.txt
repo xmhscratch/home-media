@@ -821,3 +821,5 @@ findutils
 ipset
 slirp4netns
 libslirp
+logrotate
+popt

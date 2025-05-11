@@ -34,7 +34,7 @@ $(AIRGAP_IMAGE_TARBALL): FORCE
 	if [ ! -f "$(AIRGAP_IMAGE_TARBALL)" ]; then \
 		mkdir -pv $(DIST_DOCKER_DIR); \
 		curl -SL --progress-bar --output $(AIRGAP_IMAGE_TARBALL) \
-			https://github.com/k3s-io/k3s/releases/download/v1.31.0+k3s1/$(shell basename $(AIRGAP_IMAGE_TARBALL)); \
+			https://github.com/k3s-io/k3s/releases/download/v1.31.3+k3s1/$(shell basename $(AIRGAP_IMAGE_TARBALL)); \
 	fi
 
 load_preload_images: FORCE $(PRELOAD_IMAGE_TARBALL)

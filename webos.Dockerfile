@@ -6,14 +6,20 @@ COPY \
     webos/*.sh \
     webos/apk-* \
     webos/packages.txt \
-    webos/dashboard-deploy.yaml \
-    # webos/cri-docker.socket \
-    # webos/cri-docker.service \
+    webos/dashboard-deploy.yml \
+    webos/ingress-nginx-deploy.yml \
     /tmp/build/
-COPY dist/app/ /tmp/app/
-COPY dist/bin/ /tmp/bin/
-COPY dist/docker/preload-images.tar.gz /tmp/docker/
-COPY dist/iso/.apks/ /export/iso/.apks/
+COPY ci/*.yml                                       /tmp/build/ci/
+COPY ci/hms/*.yml                                   /tmp/build/ci/hms/
+COPY ci/logstash/*.yml                              /tmp/build/ci/logstash/
+COPY ci/nfs/*.yml                                   /tmp/build/ci/nfs/
+COPY ci/nfs/deploy/                                 /tmp/build/ci/nfs/deploy/
+COPY ci/redis/*.yml                                 /tmp/build/ci/redis/
+COPY dist/app/                                      /tmp/app/
+COPY dist/bin/                                      /tmp/bin/
+COPY dist/docker/preload-images.tar.gz              /tmp/docker/
+COPY dist/docker/k3s-airgap-images-amd64.tar.zst    /tmp/docker/
+COPY dist/iso/.apks/                                /export/iso/.apks/
 RUN \
     ###########
     addgroup root abuild; \

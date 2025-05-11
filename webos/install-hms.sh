@@ -287,7 +287,7 @@ setup_user() {
 
 	makefile root:root 0440 "$mnt"/etc/sudoers.d/hms <<-EOF
 	hms ALL=(ALL) NOPASSWD: ALL
-	Defaults env_keep += "DISPLAY QT_QPA_PLATFORM WLR_BACKENDS XDG_SESSION_TYPE XDG_VTNR XDG_RUNTIME_DIR DBUS_SESSION_BUS_ADDRESS DBUS_SESSION_BUS_PID K3S_KUBECONFIG_MODE INSTALL_K3S_SKIP_DOWNLOAD INSTALL_K3S_VERSION CONTAINER_RUNTIME_ENDPOINT XDG_CURRENT_DESKTOP XCURSOR_SIZE XCURSOR_THEME"
+	Defaults env_keep += "DISPLAY QT_QPA_PLATFORM WLR_BACKENDS XDG_SESSION_TYPE XDG_VTNR XDG_RUNTIME_DIR DBUS_SESSION_BUS_ADDRESS DBUS_SESSION_BUS_PID K3S_KUBECONFIG_MODE CONTAINER_RUNTIME_ENDPOINT XDG_CURRENT_DESKTOP XCURSOR_SIZE XCURSOR_THEME"
 	EOF
 
 	makefile root:root 0755 "$mnt"/usr/sbin/autologin <<-EOF
@@ -367,10 +367,6 @@ cfg_xorg() {
 	fi
 	export \$(dbus-launch)
 	export PATH=\$PATH:/usr/libexec/cni:/root/go/bin
-	export K3S_KUBECONFIG_MODE=0644
-	export INSTALL_K3S_SKIP_DOWNLOAD=true
-	export INSTALL_K3S_VERSION=1.31.3
-	export CONTAINER_RUNTIME_ENDPOINT=unix:///run/containerd/containerd.sock
 	EOF
 
 	sed -Ei "s@Defaults secure_path=\"(.+)\"@Defaults secure_path=\"\1:/usr/libexec/cni:/root/go/bin\"@g" "$mnt"/etc/sudoers
@@ -491,41 +487,37 @@ cfg_xorg() {
 	EndSection
 	EOF
 
-	for usr in \
-		hms \
-	; do
-		local usr_home_dir=$(getent passwd "$usr" | cut -d: -f6)
+	local usr_home_dir=$(getent passwd "hms" | cut -d: -f6)
 
-		makefile root:wheel 0770 "$mnt"/"$usr_home_dir"/postinstall.sh <<-EOF
-		EOF
-		cat /usr/sbin/postinstall-hms.sh > "$mnt"/"$usr_home_dir"/postinstall.sh
+	makefile root:wheel 0770 "$mnt"/"$usr_home_dir"/postinstall.sh <<-EOF
+	EOF
+	cat /usr/sbin/postinstall-hms.sh > "$mnt"/"$usr_home_dir"/postinstall.sh
 
-		makefile root:wheel 0755 "$mnt"/"$usr_home_dir"/.profile <<-EOF
-		#!/bin/sh
-		sudo ~/postinstall.sh
+	makefile root:wheel 0755 "$mnt"/"$usr_home_dir"/.profile <<-EOF
+	#!/bin/sh
+	sudo ~/postinstall.sh
 
-		dbus-update-activation-environment DISPLAY QT_QPA_PLATFORM WLR_BACKENDS XDG_SESSION_TYPE XDG_VTNR XDG_RUNTIME_DIR XDG_CURRENT_DESKTOP XCURSOR_SIZE XCURSOR_THEME;
-		if [ -n "\$DISPLAY" ] && [ "\$XDG_VTNR" -eq 1 ]; then
-		    xinit ~/.xinitrc -- \$DISPLAY
-		fi
-		EOF
+	dbus-update-activation-environment DISPLAY QT_QPA_PLATFORM WLR_BACKENDS XDG_SESSION_TYPE XDG_VTNR XDG_RUNTIME_DIR XDG_CURRENT_DESKTOP XCURSOR_SIZE XCURSOR_THEME;
+	if [ -n "\$DISPLAY" ] && [ "\$XDG_VTNR" -eq 1 ]; then
+		xinit ~/.xinitrc -- \$DISPLAY
+	fi
+	EOF
 
-		makefile root:wheel 0755 "$mnt"/"$usr_home_dir"/.xinitrc <<-EOF
-		#!/bin/sh
-		{ sleep 1; xrandr --output Virtual-1 --mode "1368x768R"; } &
-		exec dbus-launch --sh-syntax --exit-with-session chromium \
-		    --window-size="1368,768" \
-		    --window-position="0,0" \
-		    --app="http://127.0.0.1:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/" \
-		    --no-sandbox \
-		    --kiosk \
-		    --start-fullscreen \
-		    --enable-features=UseOzonePlatform \
-		    --ozone-platform=x11 \
-		    --enable-unsafe-swiftshader \
-		    --enable-features=Vulkan,webgpu;
-		EOF
-	done
+	makefile root:wheel 0755 "$mnt"/"$usr_home_dir"/.xinitrc <<-EOF
+	#!/bin/sh
+	{ sleep 1; xrandr --output Virtual-1 --mode "1368x768R"; } &
+	exec dbus-launch --sh-syntax --exit-with-session chromium \
+		--window-size="1368,768" \
+		--window-position="0,0" \
+		--app="http://127.0.0.1:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/" \
+		--no-sandbox \
+		--kiosk \
+		--start-fullscreen \
+		--enable-features=UseOzonePlatform \
+		--ozone-platform=x11 \
+		--enable-unsafe-swiftshader \
+		--enable-features=Vulkan,webgpu;
+	EOF
 }
 
 cfg_misc() {
@@ -576,6 +568,11 @@ cfg_misc() {
 		fi
 	done
 
+	local ntp_srvname=pool.ntp.org
+	local ntp_srvip=$(getent ahosts $ntp_srvname | head -n 1 | awk -F' ' '{print $1}')
+	sed -i "s@$ntp_srvname@$ntp_srvip@g" "$mnt"/etc/chrony/chrony.conf
+	sed -i "s@FAST_STARTUP=no@FAST_STARTUP=yes@g" "$mnt"/etc/conf.d/chronyd
+
 	makefile root:wheel 0644 "$mnt"/etc/conf.d/pulseaudio <<-EOF
 	# Config file for /etc/init.d/pulseaudio
 	# \$Header: /var/cvsroot/gentoo-x86/media-sound/pulseaudio/files/pulseaudio.conf.d,v 1.6 2006/07/29 15:34:18 flameeyes Exp \$
@@ -596,30 +593,43 @@ cfg_misc() {
 			ln -sf /etc/init.d/"$srv" "$mnt"/etc/runlevels/boot/"$srv"
 		fi
 	done
+
+	for srv in \
+		pulseaudio \
+	; do
+		if [ ! -f "$mnt"/etc/runlevels/default/"$srv" ]; then
+			ln -sf /etc/init.d/"$srv" "$mnt"/etc/runlevels/default/"$srv"
+		fi
+	done
 }
 
 cfg_k3s() {
 	local mnt="$1"
 	shift
 
-	local usr_home_dir="$mnt"/home/hms
-	local dashboard_dir="$usr_home_dir"/.rancher/k3s/dashboard
+	local usr_home_dir=$(getent passwd "$(id -u hms)" | cut -d: -f6)
+	local k3s_dir="$usr_home_dir"/.rancher/k3s
+	local dashboard_dir="$k3s_dir"/dashboard
+	local ingress_nginx_dir="$k3s_dir"/ingress-nginx
 
 	mkdir -pv "$mnt"/var/lib/rancher/k3s/agent/images/
 	cp -vfrT \
 		/usr/sbin/hms/k3s-airgap-images-amd64.tar.zst \
 		"$mnt"/var/lib/rancher/k3s/agent/images/k3s-airgap-images-amd64.tar.zst
 
-	mkdir -pv "$dashboard_dir"
+	mkdir -pv "$mnt"/"$dashboard_dir"
+	mkdir -pv "$mnt"/"$ingress_nginx_dir"
 	cp -vfrT \
 		/usr/sbin/hms/preload-images.tar.gz \
-		"$usr_home_dir"/preload-images.tar.gz
-	gzip -d "$usr_home_dir"/preload-images.tar.gz
+		"$mnt"/"$usr_home_dir"/preload-images.tar.gz
+	gzip -d "$mnt"/"$usr_home_dir"/preload-images.tar.gz
 
-	chown $(id -un):$(id -gn) "$dashboard_dir"
-	cp -vfrT /usr/sbin/hms/dashboard-deploy.yaml "$dashboard_dir"/deploy.yaml
+	chown $(id -un):$(id -gn) "$mnt"/"$dashboard_dir" "$mnt"/"$ingress_nginx_dir"
+	cp -vfr /usr/sbin/hms/ci/ "$mnt"/"$k3s_dir"/ci/
+	cp -vfrT /usr/sbin/hms/dashboard-deploy.yml "$mnt"/"$dashboard_dir"/deploy.yml
+	cp -vfrT /usr/sbin/hms/ingress-nginx-deploy.yml "$mnt"/"$ingress_nginx_dir"/deploy.yml
 
-	makefile root:wheel 0644 "$dashboard_dir"/admin-user.yaml <<-EOF
+	makefile root:wheel 0644 "$mnt"/"$dashboard_dir"/admin-user.yml <<-EOF
 	apiVersion: v1
 	kind: ServiceAccount
 	metadata:
@@ -627,7 +637,7 @@ cfg_k3s() {
 	    namespace: kubernetes-dashboard
 	EOF
 
-	makefile root:wheel 0644 "$dashboard_dir"/admin-user-role.yaml <<-EOF
+	makefile root:wheel 0644 "$mnt"/"$dashboard_dir"/admin-user-role.yml <<-EOF
 	apiVersion: rbac.authorization.k8s.io/v1
 	kind: ClusterRoleBinding
 	metadata:
@@ -640,6 +650,13 @@ cfg_k3s() {
 	- kind: ServiceAccount
 	  name: admin-user
 	  namespace: kubernetes-dashboard
+	EOF
+
+	makefile root:wheel 0644 "$mnt"/etc/conf.d/k3s <<-EOF
+	# k3s options
+	export PATH=\$PATH:/usr/libexec/cni:/root/go/bin
+	K3S_EXEC="server"
+	K3S_OPTS="--disable=traefik --write-kubeconfig-mode=0644 --default-runtime=containerd --container-runtime-endpoint=unix:///run/containerd/containerd.sock"
 	EOF
 
 	for srv in \

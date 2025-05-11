@@ -70,9 +70,13 @@ cp -vrf \
 cp -vrf /tmp/app/* "$tmp"/usr/sbin/hms/
 cp -vrf /tmp/bin/ "$tmp"/usr/sbin/hms/bin/
 cp -vrf \
-	/tmp/build/dashboard-deploy.yaml \
+	/tmp/build/ci/ \
+	/tmp/build/dashboard-deploy.yml \
+	/tmp/build/ingress-nginx-deploy.yml \
 	/tmp/docker/preload-images.tar.gz \
-	"$tmp"/usr/sbin/hms/
+	/tmp/docker/k3s-airgap-images-amd64.tar.zst \
+	"$tmp"/usr/sbin/hms/; \
+\
 chmod +x \
 	"$tmp"/usr/sbin/env-hms-answers.sh \
 	"$tmp"/usr/sbin/install-hms.sh \
