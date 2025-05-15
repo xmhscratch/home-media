@@ -12,5 +12,5 @@ spec:
   persistentVolumeReclaimPolicy: Delete
   storageClassName: storage-repo
   nfs:
-    server: 192.168.56.55
-    path: /web/repos/home-media/channel/
+    server: 127.0.0.1
+    path: /data/dist/channel/

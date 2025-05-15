@@ -2,6 +2,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: pvc-channel
+  namespace: logstash
 spec:
   storageClassName: storage-repo
   accessModes:

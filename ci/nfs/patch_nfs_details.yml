@@ -4,6 +4,7 @@ metadata:
   labels:
     app: nfs-client-provisioner
   name: nfs-client-provisioner
+  namespace: nfs
 spec:
   template:
     spec:
@@ -11,11 +12,11 @@ spec:
         - name: nfs-client-provisioner
           env:
             - name: NFS_SERVER
-              value: 192.168.56.55
+              value: 127.0.0.1
             - name: NFS_PATH
               value: /data/
       volumes:
         - name: nfs-client-root
           nfs:
-            server: 192.168.56.55
+            server: 127.0.0.1
             path: /data/

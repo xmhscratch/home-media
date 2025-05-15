@@ -58,21 +58,21 @@ cat /tmp/build/apk-common >> "$tmp"/etc/apk/world
 echo "nameserver 1.1.1.1" >> "$tmp"/etc/resolv.conf
 ###########
 mkdir -pv "$tmp"/usr/sbin/hms/
+mkdir -pv "$tmp"/usr/sbin/hms/node_modules/
 mkdir -pv "$tmp"/etc/init.d/
 
 cp -vrf \
 	/tmp/build/apk-* \
 	/tmp/build/env-hms-answers.sh \
 	/tmp/build/install-hms.sh \
-	/tmp/build/postinstall-hms.sh \
+	/tmp/build/postlogin.sh \
 	"$tmp"/usr/sbin/; \
 \
 cp -vrf /tmp/app/* "$tmp"/usr/sbin/hms/
+cp -rf /tmp/node_modules/* "$tmp"/usr/sbin/hms/node_modules/
 cp -vrf /tmp/bin/ "$tmp"/usr/sbin/hms/bin/
 cp -vrf \
 	/tmp/build/ci/ \
-	/tmp/build/dashboard-deploy.yml \
-	/tmp/build/ingress-nginx-deploy.yml \
 	/tmp/docker/preload-images.tar.gz \
 	/tmp/docker/k3s-airgap-images-amd64.tar.zst \
 	"$tmp"/usr/sbin/hms/; \
@@ -80,7 +80,7 @@ cp -vrf \
 chmod +x \
 	"$tmp"/usr/sbin/env-hms-answers.sh \
 	"$tmp"/usr/sbin/install-hms.sh \
-	"$tmp"/usr/sbin/postinstall-hms.sh;
+	"$tmp"/usr/sbin/postlogin.sh;
 ###########
 
 rc_add devfs sysinit

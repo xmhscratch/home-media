@@ -45,6 +45,21 @@ makefile() {
 	chmod "$PERMS" "$FILENAME"
 }
 
+rc_add() {
+	local srvs=${*: 0:-1}
+
+	local sn=0
+	if [ $(($# > 1)) -eq 1 ]; then sn=$(($# - 1)); fi
+	shift $sn
+
+	for srv in $(echo $srvs | rev | cut -d' ' -f 2- | rev); do
+		[ ! -d "$mnt"/etc/runlevels/"$@"/ ] || mkdir -pv "$mnt"/etc/runlevels/"$@"/
+		if [ ! -f "$mnt"/etc/runlevels/"$@"/"$srv" ]; then
+			ln -sf /etc/init.d/"$srv" "$mnt"/etc/runlevels/"$@"/"$srv"
+		fi
+	done
+}
+
 partition_id() {
 	local id
 
@@ -236,8 +251,6 @@ setup_app() {
 	print_heading2 " Copy HMS files"
 	print_heading2 "----------------------"
 
-	mkdir -pv "$mnt"/etc/runlevels/default/
-
 	local export_dir="$mnt"/home/data/dist/
 	mkdir -pv "$export_dir"
 	export_dir=$(realpath "$export_dir")
@@ -255,8 +268,9 @@ setup_app() {
 		frontend \
 	; do
 		mkdir -pv "$export_dir"/"$dir"
-		cp -vfr /usr/sbin/hms/"$dir"/* "$export_dir"/"$dir"
+		cp -fr /usr/sbin/hms/"$dir"/* "$export_dir"/"$dir"
 	done
+	cp -fr /usr/sbin/hms/node_modules/* "$export_dir"/node_modules/
 
 	for exe in $(find /usr/sbin/hms/bin/* -type f | xargs basename -a); do
 		case $exe in
@@ -287,7 +301,7 @@ setup_user() {
 
 	makefile root:root 0440 "$mnt"/etc/sudoers.d/hms <<-EOF
 	hms ALL=(ALL) NOPASSWD: ALL
-	Defaults env_keep += "DISPLAY QT_QPA_PLATFORM WLR_BACKENDS XDG_SESSION_TYPE XDG_VTNR XDG_RUNTIME_DIR DBUS_SESSION_BUS_ADDRESS DBUS_SESSION_BUS_PID K3S_KUBECONFIG_MODE CONTAINER_RUNTIME_ENDPOINT XDG_CURRENT_DESKTOP XCURSOR_SIZE XCURSOR_THEME"
+	Defaults env_keep += "DISPLAY QT_QPA_PLATFORM WLR_BACKENDS XDG_SESSION_TYPE XDG_VTNR XDG_RUNTIME_DIR DBUS_SESSION_BUS_ADDRESS DBUS_SESSION_BUS_PID XDG_CURRENT_DESKTOP XCURSOR_SIZE XCURSOR_THEME"
 	EOF
 
 	makefile root:root 0755 "$mnt"/usr/sbin/autologin <<-EOF
@@ -489,14 +503,8 @@ cfg_xorg() {
 
 	local usr_home_dir=$(getent passwd "hms" | cut -d: -f6)
 
-	makefile root:wheel 0770 "$mnt"/"$usr_home_dir"/postinstall.sh <<-EOF
-	EOF
-	cat /usr/sbin/postinstall-hms.sh > "$mnt"/"$usr_home_dir"/postinstall.sh
-
 	makefile root:wheel 0755 "$mnt"/"$usr_home_dir"/.profile <<-EOF
 	#!/bin/sh
-	sudo ~/postinstall.sh
-
 	dbus-update-activation-environment DISPLAY QT_QPA_PLATFORM WLR_BACKENDS XDG_SESSION_TYPE XDG_VTNR XDG_RUNTIME_DIR XDG_CURRENT_DESKTOP XCURSOR_SIZE XCURSOR_THEME;
 	if [ -n "\$DISPLAY" ] && [ "\$XDG_VTNR" -eq 1 ]; then
 		xinit ~/.xinitrc -- \$DISPLAY
@@ -509,7 +517,7 @@ cfg_xorg() {
 	exec dbus-launch --sh-syntax --exit-with-session chromium \
 		--window-size="1368,768" \
 		--window-position="0,0" \
-		--app="http://127.0.0.1:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/" \
+		--app="http://127.0.0.1:8001/api/v1/namespaces/default/services/https:kubernetes-dashboard:/proxy/" \
 		--no-sandbox \
 		--kiosk \
 		--start-fullscreen \
@@ -523,6 +531,10 @@ cfg_xorg() {
 cfg_misc() {
 	local mnt="$1"
 	shift
+
+	cat >> "$mnt"/etc/exports <<-EOF
+	/home/      *(rw,no_subtree_check,no_root_squash,fsid=0,anonuid=0,anongid=0)
+	EOF
 
 	echo "net.ipv4.ip_forward = 1" | tee -a "$mnt"/etc/sysctl.conf
 	echo "net.ipv6.conf.all.forwarding = 1" | tee -a "$mnt"/etc/sysctl.conf
@@ -584,23 +596,8 @@ cfg_misc() {
 	PULSEAUDIO_SHOULD_NOT_GO_SYSTEMWIDE=1
 	EOF
 
-	for srv in \
-		dbus \
-		seatd \
-		cgroups \
-	; do
-		if [ ! -f "$mnt"/etc/runlevels/boot/"$srv" ]; then
-			ln -sf /etc/init.d/"$srv" "$mnt"/etc/runlevels/boot/"$srv"
-		fi
-	done
-
-	for srv in \
-		pulseaudio \
-	; do
-		if [ ! -f "$mnt"/etc/runlevels/default/"$srv" ]; then
-			ln -sf /etc/init.d/"$srv" "$mnt"/etc/runlevels/default/"$srv"
-		fi
-	done
+	rc_add seatd cgroups boot
+	rc_add dbus nfs pulseaudio default
 }
 
 cfg_k3s() {
@@ -609,65 +606,59 @@ cfg_k3s() {
 
 	local usr_home_dir=$(getent passwd "$(id -u hms)" | cut -d: -f6)
 	local k3s_dir="$usr_home_dir"/.rancher/k3s
-	local dashboard_dir="$k3s_dir"/dashboard
-	local ingress_nginx_dir="$k3s_dir"/ingress-nginx
 
+	mkdir -pv "$mnt"/"$k3s_dir"
 	mkdir -pv "$mnt"/var/lib/rancher/k3s/agent/images/
+
+	cp -vfr /usr/sbin/hms/ci/ "$mnt"/"$k3s_dir"/ci/
 	cp -vfrT \
 		/usr/sbin/hms/k3s-airgap-images-amd64.tar.zst \
 		"$mnt"/var/lib/rancher/k3s/agent/images/k3s-airgap-images-amd64.tar.zst
-
-	mkdir -pv "$mnt"/"$dashboard_dir"
-	mkdir -pv "$mnt"/"$ingress_nginx_dir"
 	cp -vfrT \
 		/usr/sbin/hms/preload-images.tar.gz \
 		"$mnt"/"$usr_home_dir"/preload-images.tar.gz
 	gzip -d "$mnt"/"$usr_home_dir"/preload-images.tar.gz
 
-	chown $(id -un):$(id -gn) "$mnt"/"$dashboard_dir" "$mnt"/"$ingress_nginx_dir"
-	cp -vfr /usr/sbin/hms/ci/ "$mnt"/"$k3s_dir"/ci/
-	cp -vfrT /usr/sbin/hms/dashboard-deploy.yml "$mnt"/"$dashboard_dir"/deploy.yml
-	cp -vfrT /usr/sbin/hms/ingress-nginx-deploy.yml "$mnt"/"$ingress_nginx_dir"/deploy.yml
-
-	makefile root:wheel 0644 "$mnt"/"$dashboard_dir"/admin-user.yml <<-EOF
-	apiVersion: v1
-	kind: ServiceAccount
-	metadata:
-	    name: admin-user
-	    namespace: kubernetes-dashboard
+	makefile root:wheel 0770 "$mnt"/usr/bin/postlogin.sh <<-EOF
 	EOF
-
-	makefile root:wheel 0644 "$mnt"/"$dashboard_dir"/admin-user-role.yml <<-EOF
-	apiVersion: rbac.authorization.k8s.io/v1
-	kind: ClusterRoleBinding
-	metadata:
-	    name: admin-user
-	roleRef:
-	    apiGroup: rbac.authorization.k8s.io
-	    kind: ClusterRole
-	    name: cluster-admin
-	subjects:
-	- kind: ServiceAccount
-	  name: admin-user
-	  namespace: kubernetes-dashboard
-	EOF
+	cat /usr/sbin/postlogin.sh > "$mnt"/usr/bin/postlogin.sh
 
 	makefile root:wheel 0644 "$mnt"/etc/conf.d/k3s <<-EOF
 	# k3s options
 	export PATH=\$PATH:/usr/libexec/cni:/root/go/bin
 	K3S_EXEC="server"
-	K3S_OPTS="--disable=traefik --write-kubeconfig-mode=0644 --default-runtime=containerd --container-runtime-endpoint=unix:///run/containerd/containerd.sock"
+	K3S_OPTS="--disable=traefik --write-kubeconfig-mode=0644"
+	rc_need="localmount netmount"
+	rc_after="net nfs"
 	EOF
 
-	for srv in \
-		k3s \
-		containerd \
-		conntrackd \
-	; do
-		if [ ! -f "$mnt"/etc/runlevels/default/"$srv" ]; then
-			ln -sf /etc/init.d/"$srv" "$mnt"/etc/runlevels/default/"$srv"
-		fi
-	done
+	makefile root:wheel 0775 "$mnt"/etc/init.d/postlogin <<-EOF
+	#!/sbin/openrc-run
+
+	POSTLOGIN_LOGFILE="\${POSTLOGIN_LOGFILE:-/var/log/\${RC_SVCNAME}.log}"
+
+	name="postlogin"
+	description="Service running after login"
+
+	command="/usr/bin/postlogin.sh"
+	command_args=">>\${POSTLOGIN_LOGFILE} 2>&1"
+	command_background="yes"
+
+	pidfile="/var/run/\$RC_SVCNAME.pid"
+
+	start_pre() {
+	    checkpath -f -m 0774 -o root:wheel "\${POSTLOGIN_LOGFILE}"
+	}
+
+	depend() {
+	    need localmount netmount
+	    after net k3s
+	}
+
+	supervisor=supervise-daemon
+	EOF
+
+	rc_add k3s postlogin default
 }
 
 if rc-service --exists networking; then

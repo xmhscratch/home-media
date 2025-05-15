@@ -1,8 +1,4 @@
-containerd
-containerd-openrc
 cri-tools
-conntrack-tools
-conntrack-tools-openrc
 findutils
 util-linux
 iproute2

@@ -823,3 +823,8 @@ slirp4netns
 libslirp
 logrotate
 popt
+rpcbind
+libtirpc
+libtirpc-conf
+nfs-utils
+nfs-utils-dbg

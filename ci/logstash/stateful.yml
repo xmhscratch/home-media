@@ -2,6 +2,7 @@ kind: StatefulSet
 apiVersion: apps/v1
 metadata:
   name: logstash
+  namespace: logstash
 spec:
   serviceName: logstash
   replicas: 1
@@ -15,7 +16,7 @@ spec:
     spec:
       containers:
         - name: logstash
-          image: docker.elastic.co/logstash/logstash:8.4.2
+          image: docker.elastic.co/logstash/logstash:9.0.1
           ports:
             - containerPort: 6379
               name: master

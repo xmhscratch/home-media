@@ -2,6 +2,7 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: backend
+  namespace: hms
 spec:
   replicas: 1
   selector:
@@ -12,14 +13,6 @@ spec:
       labels:
         app: backend
     spec:
-      # initContainers:
-      #   - name: wait-for-job
-      #     image: bitnami/kubectl:latest
-      #     command:
-      #       - "/bin/sh"
-      #       - "-c"
-      #     args:
-      #       - while [[ $(kubectl -n hms get job job-build-backend -o jsonpath='{.status.succeeded}') -ne 1 ]]; do { echo "Waiting backend build to complete..."; sleep 5; }; done
       containers:
         - name: backend
           image: localhost:5000/hms:latest
@@ -36,10 +29,7 @@ spec:
             - "/bin/sh"
             - "-c"
           args:
-            - |
-              npm install -g @angular/cli @nestjs/cli &&
-              npm install --omit=dev &&
-              npm run backend:start:prod
+            - npm run backend:start:prod
           volumeMounts:
             - name: pvc-dist-backend
               mountPath: /export/dist/
@@ -58,6 +48,7 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: frontend
+  namespace: hms
 spec:
   replicas: 1
   selector:
@@ -68,14 +59,6 @@ spec:
       labels:
         app: frontend
     spec:
-      # initContainers:
-      #   - name: wait-for-job
-      #     image: bitnami/kubectl:latest
-      #     command:
-      #       - "/bin/sh"
-      #       - "-c"
-      #     args:
-      #       - while [[ $(kubectl -n hms get job job-build-frontend -o jsonpath='{.status.succeeded}') -ne 1 ]]; do { echo "Waiting build to complete..."; sleep 5; }; done
       containers:
         - name: frontend
           image: localhost:5000/hms:latest
@@ -92,10 +75,7 @@ spec:
             - "/bin/sh"
             - "-c"
           args:
-            - |
-              npm install -g @angular/cli @nestjs/cli &&
-              npm install --omit=dev &&
-              npm run client:serve:ssr
+            - npm run frontend:serve:ssr
           volumeMounts:
             - name: pvc-dist-backend
               mountPath: /export/dist/
@@ -109,6 +89,7 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: api
+  namespace: hms
 spec:
   replicas: 1
   selector:
@@ -135,10 +116,7 @@ spec:
             - "/bin/sh"
             - "-c"
           args:
-            - |
-              while [[ ! -f /export/dist/api ]]; do { echo "Waiting build to complete..."; sleep 5; } done &&
-              cd /export/dist/ &&
-              ./api;
+            - /export/dist/api
           volumeMounts:
             - name: pvc-dist-backend
               mountPath: /export/dist/
@@ -157,6 +135,7 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: file
+  namespace: hms
 spec:
   replicas: 1
   selector:
@@ -183,10 +162,7 @@ spec:
             - "/bin/sh"
             - "-c"
           args:
-            - |
-              while [[ ! -f /export/dist/file ]]; do { echo "Waiting build to complete..."; sleep 5; } done &&
-              cd /export/dist/ &&
-              ./file;
+            - /export/dist/file
           volumeMounts:
             - name: pvc-dist-backend
               mountPath: /export/dist/
@@ -205,6 +181,7 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: downloader
+  namespace: hms
 spec:
   replicas: 1
   selector:
@@ -228,10 +205,7 @@ spec:
             - "/bin/sh"
             - "-c"
           args:
-            - |
-              while [[ ! -f /export/dist/downloader ]]; do { echo "Waiting build to complete..."; sleep 5; } done &&
-              cd /export/dist/ &&
-              ./downloader;
+            - /export/dist/downloader
           volumeMounts:
             - name: pvc-dist-backend
               mountPath: /export/dist/
@@ -250,6 +224,7 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: encoder
+  namespace: hms
 spec:
   replicas: 1
   selector:
@@ -273,10 +248,7 @@ spec:
             - "/bin/sh"
             - "-c"
           args:
-            - |
-              while [[ ! -f /export/dist/encoder ]]; do { echo "Waiting build to complete..."; sleep 5; } done &&
-              cd /export/dist/ &&
-              ./encoder;
+            - /export/dist/encoder
           volumeMounts:
             - name: pvc-dist-backend
               mountPath: /export/dist/

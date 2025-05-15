@@ -17,3 +17,6 @@ cgroup-tools
 libcgroup
 pam-rundir
 capitaine-cursors
+nfs-utils
+nfs-utils-dbg
+nfs-utils-openrc

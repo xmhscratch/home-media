@@ -6,9 +6,8 @@ COPY \
     webos/*.sh \
     webos/apk-* \
     webos/packages.txt \
-    webos/dashboard-deploy.yml \
-    webos/ingress-nginx-deploy.yml \
     /tmp/build/
+COPY package.json                                   /tmp/
 COPY ci/*.yml                                       /tmp/build/ci/
 COPY ci/hms/*.yml                                   /tmp/build/ci/hms/
 COPY ci/logstash/*.yml                              /tmp/build/ci/logstash/
@@ -28,6 +27,10 @@ RUN \
     mkdir -pv $HOME/tmp/; \
     \
     abuild-keygen -i -a -n; \
+    ###########
+    cd /tmp/; \
+    npm install -g @angular/cli @nestjs/cli; \
+    npm install --omit=dev; \
     ###########
     cd $HOME/.mkimage/; \
     git clone --depth=1 --branch=3.21-stable https://gitlab.alpinelinux.org/alpine/aports.git ./aports; \
