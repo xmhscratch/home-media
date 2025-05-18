@@ -1,6 +1,7 @@
 .PHONY: FORCE
 
 WEBOS_DIR = webos
+MANIFEST_DIR = manifest
 DIST_DIR = dist
 DIST_APP_DIR = $(DIST_DIR)/app
 DIST_BIN_DIR = $(DIST_DIR)/bin
@@ -8,7 +9,7 @@ DIST_DOCKER_DIR = $(DIST_DIR)/docker
 DIST_ISO_DIR = $(DIST_DIR)/iso
 
 BINARY = $(DIST_ISO_DIR)/alpine-hms-v3.21-x86_64.iso
-KUBE_IMAGE_OBJ = $(WEBOS_DIR)/preload_images.txt
+KUBE_IMAGE_OBJ = $(MANIFEST_DIR)/preload_images.txt
 PRELOAD_IMAGE_TARBALL = $(DIST_DOCKER_DIR)/preload-images.tar.gz
 AIRGAP_IMAGE_TARBALL = $(DIST_DOCKER_DIR)/k3s-airgap-images-amd64.tar.zst
 GONODE_TARBALL = $(DIST_DOCKER_DIR)/gonode.tar

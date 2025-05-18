@@ -163,8 +163,8 @@ export class NyaaService implements OnModuleInit, OnModuleDestroy {
                 rootId: <SqlValue>rootId,
             })
 
-            const cleanIds = []
-            const targetIds: string[] = map(stmt.all(), (v: never) => v['id'])
+            const cleanIds: string[] = []
+            const targetIds: string[] = map(stmt.all(), (v: { id: string }): string => v['id'])
 
             for (let targetId of targetIds) {
                 await tree.delete(targetId)

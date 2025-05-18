@@ -18,5 +18,6 @@ libcgroup
 pam-rundir
 capitaine-cursors
 nfs-utils
-nfs-utils-dbg
 nfs-utils-openrc
+dnsmasq
+dnsmasq-openrc

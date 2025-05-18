@@ -13,6 +13,14 @@ spec:
       labels:
         app: backend
     spec:
+      initContainers:
+        - name: wait-for-redis
+          image: docker.io/bitnami/redis:7.4
+          command:
+            - "/bin/sh"
+            - "-c"
+          args:
+            - until redis-cli -h master.redis ping | grep PONG; do echo waiting for redis; sleep 2; done;
       containers:
         - name: backend
           image: localhost:5000/hms:latest
@@ -100,6 +108,14 @@ spec:
       labels:
         app: api
     spec:
+      initContainers:
+      - name: wait-for-redis
+        image: docker.io/bitnami/redis:7.4
+        command:
+          - "/bin/sh"
+          - "-c"
+        args:
+          - until redis-cli -h master.redis ping | grep PONG; do echo waiting for redis; sleep 2; done;
       containers:
         - name: api
           image: localhost:5000/hms:latest
@@ -116,7 +132,7 @@ spec:
             - "/bin/sh"
             - "-c"
           args:
-            - /export/dist/api
+            - cd /export/dist/ && ./api
           volumeMounts:
             - name: pvc-dist-backend
               mountPath: /export/dist/
@@ -146,6 +162,14 @@ spec:
       labels:
         app: file
     spec:
+      initContainers:
+      - name: wait-for-redis
+        image: docker.io/bitnami/redis:7.4
+        command:
+          - "/bin/sh"
+          - "-c"
+        args:
+          - until redis-cli -h master.redis ping | grep PONG; do echo waiting for redis; sleep 2; done;
       containers:
         - name: file
           image: localhost:5000/hms:latest
@@ -162,7 +186,7 @@ spec:
             - "/bin/sh"
             - "-c"
           args:
-            - /export/dist/file
+            - cd /export/dist/ && ./file
           volumeMounts:
             - name: pvc-dist-backend
               mountPath: /export/dist/
@@ -192,6 +216,14 @@ spec:
       labels:
         app: downloader
     spec:
+      initContainers:
+      - name: wait-for-redis
+        image: docker.io/bitnami/redis:7.4
+        command:
+          - "/bin/sh"
+          - "-c"
+        args:
+          - until redis-cli -h master.redis ping | grep PONG; do echo waiting for redis; sleep 2; done;
       containers:
         - name: downloader
           image: localhost:5000/hms:latest
@@ -205,7 +237,7 @@ spec:
             - "/bin/sh"
             - "-c"
           args:
-            - /export/dist/downloader
+            - cd /export/dist/ && ./downloader
           volumeMounts:
             - name: pvc-dist-backend
               mountPath: /export/dist/
@@ -235,6 +267,14 @@ spec:
       labels:
         app: encoder
     spec:
+      initContainers:
+      - name: wait-for-redis
+        image: docker.io/bitnami/redis:7.4
+        command:
+          - "/bin/sh"
+          - "-c"
+        args:
+          - until redis-cli -h master.redis ping | grep PONG; do echo waiting for redis; sleep 2; done;
       containers:
         - name: encoder
           image: localhost:5000/hms:latest
@@ -248,7 +288,7 @@ spec:
             - "/bin/sh"
             - "-c"
           args:
-            - /export/dist/encoder
+            - cd /export/dist/ && ./encoder
           volumeMounts:
             - name: pvc-dist-backend
               mountPath: /export/dist/

@@ -3,23 +3,11 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    "outDir": "./dist/app/frontend",
-    "strict": true,
-    "noImplicitOverride": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "skipLibCheck": true,
-    "isolatedModules": true,
-    "esModuleInterop": true,
-    "sourceMap": true,
     "declaration": false,
+    "esModuleInterop": true,
     "experimentalDecorators": true,
-    "moduleResolution": "bundler",
     "importHelpers": true,
-    "useDefineForClassFields": false,
-    "target": "ES2022",
-    "module": "ES2022",
+    "isolatedModules": true,
     "lib": [
       "ES6",
       "ES2015",
@@ -31,11 +19,33 @@
       "ES2022.RegExp",
       "DOM"
     ],
-    "typeRoots": ["./node_modules/@types", "./frontend/types"],
-		"types": ["node", "lodash-es", "sql.js", "jest"],
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "outDir": "./dist/app/frontend",
     "paths": {
-      "@/*": ["./frontend/app/*"]
+      "@/*": [
+        "./frontend/app/*"
+      ]
     },
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "strict": true,
+    "target": "ES2022",
+    "typeRoots": [
+      "./node_modules/@types",
+      "./frontend/types"
+    ],
+    "types": [
+      "node",
+      "lodash-es",
+      "sql.js",
+      "jest"
+    ],
+    "useDefineForClassFields": false
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,

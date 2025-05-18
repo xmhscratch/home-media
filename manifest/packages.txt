@@ -81,7 +81,6 @@ cairo-gobject
 cdparanoia-libs
 chromium
 chromium-chromedriver
-chromium-dbg
 chromium-lang
 chromium-swiftshader
 chrony
@@ -688,7 +687,6 @@ python3-pycache-pyc0
 qt6-qt3d
 qt6-qt5compat
 qt6-qtbase
-qt6-qtbase-dbg
 qt6-qtbase-mysql
 qt6-qtbase-odbc
 qt6-qtbase-postgresql
@@ -772,7 +770,6 @@ vo-amrwbenc
 volume_key
 vulkan-headers
 vulkan-loader
-vulkan-loader-dbg
 vulkan-tools
 wayland-libs-client
 wayland-libs-cursor
@@ -827,4 +824,5 @@ rpcbind
 libtirpc
 libtirpc-conf
 nfs-utils
-nfs-utils-dbg
+dnsmasq
+dnsmasq-common

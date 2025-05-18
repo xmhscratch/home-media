@@ -4,8 +4,8 @@ ENV GIT_SSL_NO_VERIFY=false
 ENV ARCH=x86_64
 COPY \
     webos/*.sh \
-    webos/apk-* \
-    webos/packages.txt \
+    manifest/apk-* \
+    manifest/packages.txt \
     /tmp/build/
 COPY package.json                                   /tmp/
 COPY ci/*.yml                                       /tmp/build/ci/

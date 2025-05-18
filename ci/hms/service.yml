@@ -12,7 +12,7 @@ spec:
   ports:
   - name: backend
     protocol: TCP
-    port: 4100
+    port: 80
     targetPort: 4100
 ---
 kind: Service
@@ -29,7 +29,7 @@ spec:
   ports:
   - name: frontend
     protocol: TCP
-    port: 4000
+    port: 80
     targetPort: 4000
 ---
 kind: Service
@@ -46,7 +46,7 @@ spec:
   ports:
   - name: api
     protocol: TCP
-    port: 4110
+    port: 80
     targetPort: 4110
 ---
 kind: Service
@@ -63,5 +63,5 @@ spec:
   ports:
   - name: file
     protocol: TCP
-    port: 4150
+    port: 80
     targetPort: 4150

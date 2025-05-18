@@ -224,6 +224,7 @@ install_mounted_root() {
 	print_heading1 " Finish installation"
 	print_heading1 "----------------------"
 	cfg_misc "$mnt"
+	cfg_dnsmasq "$mnt"
 	cfg_k3s "$mnt"
 
 	cleanup_chroot_mounts "$mnt"
@@ -253,6 +254,7 @@ setup_app() {
 
 	local export_dir="$mnt"/home/data/dist/
 	mkdir -pv "$export_dir"
+	mkdir -pv "$export_dir"/node_modules/
 	export_dir=$(realpath "$export_dir")
 
 	for exe in \
@@ -505,6 +507,7 @@ cfg_xorg() {
 
 	makefile root:wheel 0755 "$mnt"/"$usr_home_dir"/.profile <<-EOF
 	#!/bin/sh
+	sudo /usr/bin/postlogin.sh;
 	dbus-update-activation-environment DISPLAY QT_QPA_PLATFORM WLR_BACKENDS XDG_SESSION_TYPE XDG_VTNR XDG_RUNTIME_DIR XDG_CURRENT_DESKTOP XCURSOR_SIZE XCURSOR_THEME;
 	if [ -n "\$DISPLAY" ] && [ "\$XDG_VTNR" -eq 1 ]; then
 		xinit ~/.xinitrc -- \$DISPLAY
@@ -600,6 +603,31 @@ cfg_misc() {
 	rc_add dbus nfs pulseaudio default
 }
 
+cfg_dnsmasq() {
+	local mnt="$1"
+	shift
+
+	mv -vf "$mnt"/etc/udhcpc/udhcpc.conf "$mnt"/etc/udhcpc/udhcpc.conf.bak
+	makefile root:wheel 0644 "$mnt"/etc/udhcpc/udhcpc.conf <<-EOF
+	RESOLV_CONF=yes
+	EOF
+
+	sed -i '1i nameserver 127.0.0.1' "$mnt"/etc/resolv.conf
+
+	mv -vf "$mnt"/etc/dnsmasq.conf "$mnt"/etc/dnsmasq.conf.bak
+	makefile root:wheel 0644 "$mnt"/etc/dnsmasq.conf <<-EOF
+	port=53
+	strict-order
+	no-resolv
+	no-poll
+	address=/.hms/127.0.0.1
+	local-service
+	listen-address=127.0.0.1
+	bind-interfaces
+	conf-dir=/etc/dnsmasq.d/,*.conf
+	EOF
+}
+
 cfg_k3s() {
 	local mnt="$1"
 	shift
@@ -619,35 +647,30 @@ cfg_k3s() {
 		"$mnt"/"$usr_home_dir"/preload-images.tar.gz
 	gzip -d "$mnt"/"$usr_home_dir"/preload-images.tar.gz
 
-	makefile root:wheel 0770 "$mnt"/usr/bin/postlogin.sh <<-EOF
-	EOF
-	cat /usr/sbin/postlogin.sh > "$mnt"/usr/bin/postlogin.sh
+	cp -vfrT /usr/sbin/postlogin.sh "$mnt"/usr/bin/postlogin.sh
 
 	makefile root:wheel 0644 "$mnt"/etc/conf.d/k3s <<-EOF
 	# k3s options
 	export PATH=\$PATH:/usr/libexec/cni:/root/go/bin
 	K3S_EXEC="server"
-	K3S_OPTS="--disable=traefik --write-kubeconfig-mode=0644"
+	K3S_OPTS="--disable=traefik --write-kubeconfig-mode=0644 --cluster-dns=10.43.0.10"
 	rc_need="localmount netmount"
 	rc_after="net nfs"
 	EOF
 
-	makefile root:wheel 0775 "$mnt"/etc/init.d/postlogin <<-EOF
+	makefile root:wheel 0775 "$mnt"/etc/init.d/k3s-proxy <<-EOF
 	#!/sbin/openrc-run
 
-	POSTLOGIN_LOGFILE="\${POSTLOGIN_LOGFILE:-/var/log/\${RC_SVCNAME}.log}"
+	K3S_PROXY_LOGFILE="\${K3S_PROXY_LOGFILE:-/var/log/\${RC_SVCNAME}.log}"
 
-	name="postlogin"
-	description="Service running after login"
+	name="k3s-proxy"
+	description="K3s apiserver proxy"
 
-	command="/usr/bin/postlogin.sh"
-	command_args=">>\${POSTLOGIN_LOGFILE} 2>&1"
-	command_background="yes"
-
-	pidfile="/var/run/\$RC_SVCNAME.pid"
+	command="/usr/bin/kubectl proxy"
+	command_args=">>\${K3S_PROXY_LOGFILE} 2>&1"
 
 	start_pre() {
-	    checkpath -f -m 0774 -o root:wheel "\${POSTLOGIN_LOGFILE}"
+	    checkpath -f -m 0774 -o root:wheel "\${K3S_PROXY_LOGFILE}"
 	}
 
 	depend() {
@@ -655,10 +678,13 @@ cfg_k3s() {
 	    after net k3s
 	}
 
+	respawn_delay=2
+	respawn_max=3
+	respawn_period=60
 	supervisor=supervise-daemon
 	EOF
 
-	rc_add k3s postlogin default
+	rc_add k3s dnsmasq default
 }
 
 if rc-service --exists networking; then

@@ -1,9 +1,29 @@
 {
     "extends": "./tsconfig.json",
     "compilerOptions": {
+        "allowSyntheticDefaultImports": true,
+        "baseUrl": "./backend",
+        "declaration": true,
+        "emitDecoratorMetadata": true,
+        "forceConsistentCasingInFileNames": true,
+        "incremental": true,
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "noFallthroughCasesInSwitch": false,
+        "noImplicitAny": false,
         "outDir": "./dist/app/backend",
-        "typeRoots": ["./node_modules/@types", "./backend/types"],
-        "types": ["node", "lodash-es", "jest"],
+        "removeComments": true,
+        "strictBindCallApply": false,
+        "strictNullChecks": true,
+        "typeRoots": [
+            "./node_modules/@types",
+            "./backend/types"
+        ],
+        "types": [
+            "node",
+            "lodash-es",
+            "jest"
+        ]
     },
     "files": [
         "backend/app.config.ts",
@@ -15,5 +35,6 @@
     "include": [
         "backend/**/*.d.ts",
         "backend/**/*.spec.ts"
-    ]
+    ],
+    "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
 }
