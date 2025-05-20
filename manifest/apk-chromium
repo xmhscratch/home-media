@@ -1,9 +1,7 @@
 vulkan-headers
 vulkan-loader
-vulkan-loader-dbg
 vulkan-tools
 chromium
 chromium-chromedriver
-chromium-dbg
 chromium-lang
 chromium-swiftshader

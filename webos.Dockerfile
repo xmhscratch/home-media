@@ -8,18 +8,15 @@ COPY \
     manifest/packages.txt \
     /tmp/build/
 COPY package.json                                   /tmp/
-COPY ci/*.yml                                       /tmp/build/ci/
-COPY ci/hms/*.yml                                   /tmp/build/ci/hms/
-COPY ci/logstash/*.yml                              /tmp/build/ci/logstash/
-COPY ci/nfs/*.yml                                   /tmp/build/ci/nfs/
-COPY ci/nfs/deploy/                                 /tmp/build/ci/nfs/deploy/
-COPY ci/redis/*.yml                                 /tmp/build/ci/redis/
+COPY ci/                                            /tmp/build/ci/
+COPY channel/                                       /tmp/channel/
 COPY dist/app/                                      /tmp/app/
 COPY dist/bin/                                      /tmp/bin/
 COPY dist/docker/preload-images.tar.gz              /tmp/docker/
 COPY dist/docker/k3s-airgap-images-amd64.tar.zst    /tmp/docker/
 COPY dist/iso/.apks/                                /export/iso/.apks/
 RUN \
+    apk add kustomize; \
     ###########
     addgroup root abuild; \
     mkdir -pv $HOME/.mkimage/; \
@@ -35,6 +32,13 @@ RUN \
     cd $HOME/.mkimage/; \
     git clone --depth=1 --branch=3.21-stable https://gitlab.alpinelinux.org/alpine/aports.git ./aports; \
     sudo apk update; \
+    ###########
+    mkdir -pv /tmp/ci/; \
+    cp -vrf \
+        /tmp/build/ci/*-deploy.yml \
+        /tmp/ci/; \
+    \
+    kustomize build /tmp/build/ci/ --output /tmp/ci/hms-deploy.yml; \
     ###########
     export APORTS=$(realpath "$HOME/.mkimage/aports/"); \
     ###########

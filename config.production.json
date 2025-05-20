@@ -10,10 +10,10 @@
         "path": "/export/data/"
     },
     "endpoint": {
-        "backend": "backend.hms:4100",
-        "api": "api.hms:4110",
-        "file": "file.hms:4150",
-        "frontend": "frontend.hms:4200"
+        "backend": "backend.hms",
+        "api": "api.hms",
+        "file": "file.hms",
+        "frontend": "frontend.hms"
     },
     "rootPath": "/export/",
     "binPath": "/export/bin/",

@@ -1,7 +1,6 @@
 qt6-qt3d
 qt6-qt5compat
 qt6-qtbase
-qt6-qtbase-dbg
 qt6-qtbase-mysql
 qt6-qtbase-odbc
 qt6-qtbase-postgresql

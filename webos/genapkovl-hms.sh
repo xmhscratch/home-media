@@ -58,6 +58,7 @@ cat /tmp/build/apk-common >> "$tmp"/etc/apk/world
 echo "nameserver 1.1.1.1" >> "$tmp"/etc/resolv.conf
 ###########
 mkdir -pv "$tmp"/usr/sbin/hms/
+mkdir -pv "$tmp"/usr/sbin/hms/channel/
 mkdir -pv "$tmp"/usr/sbin/hms/node_modules/
 mkdir -pv "$tmp"/etc/init.d/
 
@@ -69,10 +70,11 @@ cp -vrf \
 	"$tmp"/usr/sbin/; \
 \
 cp -vrf /tmp/app/* "$tmp"/usr/sbin/hms/
+cp -rf /tmp/channel/* "$tmp"/usr/sbin/hms/channel/
 cp -rf /tmp/node_modules/* "$tmp"/usr/sbin/hms/node_modules/
 cp -vrf /tmp/bin/ "$tmp"/usr/sbin/hms/bin/
 cp -vrf \
-	/tmp/build/ci/ \
+	/tmp/ci/*.yml \
 	/tmp/docker/preload-images.tar.gz \
 	/tmp/docker/k3s-airgap-images-amd64.tar.zst \
 	"$tmp"/usr/sbin/hms/; \

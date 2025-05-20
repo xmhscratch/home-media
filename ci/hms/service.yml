@@ -30,7 +30,7 @@ spec:
   - name: frontend
     protocol: TCP
     port: 80
-    targetPort: 4000
+    targetPort: 4200
 ---
 kind: Service
 apiVersion: v1

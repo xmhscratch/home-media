@@ -254,6 +254,7 @@ setup_app() {
 
 	local export_dir="$mnt"/home/data/dist/
 	mkdir -pv "$export_dir"
+	mkdir -pv "$export_dir"/channel/
 	mkdir -pv "$export_dir"/node_modules/
 	export_dir=$(realpath "$export_dir")
 
@@ -272,6 +273,7 @@ setup_app() {
 		mkdir -pv "$export_dir"/"$dir"
 		cp -fr /usr/sbin/hms/"$dir"/* "$export_dir"/"$dir"
 	done
+	cp -fr /usr/sbin/hms/channel/* "$export_dir"/channel/
 	cp -fr /usr/sbin/hms/node_modules/* "$export_dir"/node_modules/
 
 	for exe in $(find /usr/sbin/hms/bin/* -type f | xargs basename -a); do
@@ -510,7 +512,7 @@ cfg_xorg() {
 	sudo /usr/bin/postlogin.sh;
 	dbus-update-activation-environment DISPLAY QT_QPA_PLATFORM WLR_BACKENDS XDG_SESSION_TYPE XDG_VTNR XDG_RUNTIME_DIR XDG_CURRENT_DESKTOP XCURSOR_SIZE XCURSOR_THEME;
 	if [ -n "\$DISPLAY" ] && [ "\$XDG_VTNR" -eq 1 ]; then
-		xinit ~/.xinitrc -- \$DISPLAY
+	    xinit ~/.xinitrc -- \$DISPLAY
 	fi
 	EOF
 
@@ -518,16 +520,16 @@ cfg_xorg() {
 	#!/bin/sh
 	{ sleep 1; xrandr --output Virtual-1 --mode "1368x768R"; } &
 	exec dbus-launch --sh-syntax --exit-with-session chromium \
-		--window-size="1368,768" \
-		--window-position="0,0" \
-		--app="http://127.0.0.1:8001/api/v1/namespaces/default/services/https:kubernetes-dashboard:/proxy/" \
-		--no-sandbox \
-		--kiosk \
-		--start-fullscreen \
-		--enable-features=UseOzonePlatform \
-		--ozone-platform=x11 \
-		--enable-unsafe-swiftshader \
-		--enable-features=Vulkan,webgpu;
+	    --window-size="1368,768" \
+	    --window-position="0,0" \
+	    --app="http://127.0.0.1:8001/api/v1/namespaces/default/services/https:kubernetes-dashboard:/proxy/" \
+	    --no-sandbox \
+	    --kiosk \
+	    --start-fullscreen \
+	    --ozone-platform=x11 \
+	    --enable-unsafe-swiftshader \
+	    --enable-unsafe-webgpu \
+	    --enable-features=UseOzonePlatform,Vulkan,VulkanFromANGLE,DefaultANGLEVulkan,webgpu;
 	EOF
 }
 
@@ -636,9 +638,10 @@ cfg_k3s() {
 	local k3s_dir="$usr_home_dir"/.rancher/k3s
 
 	mkdir -pv "$mnt"/"$k3s_dir"
+	mkdir -pv "$mnt"/"$k3s_dir"/ci/
 	mkdir -pv "$mnt"/var/lib/rancher/k3s/agent/images/
 
-	cp -vfr /usr/sbin/hms/ci/ "$mnt"/"$k3s_dir"/ci/
+	cp -vfr /usr/sbin/hms/*.yml "$mnt"/"$k3s_dir"/ci/
 	cp -vfrT \
 		/usr/sbin/hms/k3s-airgap-images-amd64.tar.zst \
 		"$mnt"/var/lib/rancher/k3s/agent/images/k3s-airgap-images-amd64.tar.zst

@@ -1,5 +1,4 @@
 wayland
-wayland-dbg
 wayland-libs-client
 wayland-libs-cursor
 wayland-libs-egl
@@ -10,7 +9,6 @@ wayland-static
 wayland-utils
 waylandpp
 xwayland
-xwayland-dbg
 wl-clipboard
 grim
 foot
