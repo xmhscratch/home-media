@@ -5,7 +5,7 @@ metadata:
 resources:
 - namespace.yml
 - service.yml
-- ingress.yml
+# - ingress.yml
 - pv.yml
 - pvc.yml
 - deployment.yml

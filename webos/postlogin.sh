@@ -36,64 +36,54 @@ check_ready() {
 	printf "%s\e[32m [ok]\e[0m\n" "$check_cmd"
 }
 
-cfg_dashboard() {
-	local k3s_dir=$1
-	shift
-	kubectl apply -f "$k3s_dir"/ci/dashboard-deploy.yml
+json_display_format="{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{'\n'}{end}"
+pod_ready_filter="PodReadyToStartContainers=True;Initialized=True;Ready=True;ContainersReady=True;PodScheduled=True;"
+
+wait_system() {
+	local ingress_nginx_check_cmd="kubectl get pods -n ingress-nginx -l app.kubernetes.io/instance=ingress-nginx,app.kubernetes.io/name=ingress-nginx -o jsonpath=\"$json_display_format\""
+	check_ready "$ingress_nginx_check_cmd | grep Initialized=True" 3 $CHECK_TIMEOUT
+	check_ready "$ingress_nginx_check_cmd | grep -E '^ingress\-nginx\-controller.+PodReadyToStartContainers=True;Initialized=True;Ready=True;ContainersReady=True;PodScheduled=True;'" 1 $CHECK_TIMEOUT
+
+	local kube_system_check_cmd="kubectl get pods -n kube-system -o jsonpath=\"{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{'\n'}{end}\""
+	check_ready "$kube_system_check_cmd | grep -E '$pod_ready_filter'" 4 $CHECK_TIMEOUT
 }
 
-cfg_bearer_token() {
-	local usr_home_dir=$1
-	shift
-
-	local k3s_bearer_token=
-	if [ -f "$usr_home_dir"/.k3s_token ]; then
-		k3s_bearer_token=$(cat "$usr_home_dir"/.k3s_token)
-	else
-		k3s_bearer_token=$(kubectl -n default create token kubernetes-dashboard)
-		kubectl config set-credentials kubernetes-dashboard --token="$k3s_bearer_token" >/dev/null
-		makefile root:wheel 0444 "$usr_home_dir"/.k3s_token <<-EOF
-		$k3s_bearer_token
-		EOF
-	fi
-	echo $k3s_bearer_token
+wait_redis() {
+	local redis_check_cmd="kubectl get pods -n redis -o jsonpath=\"$json_display_format\""
+	check_ready "$redis_check_cmd | grep '$pod_ready_filter'" $(kubectl get pods -n redis --no-headers | wc -l) $CHECK_TIMEOUT
 }
 
-cfg_ingress_nginx() {
-	local k3s_dir=$1
-	shift
-	kubectl apply -f "$k3s_dir"/ci/ingress-nginx-deploy.yml
-}
-
-cfg_hms() {
-	local k3s_dir=$1
-	shift
-	kubectl apply -f "$k3s_dir"/ci/hms-deploy.yml
-}
-
-wait_ingress_nginx() {
-	local base_check_cmd="kubectl get pods -n ingress-nginx -l app.kubernetes.io/instance=ingress-nginx,app.kubernetes.io/name=ingress-nginx -o jsonpath=\"{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{'\n'}{end}\""
-	check_ready "$base_check_cmd | grep Initialized=True" 3 $CHECK_TIMEOUT
-	check_ready "$base_check_cmd | grep -E '^ingress\-nginx\-controller.*Ready\=True'" 1 $CHECK_TIMEOUT
+wait_logstash() {
+	local logstash_check_cmd="kubectl get pods -n logstash -o jsonpath=\"$json_display_format\""
+	check_ready "$logstash_check_cmd | grep '$pod_ready_filter'" $(kubectl get pods -n logstash --no-headers | wc -l) $CHECK_TIMEOUT
 }
 
 wait_hms() {
-	local base_check_cmd="kubectl get pods -n hms -o jsonpath=\"{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{'\n'}{end}\""
-	check_ready "$base_check_cmd | grep 'PodReadyToStartContainers=True;Initialized=True;Ready=True;ContainersReady=True;PodScheduled=True;'" 6 $CHECK_TIMEOUT
+	local hms_check_cmd="kubectl get pods -n hms -o jsonpath=\"$json_display_format\""
+	check_ready "$hms_check_cmd | grep '$pod_ready_filter'" $(kubectl get pods -n hms --no-headers | wc -l) $CHECK_TIMEOUT
 }
 
 wait_apiserver() {
 	local usr_home_dir=$1
 	shift
 
-	local k3s_bearer_token=$(cfg_bearer_token "$usr_home_dir")
+	# create dashboard access token
+	local k3s_bearer_token=
+	if [ ! -f "$usr_home_dir"/.k3s_token ]; then
+		k3s_bearer_token=$(kubectl -n default create token kubernetes-dashboard)
+		kubectl config set-credentials kubernetes-dashboard --token="$k3s_bearer_token"
+		makefile root:wheel 0444 "$usr_home_dir"/.k3s_token <<-EOF
+		$k3s_bearer_token
+		EOF
+	else
+		k3s_bearer_token=$(cat "$usr_home_dir"/.k3s_token)
+	fi
+
 	local k3s_root_dir=/var/lib/rancher/k3s
 	local k3s_tlscert_dir="$k3s_root_dir"/server/tls
-	local check_apiserver_ready_cmd="curl -s --cert $k3s_tlscert_dir/client-admin.crt --key $k3s_tlscert_dir/client-admin.key --cacert $k3s_tlscert_dir/server-ca.crt -H \"Authorization: Bearer $k3s_bearer_token\" https://127.0.0.1:6443/readyz | xargs -I @ sh -c '[ \"@\" == \"ok\" ] && echo -e || false'"
 
-	check_ready "$check_apiserver_ready_cmd" 1 $CHECK_TIMEOUT
-
-	{ rc-service k3s-proxy --ifnotstarted --quiet start; } &
+	check_ready "curl -s --cert $k3s_tlscert_dir/client-admin.crt --key $k3s_tlscert_dir/client-admin.key --cacert $k3s_tlscert_dir/server-ca.crt -H \"Authorization: Bearer $k3s_bearer_token\" https://127.0.0.1:6443/readyz | xargs -I @ sh -c '[ \"@\" == \"ok\" ] && echo -e || false'" 1 $CHECK_TIMEOUT
+	rc-service k3s-proxy --ifnotstarted start
 	check_ready "curl -s http://127.0.0.1:8001/readyz | xargs -I @ sh -c '[ \"@\" == \"ok\" ] && echo -e || false'" 1 $CHECK_TIMEOUT
 }
 
@@ -113,22 +103,31 @@ init() {
 	local k3s_dir="$usr_home_dir"/.rancher/k3s
 
 	check_ready "ss -lx | grep -E '.*containerd\.sock\ '" 1 $CHECK_TIMEOUT
+	check_ready "ss -lx | grep -E '.*kubelet\.sock\ '" 1 $CHECK_TIMEOUT
+
 	if [ ! -f "$usr_home_dir"/.renovated ]; then
 		mkdir -pv /home/data/db/
 
 		printf "%s\n" "Importing preload container images..."
 		ctr image import "$usr_home_dir"/preload-images.tar
-		cfg_dashboard "$k3s_dir"
+		kubectl apply -f "$k3s_dir"/ci/dashboard-deploy.yml
 		wait_apiserver "$usr_home_dir"
-		cfg_ingress_nginx "$k3s_dir"
-		wait_ingress_nginx
-		cfg_hms "$k3s_dir"
+		kubectl apply -f "$k3s_dir"/ci/ingress-nginx-deploy.yml
+		wait_system
+		kubectl apply -f "$k3s_dir"/ci/hms-deploy.yml
+		wait_redis
+		kubectl apply -f "$k3s_dir"/ci/redis-svc-ingress.yml
+		wait_logstash
+		kubectl apply -f "$k3s_dir"/ci/logstash-svc-ingress.yml
 		wait_hms
+		kubectl apply -f "$k3s_dir"/ci/hms-svc-ingress.yml
 
 		touch "$usr_home_dir"/.renovated
 	else
 		wait_apiserver "$usr_home_dir"
-		wait_ingress_nginx
+		wait_system
+		wait_redis
+		wait_logstash
 		wait_hms
 	fi
 }

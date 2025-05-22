@@ -189,7 +189,7 @@ install_mounted_root() {
 	pkgs="$pkgs $(cat /usr/sbin/apk-xorg | tr '\n' ' ')"
 	pkgs="$pkgs $(cat /usr/sbin/apk-font | tr '\n' ' ')"
 	pkgs="$pkgs $(cat /usr/sbin/apk-kube | tr '\n' ' ')"
-	pkgs="$pkgs $(cat /usr/sbin/apk-pulseaudio | tr '\n' ' ')"
+	# pkgs="$pkgs $(cat /usr/sbin/apk-pulseaudio | tr '\n' ' ')"
 	pkgs="$pkgs $(cat /usr/sbin/apk-chromium | tr '\n' ' ')"
 	pkgs="$pkgs $(cat /usr/sbin/apk-auth | tr '\n' ' ')"
 
@@ -218,6 +218,10 @@ install_mounted_root() {
 	printf "\n\n"
 	print_heading1 " Setup Xorg"
 	print_heading1 "----------------------"
+
+    makefile root:root 0644 "$mnt"/etc/motd <<-EOF
+	EOF
+
 	cfg_xorg "$mnt"
 
 	printf "\n\n"
@@ -365,7 +369,8 @@ cfg_xorg() {
 	mkdir -pv "$mnt"/etc/X11/xorg.conf.d/
 
 	makefile root:wheel 0644 "$mnt"/etc/conf.d/dbus <<-EOF
-	command_args="--system --nofork --nopidfile --syslog-only \${command_args:-}"
+	DBUS_LOGFILE="\${DBUS_LOGFILE:-/var/log/dbus.log}"
+	command_args="--system --nofork --nopidfile --syslog-only \${command_args:-} >>\${DBUS_LOGFILE}"
 	EOF
 
 	# linuxfb, wayland, eglfs, xcb, wayland-egl, minimalegl, minimal, offscreen, vkkhrdisplay, vnc
@@ -590,19 +595,20 @@ cfg_misc() {
 	sed -i "s@$ntp_srvname@$ntp_srvip@g" "$mnt"/etc/chrony/chrony.conf
 	sed -i "s@FAST_STARTUP=no@FAST_STARTUP=yes@g" "$mnt"/etc/conf.d/chronyd
 
-	makefile root:wheel 0644 "$mnt"/etc/conf.d/pulseaudio <<-EOF
-	# Config file for /etc/init.d/pulseaudio
-	# \$Header: /var/cvsroot/gentoo-x86/media-sound/pulseaudio/files/pulseaudio.conf.d,v 1.6 2006/07/29 15:34:18 flameeyes Exp \$
+	# makefile root:wheel 0644 "$mnt"/etc/conf.d/pulseaudio <<-EOF
+	# # Config file for /etc/init.d/pulseaudio
+	# # \$Header: /var/cvsroot/gentoo-x86/media-sound/pulseaudio/files/pulseaudio.conf.d,v 1.6 2006/07/29 15:34:18 flameeyes Exp \$
 
-	# For more see "pulseaudio -h".
+	# # For more see "pulseaudio -h".
 
-	# Startup options
-	PA_OPTS="--log-target=syslog --disallow-module-loading=1"
-	PULSEAUDIO_SHOULD_NOT_GO_SYSTEMWIDE=1
-	EOF
+	# # Startup options
+	# PA_OPTS="--log-target=syslog --disallow-module-loading=1"
+	# PULSEAUDIO_SHOULD_NOT_GO_SYSTEMWIDE=1
+	# EOF
 
 	rc_add seatd cgroups boot
-	rc_add dbus nfs pulseaudio default
+	# rc_add dbus nfs pulseaudio default
+	rc_add dbus nfs default
 }
 
 cfg_dnsmasq() {
@@ -652,12 +658,13 @@ cfg_k3s() {
 
 	cp -vfrT /usr/sbin/postlogin.sh "$mnt"/usr/bin/postlogin.sh
 
+	# openrc services and configuration files
 	makefile root:wheel 0644 "$mnt"/etc/conf.d/k3s <<-EOF
 	# k3s options
 	export PATH=\$PATH:/usr/libexec/cni:/root/go/bin
 	K3S_EXEC="server"
 	K3S_OPTS="--disable=traefik --write-kubeconfig-mode=0644 --cluster-dns=10.43.0.10"
-	rc_need="localmount netmount"
+	rc_need="localmount netmount rpcbind rpc.statd"
 	rc_after="net nfs"
 	EOF
 
@@ -668,17 +675,18 @@ cfg_k3s() {
 
 	name="k3s-proxy"
 	description="K3s apiserver proxy"
-
 	command="/usr/bin/kubectl proxy"
-	command_args=">>\${K3S_PROXY_LOGFILE} 2>&1"
+	command_args="\${command_args:-} >>\${K3S_PROXY_LOGFILE}"
+	command_background="no"
+	pidfile="/var/run/\${RC_SVCNAME}.pid"
 
 	start_pre() {
 	    checkpath -f -m 0774 -o root:wheel "\${K3S_PROXY_LOGFILE}"
 	}
 
 	depend() {
-	    need localmount netmount
 	    after net k3s
+	    provide k3s-proxy
 	}
 
 	respawn_delay=2

@@ -20,12 +20,15 @@ profile_hms() {
     arch="x86_64"
     kernel_flavors="lts"
     initfs_cmdline="modules=loop,squashfs,sd-mod,usb-storage video=nouveaudrmfb nouveau.config=\"NvGspRm=1,tv_norm=hd1080i\" pax_nouderef cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory"
+    # initfs_features="base ext4 mmc nvme scsi squashfs usb virtio"
     initfs_features="ata base bootchart cdrom ext4 mmc nvme raid scsi squashfs usb virtio"
     modloop_sign=yes
     grub_mod="all_video disk part_gpt part_msdos linux normal configfile search search_label efi_gop fat iso9660 cat echo ls test true help gzio"
     # x86_64
     grub_mod="$grub_mod multiboot2 efi_uga"
     initfs_features="$initfs_features nfit"
+    # none essentials
+    # initfs_features="$initfs_features bootchart cdrom raid"
 
     apks="alpine-base apk-cron busybox chrony dhcpcd doas e2fsprogs kbd-bkeymaps network-extras openssl openssh tzdata wget"
     rootfs_apks="busybox alpine-baselayout alpine-keys alpine-release apk-tools libc-utils"

@@ -39,6 +39,16 @@ RUN \
         /tmp/ci/; \
     \
     kustomize build /tmp/build/ci/ --output /tmp/ci/hms-deploy.yml; \
+    for fl in \
+        logstash \
+        redis \
+        hms \
+    ; do \
+        svig_dir=/tmp/ci/$fl-svc-ingress.yml; \
+        find /tmp/build/ci/$fl/service.yml -type f | xargs -I @ sh -c "cat @ | tee -a $svig_dir; echo -e --- | tee -a $svig_dir"; \
+        find /tmp/build/ci/$fl/ingress.yml -type f | xargs -I @ sh -c "cat @ | tee -a $svig_dir; echo -e --- | tee -a $svig_dir"; \
+        cat $svig_dir; \
+    done; \
     ###########
     export APORTS=$(realpath "$HOME/.mkimage/aports/"); \
     ###########
