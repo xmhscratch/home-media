@@ -1,6 +1,7 @@
 #!/bin/sh
 
-CHECK_TIMEOUT=${CHECK_TIMEOUT:-600}
+CHECK_TIMEOUT=${CHECK_TIMEOUT:-1000}
+CHECK_INTERVAL=${CHECK_INTERVAL:-0.1}
 
 makefile() {
 	OWNER="$1"
@@ -23,10 +24,10 @@ check_ready() {
 		if [[ $(echo "$check_cmd" | sh | wc -l) -eq $qualifier ]]; then break; fi
 		if [ $retry -le $duration ]; then printf "\rWaiting service readiness (%s retried)..." $retry; else break; fi
 		retry=$((retry + 1))
-		sleep 0.5
+		sleep $CHECK_INTERVAL
 	done
 
-	sleep 0.5
+	sleep $CHECK_INTERVAL
 
 	printf "\n"
 	if [[ $(echo "$check_cmd" | sh | wc -l) -lt $qualifier ]]; then

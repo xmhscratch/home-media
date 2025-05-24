@@ -18,7 +18,7 @@ SYSENV_TARBALL = $(DIST_DOCKER_DIR)/sysenv.tar
 HMS_TARBALL = $(DIST_DOCKER_DIR)/hms.tar.gz
 
 # CACHE=1 make
-$(BINARY): pre_build app webos
+$(BINARY): app webos
 
 # CACHE=1 make dist/docker/preload-images.tar.gz
 $(PRELOAD_IMAGE_TARBALL): IMG_LIST = $$(cat $(KUBE_IMAGE_OBJ) | tr '\n' ' ')
@@ -53,7 +53,7 @@ DOCK_ROOT_CTX = ./
 DOCK_GONODE_CTX = ci/gonode/
 DOCK_SYSENV_CTX = ci/sysenv/
 
-gonode:
+gonode: clean_docker_system
 	docker $(DBUILD_CMD) $(DBUILD_ARGS) -t $(DBUILD_REPO)/$@:$(DBUILD_VERS) $(DOCK_GONODE_CTX)
 	if [ ! -f "$(GONODE_TARBALL)" ]; then \
 		mkdir -pv $(DIST_DOCKER_DIR); \
@@ -65,7 +65,7 @@ load_gonode: gonode
 	docker load --input $(GONODE_TARBALL)
 .PHONY: load_gonode
 
-builder: gonode
+builder: clean_docker_system gonode
 	docker $(DBUILD_CMD) $(DBUILD_ARGS) --file=$(DOCK_GONODE_CTX)/$@.Dockerfile -t $(DBUILD_REPO)/$@:$(DBUILD_VERS) $(DOCK_GONODE_CTX)
 	if [ ! -f "$(BUILDER_TARBALL)" ]; then \
 		mkdir -pv $(DIST_DOCKER_DIR); \
@@ -77,7 +77,7 @@ load_builder: builder
 	docker load --input $(BUILDER_TARBALL)
 .PHONY: load_builder
 
-sysenv: gonode
+sysenv: clean_docker_system gonode
 	docker $(DBUILD_CMD) $(DBUILD_ARGS) -t $(DBUILD_REPO)/$@:$(DBUILD_VERS) $(DOCK_SYSENV_CTX)
 	if [ ! -f "$(SYSENV_TARBALL)" ]; then \
 		mkdir -pv $(DIST_DOCKER_DIR); \
@@ -89,11 +89,10 @@ load_sysenv: sysenv
 	docker load --input $(SYSENV_TARBALL)
 .PHONY: load_sysenv
 
-hms: sysenv
+hms: clean_docker_system sysenv
 	if [ -z "$(CACHE)" ] || [ "$(CACHE)" -ne 1 ]; then \
 		img="$(shell docker images -q $(DBUILD_REPO)/$@:$(DBUILD_VERS))"; \
 		[ -z "$$img" ] || docker image rm $$img; \
-		echo -e 'y' | docker system prune; \
 	fi
 	docker $(DBUILD_CMD) $(DBUILD_ARGS) --file=./$@.Dockerfile -t $(DBUILD_REPO)/$@:$(DBUILD_VERS) $(DOCK_ROOT_CTX)
 .PHONY: hms
@@ -101,7 +100,7 @@ hms: sysenv
 # CACHE=1 make dist/docker/hms.tar.gz
 $(HMS_TARBALL): hms
 	if [ -z "$(CACHE)" ] || [ "$(CACHE)" -ne 1 ]; then \
-		rm -r $(HMS_TARBALL); \
+		rm -rf $(HMS_TARBALL); \
 	fi
 	if [ ! -f "$(HMS_TARBALL)" ]; then \
 		mkdir -pv $(DIST_DOCKER_DIR); \
@@ -112,7 +111,10 @@ load_hms: hms
 	docker load --input $(HMS_TARBALL)
 .PHONY: load_hms
 
-app: clean_app gonode
+app: clean_docker_system gonode
+	if [ -z "$(CACHE)" ] || [ "$(CACHE)" -ne 1 ]; then \
+		rm -rf $(DIST_APP_DIR); \
+	fi
 	mkdir -pv $(DIST_APP_DIR)
 	docker $(DBUILD_CMD) $(DBUILD_ARGS) --file=./$@.Dockerfile --output type=local,dest=$(DIST_APP_DIR) $(DOCK_ROOT_CTX)
 .PHONY: app
@@ -122,23 +124,38 @@ app: clean_app gonode
 # 	docker $(DBUILD_CMD) $(DBUILD_ARGS) --file=./$@.Dockerfile --output type=local,dest=$(DIST_BIN_DIR) $(DOCK_ROOT_CTX)
 # .PHONY: kube
 
-webos: $(AIRGAP_IMAGE_TARBALL) $(PRELOAD_IMAGE_TARBALL) $(HMS_TARBALL) builder
+webos: clean_docker_system $(AIRGAP_IMAGE_TARBALL) $(PRELOAD_IMAGE_TARBALL) $(HMS_TARBALL) webos_apks webos_node_modules
 	rm -rf $(DIST_APP_DIR)/*.out
-	if [ -z "$(CACHE)" ] || [ "$(CACHE)" -ne 1 ]; then \
-		echo -e 'y' | docker system prune; \
-	fi
 	mkdir -pv $(DIST_ISO_DIR)
-	docker $(DBUILD_CMD) $(DBUILD_ARGS) --file=./$@.Dockerfile --output type=local,dest=$(DIST_ISO_DIR) $(DOCK_ROOT_CTX)
+	docker $(DBUILD_CMD) $(DBUILD_ARGS) --file=./$@.Dockerfile --target=export-iso --output type=local,dest=$(DIST_ISO_DIR) $(DOCK_ROOT_CTX)
 .PHONY: webos
+
+webos_apks:
+	if [ -z "$(REBUILD_APKS)" ] || [ "$(REBUILD_APKS)" -ne 1 ] || [ ! -d $(DIST_ISO_DIR)/.apks/ ]; then \
+		return $$?; \
+	else \
+		mkdir -pv $(DIST_ISO_DIR)/.apks/; \
+		docker $(DBUILD_CMD) $(DBUILD_ARGS) --file=./webos.Dockerfile --target=export-apks --output type=local,dest=$(DIST_ISO_DIR) $(DOCK_ROOT_CTX); \
+	fi
+.PHONY: webos_apks
+
+webos_node_modules:
+	if [ -z "$(REBUILD_NODE_MODULES)" ] || [ "$(REBUILD_NODE_MODULES)" -ne 1 ] || [ ! -d $(DIST_ISO_DIR)/.node-modules/ ]; then \
+		return $$?; \
+	else \
+		mkdir -pv $(DIST_ISO_DIR)/.node-modules/; \
+		docker $(DBUILD_CMD) $(DBUILD_ARGS) --file=./webos.Dockerfile --target=export-node-modules --output type=local,dest=$(DIST_ISO_DIR) $(DOCK_ROOT_CTX); \
+	fi
+.PHONY: webos_node_modules
 
 go.mod: FORCE
 	go mod tidy
 	go mod verify
 go.sum: go.mod
 
-pre_build:
+clean_docker_system:
 	echo -e 'y' | docker system prune
-.PHONY: pre_build
+.PHONY: clean_docker_system
 
 clean_app:
 	rm -rf $(DIST_APP_DIR)/*
@@ -159,11 +176,11 @@ clean_angular:
 	rm -rf .angular/*
 .PHONY: clean_angular
 
-clean_cache: pre_build clean_angular
+clean_cache: clean_docker_system clean_angular
 	rm -rf $(DIST_ISO_DIR)/.apks
 .PHONY: clean_all
 
-clean_all: pre_build clean_app clean_bin clean_docker clean_angular
+clean_all: clean_docker_system clean_app clean_bin clean_docker clean_angular
 	rm -f $(BINARY)
 	rm -rf node_modules
 .PHONY: clean_all

@@ -56,7 +56,7 @@ func main() {
 		return c.SendString("File not found!")
 	})
 
-	_, port, err := net.SplitHostPort(cfg.EndPoint["file"])
+	_, port, err := cfg.ParseHostPort(cfg.EndPoint["file"])
 	if err != nil {
 		panic(err)
 	}

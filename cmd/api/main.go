@@ -45,7 +45,7 @@ func (ctx *Server) Start() (err error) {
 		return errors.New("server is uninitialized")
 	}
 
-	_, port, err := net.SplitHostPort(ctx.Config.EndPoint["api"])
+	_, port, err := ctx.Config.ParseHostPort(ctx.Config.EndPoint["api"])
 	if err != nil {
 		return err
 	}

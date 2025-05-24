@@ -4,8 +4,10 @@ package sys
 import (
 	"context"
 	"encoding/json"
+	"net"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/golang/groupcache"
 	"github.com/joho/godotenv"
@@ -49,9 +51,9 @@ func NewConfig(appDir string) (*Config, error) {
 		return cfg, err
 	}
 
-	hostAddress := BuildString("http://", cfg.EndPoint["api"])
-	peers := groupcache.NewHTTPPool(hostAddress)
-	peers.Set(hostAddress)
+	configAddress := BuildString("http://", cfg.ConfigAddress)
+	peers := groupcache.NewHTTPPool(configAddress)
+	peers.Set(configAddress)
 
 	return cfg, err
 }
@@ -102,4 +104,12 @@ func (cfg *Config) Load(key string) (data []byte, err error) {
 		return nil, err
 	}
 	return json.Marshal(cfg)
+}
+
+func (cfg *Config) ParseHostPort(address string) (string, string, error) {
+	if !strings.Contains(address, ":") {
+		return address, cfg.Port, nil
+	}
+	host, port, err := net.SplitHostPort(address)
+	return host, port, err
 }

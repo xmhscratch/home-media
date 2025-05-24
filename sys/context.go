@@ -27,14 +27,15 @@ type SQLiteConnectionConfig struct {
 
 // ConfigFile comment
 type ConfigFile struct {
-	Debug    bool                   `json:"debug"`
-	Port     string                 `json:"port"`
-	SQLite   SQLiteConnectionConfig `json:"sqlite"`
-	Redis    RedisConnectionConfig  `json:"redis"`
-	EndPoint map[string]string      `json:"endpoint"`
-	BinPath  string                 `json:"binPath"`
-	TmpPath  string                 `json:"tmpPath"`
-	DataPath string                 `json:"dataPath"`
+	Debug         bool                   `json:"debug"`
+	Port          string                 `json:"port"`
+	SQLite        SQLiteConnectionConfig `json:"sqlite"`
+	Redis         RedisConnectionConfig  `json:"redis"`
+	EndPoint      map[string]string      `json:"endpoint"`
+	ConfigAddress string                 `json:"configAddress"`
+	BinPath       string                 `json:"binPath"`
+	TmpPath       string                 `json:"tmpPath"`
+	DataPath      string                 `json:"dataPath"`
 }
 
 // Config comment
