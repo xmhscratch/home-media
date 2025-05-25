@@ -39,18 +39,23 @@ spec:
           args:
             - npm run backend:start:prod
           volumeMounts:
-            - name: pvc-dist-backend
+            - name: pvc-dist
               mountPath: /export/dist/
               readOnly: true
-            - name: pvc-db-backend
+            - name: pvc-db
               mountPath: /export/db/
+            - name: runtime-config
+              mountPath: /export/
       volumes:
-        - name: pvc-dist-backend
+        - name: pvc-dist
           persistentVolumeClaim:
-            claimName: pvc-dist-backend
-        - name: pvc-db-backend
+            claimName: pvc-dist
+        - name: pvc-db
           persistentVolumeClaim:
-            claimName: pvc-db-backend
+            claimName: pvc-db
+        - name: runtime-config
+          configMap:
+            name: runtime-config
 ---
 kind: Deployment
 apiVersion: apps/v1
@@ -85,13 +90,18 @@ spec:
           args:
             - npm run frontend:serve:ssr
           volumeMounts:
-            - name: pvc-dist-backend
+            - name: pvc-dist
               mountPath: /export/dist/
               readOnly: true
+            - name: runtime-config
+              mountPath: /export/
       volumes:
-        - name: pvc-dist-backend
+        - name: pvc-dist
           persistentVolumeClaim:
-            claimName: pvc-dist-backend
+            claimName: pvc-dist
+        - name: runtime-config
+          configMap:
+            name: runtime-config
 ---
 kind: Deployment
 apiVersion: apps/v1
@@ -134,18 +144,23 @@ spec:
           args:
             - cd /export/dist/ && ./api
           volumeMounts:
-            - name: pvc-dist-backend
+            - name: pvc-dist
               mountPath: /export/dist/
               readOnly: true
-            - name: pvc-db-backend
+            - name: pvc-db
               mountPath: /export/db/
+            - name: runtime-config
+              mountPath: /export/
       volumes:
-        - name: pvc-dist-backend
+        - name: pvc-dist
           persistentVolumeClaim:
-            claimName: pvc-dist-backend
-        - name: pvc-db-backend
+            claimName: pvc-dist
+        - name: pvc-db
           persistentVolumeClaim:
-            claimName: pvc-db-backend
+            claimName: pvc-db
+        - name: runtime-config
+          configMap:
+            name: runtime-config
 ---
 kind: Deployment
 apiVersion: apps/v1
@@ -188,18 +203,23 @@ spec:
           args:
             - cd /export/dist/ && ./file
           volumeMounts:
-            - name: pvc-dist-backend
+            - name: pvc-dist
               mountPath: /export/dist/
               readOnly: true
-            - name: pvc-db-backend
+            - name: pvc-db
               mountPath: /export/db/
+            - name: runtime-config
+              mountPath: /export/
       volumes:
-        - name: pvc-dist-backend
+        - name: pvc-dist
           persistentVolumeClaim:
-            claimName: pvc-dist-backend
-        - name: pvc-db-backend
+            claimName: pvc-dist
+        - name: pvc-db
           persistentVolumeClaim:
-            claimName: pvc-db-backend
+            claimName: pvc-db
+        - name: runtime-config
+          configMap:
+            name: runtime-config
 ---
 kind: Deployment
 apiVersion: apps/v1
@@ -239,18 +259,23 @@ spec:
           args:
             - cd /export/dist/ && ./downloader
           volumeMounts:
-            - name: pvc-dist-backend
+            - name: pvc-dist
               mountPath: /export/dist/
               readOnly: true
-            - name: pvc-db-backend
+            - name: pvc-db
               mountPath: /export/db/
+            - name: runtime-config
+              mountPath: /export/
       volumes:
-        - name: pvc-dist-backend
+        - name: pvc-dist
           persistentVolumeClaim:
-            claimName: pvc-dist-backend
-        - name: pvc-db-backend
+            claimName: pvc-dist
+        - name: pvc-db
           persistentVolumeClaim:
-            claimName: pvc-db-backend
+            claimName: pvc-db
+        - name: runtime-config
+          configMap:
+            name: runtime-config
 ---
 kind: Deployment
 apiVersion: apps/v1
@@ -290,15 +315,20 @@ spec:
           args:
             - cd /export/dist/ && ./encoder
           volumeMounts:
-            - name: pvc-dist-backend
+            - name: pvc-dist
               mountPath: /export/dist/
               readOnly: true
-            - name: pvc-db-backend
+            - name: pvc-db
               mountPath: /export/db/
+            - name: runtime-config
+              mountPath: /export/
       volumes:
-        - name: pvc-dist-backend
+        - name: pvc-dist
           persistentVolumeClaim:
-            claimName: pvc-dist-backend
-        - name: pvc-db-backend
+            claimName: pvc-dist
+        - name: pvc-db
           persistentVolumeClaim:
-            claimName: pvc-db-backend
+            claimName: pvc-db
+        - name: runtime-config
+          configMap:
+            name: runtime-config

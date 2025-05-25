@@ -31,7 +31,7 @@ setup() {
 	export PATH=\$PATH:/usr/libexec/cni:/root/go/bin
 	K3S_EXEC="server"
 	K3S_OPTS="--disable=traefik --write-kubeconfig-mode=0644 --cluster-dns=10.43.0.10"
-	rc_need="localmount netmount rpcbind rpc.statd"
+	rc_need="localmount netmount rpcbind"
 	rc_after="net nfs"
 	EOF
 

@@ -9,7 +9,7 @@ DIST_DOCKER_DIR = $(DIST_DIR)/docker
 DIST_ISO_DIR = $(DIST_DIR)/iso
 
 BINARY = $(DIST_ISO_DIR)/alpine-hms-v3.21-x86_64.iso
-KUBE_IMAGE_OBJ = $(MANIFEST_DIR)/preload_images.txt
+KUBE_IMAGE_OBJ = $(MANIFEST_DIR)/preload-images.txt
 PRELOAD_IMAGE_TARBALL = $(DIST_DOCKER_DIR)/preload-images.tar.gz
 AIRGAP_IMAGE_TARBALL = $(DIST_DOCKER_DIR)/k3s-airgap-images-amd64.tar.zst
 GONODE_TARBALL = $(DIST_DOCKER_DIR)/gonode.tar
@@ -124,14 +124,14 @@ app: clean_docker_system gonode
 # 	docker $(DBUILD_CMD) $(DBUILD_ARGS) --file=./$@.Dockerfile --output type=local,dest=$(DIST_BIN_DIR) $(DOCK_ROOT_CTX)
 # .PHONY: kube
 
-webos: clean_docker_system $(AIRGAP_IMAGE_TARBALL) $(PRELOAD_IMAGE_TARBALL) $(HMS_TARBALL) webos_apks webos_node_modules
+webos: clean_docker_system $(AIRGAP_IMAGE_TARBALL) $(PRELOAD_IMAGE_TARBALL) $(HMS_TARBALL) webos_apks webos_node_modules webos_ci
 	rm -rf $(DIST_APP_DIR)/*.out
 	mkdir -pv $(DIST_ISO_DIR)
 	docker $(DBUILD_CMD) $(DBUILD_ARGS) --file=./$@.Dockerfile --target=export-iso --output type=local,dest=$(DIST_ISO_DIR) $(DOCK_ROOT_CTX)
 .PHONY: webos
 
 webos_apks:
-	if [ -z "$(REBUILD_APKS)" ] || [ "$(REBUILD_APKS)" -ne 1 ] || [ ! -d $(DIST_ISO_DIR)/.apks/ ]; then \
+	if [ -d $(DIST_ISO_DIR)/.apks/ ]; then \
 		return $$?; \
 	else \
 		mkdir -pv $(DIST_ISO_DIR)/.apks/; \
@@ -140,13 +140,21 @@ webos_apks:
 .PHONY: webos_apks
 
 webos_node_modules:
-	if [ -z "$(REBUILD_NODE_MODULES)" ] || [ "$(REBUILD_NODE_MODULES)" -ne 1 ] || [ ! -d $(DIST_ISO_DIR)/.node-modules/ ]; then \
+	if [ -d $(DIST_ISO_DIR)/.node-modules/ ]; then \
 		return $$?; \
 	else \
 		mkdir -pv $(DIST_ISO_DIR)/.node-modules/; \
 		docker $(DBUILD_CMD) $(DBUILD_ARGS) --file=./webos.Dockerfile --target=export-node-modules --output type=local,dest=$(DIST_ISO_DIR) $(DOCK_ROOT_CTX); \
 	fi
 .PHONY: webos_node_modules
+
+webos_ci:
+	if [ -d $(DIST_ISO_DIR)/.ci/ ]; then \
+		return $$?; \
+	fi
+	mkdir -pv $(DIST_ISO_DIR)/.ci/;
+	docker $(DBUILD_CMD) $(DBUILD_ARGS) --file=./webos.Dockerfile --target=export-ci --output type=local,dest=$(DIST_ISO_DIR) $(DOCK_ROOT_CTX);
+.PHONY: webos_ci
 
 go.mod: FORCE
 	go mod tidy
@@ -167,7 +175,7 @@ clean_bin:
 	mkdir -pv $(DIST_BIN_DIR)
 .PHONY: clean_bin
 
-clean_docker:
+clean_docker: clean_docker_system
 	rm -rf $(DIST_DOCKER_DIR)/*
 	mkdir -pv $(DIST_DOCKER_DIR)
 .PHONY: clean_docker
@@ -178,7 +186,9 @@ clean_angular:
 
 clean_cache: clean_docker_system clean_angular
 	rm -rf $(DIST_ISO_DIR)/.apks
-.PHONY: clean_all
+	rm -rf $(DIST_ISO_DIR)/.ci
+	rm -rf $(DIST_ISO_DIR)/.node-modules
+.PHONY: clean_cache
 
 clean_all: clean_docker_system clean_app clean_bin clean_docker clean_angular
 	rm -f $(BINARY)

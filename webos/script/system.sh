@@ -7,10 +7,6 @@ setup() {
 	local mnt="$1"
 	shift
 
-	cat >> "$mnt"/etc/exports <<-EOF
-	/home/      *(rw,no_subtree_check,no_root_squash,fsid=0,anonuid=0,anongid=0)
-	EOF
-
 	echo "net.ipv4.ip_forward = 1" | tee -a "$mnt"/etc/sysctl.conf
 	echo "net.ipv6.conf.all.forwarding = 1" | tee -a "$mnt"/etc/sysctl.conf
 	echo "net.bridge.bridge-nf-call-iptables = 1" | tee -a "$mnt"/etc/sysctl.conf
@@ -72,8 +68,8 @@ setup() {
 	# EOF
 
 	rc_add seatd cgroups boot
-	# rc_add dbus nfs pulseaudio default
-	rc_add dbus nfs default
+	# rc_add dbus pulseaudio default
+	rc_add dbus default
 }
 
 setup $1

@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "frontend:start": "ng serve --host=0.0.0.0 --configuration=development",
+    "frontend:start": "ng serve --host=0.0.0.0 --disable-host-check --configuration=development",
     "frontend:build": "ng build --verbose --progress=false",
     "frontend:watch": "ng build --watch --configuration=development",
     "frontend:format": "npx prettier --write ./frontend/app ./frontend/environments ./frontend/polyfills ./frontend/app.controller.ts ./frontend/app.module.ts ./frontend/main.server.ts ./frontend/main.ts ./frontend/polyfills.ts ./frontend/server.ts",
@@ -24,14 +24,6 @@
     "backend:test:e2e": "jest --config ./test/jest-e2e.json",
     "docker:inspect:sysenv": "docker run --rm -it --entrypoint sh localhost:5000/sysenv:latest",
     "docker:inspect:hms": "docker run --rm -it --entrypoint sh localhost:5000/hms:latest",
-    "swarmpit": "dotenvx run -- docker stack deploy --prune --resolve-image always -c ./ci/swarmpit/docker-stack.yml swarmpit",
-    "redis": "dotenvx run -- docker stack deploy --prune --resolve-image always -c ./ci/redis/docker-stack.yml redis",
-    "logstash": "dotenvx run -- docker stack deploy --prune --resolve-image always -c ./ci/logstash/docker-stack.yml logstash",
-    "hms:deploy": "dotenvx run -- docker stack deploy --prune --resolve-image always -c ./ci/hms/docker-stack.yml hms",
-    "hms:destroy": "dotenvx run -- docker stack rm hms",
-    "hms:update": "dotenvx run -- docker service update --force $@",
-    "hms:up": "dotenvx run -- docker service update --replicas 1 $@",
-    "hms:down": "dotenvx run -- docker service update --replicas 0 $@",
     "lint": "ng lint"
   },
   "private": true,

@@ -3,6 +3,6 @@ export const environment = {
         "backend": "backend.hms",
         "api": "api.hms",
         "file": "file.hms",
-        "frontend": "frontend.hms",
+        "frontend": "frontend.hms"
     }
 }

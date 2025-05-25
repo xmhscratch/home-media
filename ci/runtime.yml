@@ -1,0 +1,11 @@
+configMapGenerator:
+- name: runtime-config
+  namespace: hms
+  files:
+  - go.mod
+  - angular.json
+  - config.production.json
+  - config.development.json
+  - package.json
+generatorOptions:
+  disableNameSuffixHash: true

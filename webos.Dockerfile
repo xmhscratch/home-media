@@ -48,6 +48,39 @@ RUN \
     npm install --omit=dev; \
     mv -vf /tmp/node_modules/* /export/iso/.node-modules/;
 
+FROM localhost:5000/builder:latest AS build-ci
+USER root
+ENV GIT_SSL_NO_VERIFY=false
+ENV ARCH=x86_64
+COPY \
+    go.mod \
+    package.json \
+    angular.json \
+    config.production.json \
+    config.development.json \
+    /tmp/build/ci/
+COPY ci/ /tmp/build/ci/
+RUN \
+    apk add kustomize; \
+    # ###########
+    cd /tmp/; \
+    mkdir -pv /export/iso/.ci/; \
+    cat /tmp/build/ci/runtime.yml >> /tmp/build/ci/kustomization.yml; \
+    kustomize build /tmp/build/ci/ --output /export/iso/.ci/hms-deploy.yml; \
+    mv -vf \
+        /tmp/build/ci/*-deploy.yml \
+        /export/iso/.ci/; \
+    \
+    for fl in \
+        hms \
+        logstash \
+        redis \
+    ; do \
+        svig_dir=/export/iso/.ci/$fl-svc-ingress.yml; \
+        find /tmp/build/ci/$fl/ -type f -name service.yml | xargs -I @ sh -c "cat @ | tee -a $svig_dir; echo -e --- | tee -a $svig_dir"; \
+        find /tmp/build/ci/$fl/ -type f -name ingress.yml | xargs -I @ sh -c "cat @ | tee -a $svig_dir; echo -e --- | tee -a $svig_dir"; \
+    done;
+
 FROM localhost:5000/builder:latest AS build-iso
 USER root
 ENV GIT_SSL_NO_VERIFY=false
@@ -57,9 +90,6 @@ COPY \
     manifest/apk-* \
     manifest/packages.txt \
     /tmp/build/
-        
-COPY package.json                                   /tmp/
-COPY ci/                                            /tmp/build/ci/
 COPY webos/script/                                  /tmp/build/script/
 COPY channel/                                       /tmp/channel/
 COPY dist/app/                                      /tmp/app/
@@ -67,32 +97,14 @@ COPY dist/bin/                                      /tmp/bin/
 COPY dist/docker/preload-images.tar.gz              /tmp/docker/
 COPY dist/docker/k3s-airgap-images-amd64.tar.zst    /tmp/docker/
 COPY dist/iso/.node-modules/                        /tmp/node_modules/
-COPY dist/iso/.apks/                                /export/iso/.apks/
+COPY dist/iso/.apks/                                /tmp/apks/
+COPY dist/iso/.ci/                                  /tmp/ci/
 RUN \
-    apk add kustomize; \
-    ###########
     addgroup root abuild; \
     mkdir -pv $HOME/.mkimage/; \
     mkdir -pv /export/iso/; \
     mkdir -pv $HOME/tmp/; \
     abuild-keygen -i -a -n; \
-    ###########
-    cd /tmp/; \
-    mkdir -pv /tmp/ci/; \
-    mv -vf \
-        /tmp/build/ci/*-deploy.yml \
-        /tmp/ci/; \
-    \
-    kustomize build /tmp/build/ci/ --output /tmp/ci/hms-deploy.yml; \
-    for fl in \
-        logstash \
-        redis \
-        hms \
-    ; do \
-        svig_dir=/tmp/ci/$fl-svc-ingress.yml; \
-        find /tmp/build/ci/$fl/service.yml -type f | xargs -I @ sh -c "cat @ | tee -a $svig_dir; echo -e --- | tee -a $svig_dir" >/dev/null &2>1; \
-        find /tmp/build/ci/$fl/ingress.yml -type f | xargs -I @ sh -c "cat @ | tee -a $svig_dir; echo -e --- | tee -a $svig_dir" >/dev/null &2>1; \
-    done; \
     ###########
     cd $HOME/.mkimage/; \
     git clone --depth=1 --branch=3.21-stable https://gitlab.alpinelinux.org/alpine/aports.git ./aports; \
@@ -108,6 +120,7 @@ RUN \
         $APORTS/scripts/mkimg.hms.sh; \
     \
     ###########
+    echo "/tmp/apks/" > /etc/apk/repositories; \
     $APORTS/scripts/mkimage.sh \
         --tag v3.21 \
         --outdir /export/iso/ \
@@ -126,4 +139,8 @@ ENTRYPOINT ["/export/iso/"]
 
 FROM scratch AS export-node-modules
 COPY --from=build-node-modules /export/iso/ /
+ENTRYPOINT ["/export/iso/"]
+
+FROM scratch AS export-ci
+COPY --from=build-ci /export/iso/ /
 ENTRYPOINT ["/export/iso/"]

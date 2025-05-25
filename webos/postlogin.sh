@@ -111,6 +111,7 @@ init() {
 
 		printf "%s\n" "Importing preload container images..."
 		ctr image import "$usr_home_dir"/preload-images.tar
+		kubectl apply -f "$k3s_dir"/ci/runtime-deploy.yml
 		kubectl apply -f "$k3s_dir"/ci/dashboard-deploy.yml
 		wait_apiserver "$usr_home_dir"
 		kubectl apply -f "$k3s_dir"/ci/ingress-nginx-deploy.yml

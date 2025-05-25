@@ -2,7 +2,7 @@
     "debug": false,
     "redis": {
         "db": "0",
-        "host": "192.168.56.55",
+        "host": "master.redis",
         "port": "6379",
         "password": ""
     },
@@ -10,14 +10,14 @@
         "path": "/home/data/"
     },
     "endpoint": {
-        "backend": "192.168.56.55:4100",
-        "api": "192.168.56.55:4110",
-        "file": "192.168.56.55:4150",
-        "frontend": "192.168.56.55:4200"
+        "backend": "backend.hms:4100",
+        "api": "api.hms:4110",
+        "file": "file.hms:4150",
+        "frontend": "frontend.hms:4000"
     },
-    "configAddress": "192.168.56.55:4444",
-    "rootPath": "/home/web/repos/home-media/",
-    "binPath": "/home/web/repos/home-media/ci/",
+    "configAddress": "10.43.0.100:4444",
+    "rootPath": "/home/dev/",
+    "binPath": "/home/dev/ci/",
     "tmpPath": "/home/tmp/",
     "dataPath": "/home/data/"
 }

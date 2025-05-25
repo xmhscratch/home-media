@@ -13,20 +13,6 @@ ENV LD_LIBRARY_PATH="/usr/lib:/usr/lib64:\$LD_LIBRARY_PATH"
 ENV CGO_LDFLAGS="-L/usr/lib64"
 ENV CGO_CFLAGS="-I/usr/include/ffmpeg"
 ENV PKG_CONFIG_PATH="/usr/lib64/pkgconfig:\$PKG_CONFIG_PATH"
-COPY \
-    .browserslistrc \
-    .eslintrc.json \
-    angular.json \
-    config.development.json \
-    config.production.json \
-    go.mod \
-    package.json \
-    postcss.config.js \
-    tailwind.config.js \
-    tsconfig.app.json \
-    tsconfig.json \
-    tsconfig.spec.json \
-    /export/
 COPY ci/*.sh /export/bin/
 RUN \
     apk add --no-cache \

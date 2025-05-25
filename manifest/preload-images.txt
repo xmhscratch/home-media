@@ -4,4 +4,3 @@ docker.io/kubernetesui/metrics-scraper:v1.0.9
 docker.elastic.co/logstash/logstash:9.0.1
 docker.io/bitnami/redis:7.4
 registry.k8s.io/sig-storage/nfs-subdir-external-provisioner:v4.0.2
-localhost:5000/hms:latest

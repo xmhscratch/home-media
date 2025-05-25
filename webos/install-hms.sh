@@ -159,11 +159,6 @@ install_mounted_root() {
 
 	init_chroot_mounts "$mnt"
 
-	if [ "$SSHD" -eq 1 ]; then
-		sed -Ei "s@[\#]{0,}PermitRootLogin.+@PermitRootLogin yes@g" "$mnt"/etc/ssh/sshd_config
-		sed -Ei "s@[\#]{0,}PasswordAuthentication.+@PasswordAuthentication yes@g" "$mnt"/etc/ssh/sshd_config
-		sed -Ei "s@[\#]{0,}PermitEmptyPasswords.+@PermitEmptyPasswords yes@g" "$mnt"/etc/ssh/sshd_config
-	fi
     makefile root:root 0644 "$mnt"/etc/motd <<-EOF
 	EOF
 
@@ -171,6 +166,7 @@ install_mounted_root() {
 	print_heading1 " Install application"
 	print_heading1 "----------------------"
 	setup_app "$mnt"
+	$SBIN_DIR/script/sshd.sh "$mnt"
 
 	printf "\n\n"
 	print_heading1 " Register user"
@@ -186,6 +182,7 @@ install_mounted_root() {
 	print_heading1 " Finish installation"
 	print_heading1 "----------------------"
 	$SBIN_DIR/script/system.sh "$mnt"
+	$SBIN_DIR/script/nfs.sh "$mnt"
 	$SBIN_DIR/script/dnsmasq.sh "$mnt"
 	$SBIN_DIR/script/k3s.sh "$mnt"
 

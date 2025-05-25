@@ -74,12 +74,7 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true,
-              "fileReplacements": [
-                {
-                  "replace": "frontend/environments/environment.ts",
-                  "with": "frontend/environments/environment.development.ts"
-                }
-              ]
+              "fileReplacements": []
             }
           },
           "defaultConfiguration": "production"

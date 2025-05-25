@@ -3,7 +3,7 @@ import { isDevMode } from '@angular/core';
 import { get as ldGet } from 'lodash-es';
 
 import { IEnvConfig } from '../types/env.d';
-import { environment } from '../environments/environment';
+import { environment } from '../environment';
 
 const envName = isDevMode() ? 'development' : 'production';
 
