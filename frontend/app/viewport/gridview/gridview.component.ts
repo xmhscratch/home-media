@@ -6,7 +6,7 @@ import {
   inject,
 } from '@angular/core';
 import { OnInit, OnDestroy } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute, ParamMap } from '@angular/router';
 
 import { ButtonModule } from 'primeng/button';
 import { PanelModule } from 'primeng/panel';
@@ -73,7 +73,7 @@ export class CGridview implements OnInit, OnDestroy {
             this.destroy$.add(this.nodeId$.subscribe());
           }),
         )
-        .subscribe((a) => {
+        .subscribe((a: ParamMap) => {
           this.destroy$.add(
             this.storage
               .switchNode(this.rootId(), this.nodeId())
@@ -82,13 +82,15 @@ export class CGridview implements OnInit, OnDestroy {
                 map(({ nodes }) => ({
                   nodes: ldOrderBy(
                     nodes,
-                    (i) => new Date(i.created_date as string).valueOf(),
+                    (i: IINode) => new Date(i.created_date as string).valueOf(),
                     'desc',
                   ),
                 })),
                 // tap((v) => console.log(v)),
               )
-              .subscribe(({ nodes }) => this.nodes.set(nodes)),
+              .subscribe(({ nodes }) => {
+                this.nodes.set(nodes);
+              }),
           );
         }),
     );

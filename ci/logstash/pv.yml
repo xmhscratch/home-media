@@ -10,7 +10,7 @@ spec:
   accessModes:
     - ReadOnlyMany
   persistentVolumeReclaimPolicy: Delete
-  storageClassName: storage-repo
+  storageClassName: data-repo
   nfs:
     server: 127.0.0.1
     path: /data/dist/channel/

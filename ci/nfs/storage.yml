@@ -1,7 +1,7 @@
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
 metadata:
-  name: storage-repo
+  name: data-repo
 provisioner: kubernetes.io/no-provisioner
 allowVolumeExpansion: true
 reclaimPolicy: Delete

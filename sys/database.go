@@ -10,8 +10,6 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-// NewDatabase returns a gorm.DB struct, gorm.DB.DB() returns a database handle
-// see http://golang.org/pkg/database/sql/#DB
 func NewDatabase(cfg *Config, dbName string) (*gorm.DB, error) {
 	gormLogger := logger.New(
 		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer

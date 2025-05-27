@@ -100,7 +100,7 @@ export class CPlayer implements OnInit, OnDestroy, AfterViewInit {
     private storageService: StorageService,
     private fileService: FileService,
     private cdRef: ChangeDetectorRef,
-  ) { }
+  ) {}
 
   ngOnInit(): void {
     ((f: IFileListItem) => {
@@ -133,7 +133,7 @@ export class CPlayer implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  ngAfterViewInit(): void { }
+  ngAfterViewInit(): void {}
 
   handleItemSelect(e: Event, f: IFileListItem) {
     if (!f) {

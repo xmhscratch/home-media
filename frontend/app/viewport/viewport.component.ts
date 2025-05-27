@@ -8,8 +8,8 @@ import { Router, ActivatedRoute } from '@angular/router';
 
 import { ButtonModule } from 'primeng/button';
 
-import { zip, combineLatest, switchMap, Subscription } from 'rxjs';
-import { map, isEmpty } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { toObservable } from '@angular/core/rxjs-interop';
 
 import { IINode } from '../../types/storage';
@@ -43,10 +43,8 @@ export class CViewport implements OnInit, OnDestroy {
 
   destroy$: Subscription = new Subscription();
 
-  constructor(
-    private storage: StorageService,
-    private router: Router,
-  ) {}
+  constructor() // private router: Router, // private storage: StorageService,
+  {}
 
   ngOnInit() {
     this.destroy$.add(

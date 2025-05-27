@@ -81,6 +81,7 @@ mv -vf /tmp/channel/* "$tmp"/usr/sbin/hms/channel/
 mv -vf /tmp/node_modules/* "$tmp"/usr/sbin/hms/node_modules/
 mv -vf \
 	/tmp/ci/*.yml \
+	/tmp/node-modules.txt \
 	/tmp/docker/preload-images.tar.gz \
 	/tmp/docker/k3s-airgap-images-amd64.tar.zst \
 	"$tmp"/usr/sbin/hms/; \

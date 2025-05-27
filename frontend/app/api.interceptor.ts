@@ -1,4 +1,5 @@
 import { inject } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import {
   HttpInterceptorFn,
   HttpRequest,
@@ -16,11 +17,17 @@ export const apiInterceptor: HttpInterceptorFn = (
   next: HttpHandlerFn,
 ): Observable<HttpEvent<unknown>> => {
   const env = inject(EnvService);
+  const document: Document = inject(DOCUMENT);
 
   const endpoint: string =
-    'http://' + <string>req.headers.get('endpoint') ||
-    <string>env.get('endpoint.backend');
-  const apiReq = req.clone({ url: new URL(req.url, endpoint).toString() });
+    <string>req.headers.get('endpoint') || <string>env.get('endpoint.backend');
+
+  const apiReq = req.clone({
+    url: new URL(
+      req.url,
+      `${document.location.protocol}//` + endpoint,
+    ).toString(),
+  });
 
   return next(apiReq);
 

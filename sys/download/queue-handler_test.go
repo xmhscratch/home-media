@@ -15,9 +15,9 @@ var SampleDQMessage *session.DQMessage = &session.DQMessage{
 
 // func TestFileExists(t *testing.T) {
 // 	fmt.Println(
-// 		sys.CheckFileExists("/home/data/c041112c23b3a441957ee47a/fe2359ea7d5a53f88574d59461325f26.eng2.vtt"),
-// 		sys.CheckFileExists("/home/data/c041112c23b3a441957ee47a/fe2359ea7d5a53f88574d59461325f26.jpn1.mp4"),
-// 		sys.CheckFileExists("/home/data/c041112c23b3a441957ee47a/fe2359ea7d5a53f88574d59461325f26.mp4"),
+// 		sys.CheckFileExists("/home/data/storage/c041112c23b3a441957ee47a/fe2359ea7d5a53f88574d59461325f26.eng2.vtt"),
+// 		sys.CheckFileExists("/home/data/storage/c041112c23b3a441957ee47a/fe2359ea7d5a53f88574d59461325f26.jpn1.mp4"),
+// 		sys.CheckFileExists("/home/data/storage/c041112c23b3a441957ee47a/fe2359ea7d5a53f88574d59461325f26.mp4"),
 // 	)
 // }
 

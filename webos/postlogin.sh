@@ -74,7 +74,7 @@ wait_apiserver() {
 		k3s_bearer_token=$(kubectl -n default create token kubernetes-dashboard)
 		kubectl config set-credentials kubernetes-dashboard --token="$k3s_bearer_token"
 		makefile root:wheel 0444 "$usr_home_dir"/.k3s_token <<-EOF
-		$k3s_bearer_token
+			$k3s_bearer_token
 		EOF
 	else
 		k3s_bearer_token=$(cat "$usr_home_dir"/.k3s_token)
@@ -101,28 +101,30 @@ init() {
 	exportfs -afv
 
 	local usr_home_dir=$(getent passwd "$(id -u hms)" | cut -d: -f6)
-	local k3s_dir="$usr_home_dir"/.rancher/k3s
+	local ci_dir=/home/data/dist/ci/
 
 	check_ready "ss -lx | grep -E '.*containerd\.sock\ '" 1 $CHECK_TIMEOUT
 	check_ready "ss -lx | grep -E '.*kubelet\.sock\ '" 1 $CHECK_TIMEOUT
 
 	if [ ! -f "$usr_home_dir"/.renovated ]; then
-		mkdir -pv /home/data/db/
+		mkdir -pv /home/data/db/ && chmod 0775 /home/data/db/
+		mkdir -pv /home/data/channel/ && chmod 0664 /home/data/channel/
+		mkdir -pv /home/data/storage/ && chmod 0775 /home/data/storage/
 
 		printf "%s\n" "Importing preload container images..."
 		ctr image import "$usr_home_dir"/preload-images.tar
-		kubectl apply -f "$k3s_dir"/ci/runtime-deploy.yml
-		kubectl apply -f "$k3s_dir"/ci/dashboard-deploy.yml
+		kubectl apply -f "$ci_dir"/runtime-deploy.yml
+		kubectl apply -f "$ci_dir"/dashboard-deploy.yml
 		wait_apiserver "$usr_home_dir"
-		kubectl apply -f "$k3s_dir"/ci/ingress-nginx-deploy.yml
+		kubectl apply -f "$ci_dir"/ingress-nginx-deploy.yml
 		wait_system
-		kubectl apply -f "$k3s_dir"/ci/hms-deploy.yml
+		kubectl apply -f "$ci_dir"/hms-deploy.yml
 		wait_redis
-		kubectl apply -f "$k3s_dir"/ci/redis-svc-ingress.yml
+		kubectl apply -f "$ci_dir"/redis-svc-ingress.yml
 		wait_logstash
-		kubectl apply -f "$k3s_dir"/ci/logstash-svc-ingress.yml
+		kubectl apply -f "$ci_dir"/logstash-svc-ingress.yml
 		wait_hms
-		kubectl apply -f "$k3s_dir"/ci/hms-svc-ingress.yml
+		kubectl apply -f "$ci_dir"/hms-svc-ingress.yml
 
 		touch "$usr_home_dir"/.renovated
 	else

@@ -10,13 +10,12 @@ import {
   DynamicDialogRef,
 } from 'primeng/dynamicdialog';
 
-import { IINode } from '../../../types/storage';
+import { IINode } from '@T/storage';
 import { StorageService } from '@/storage.service';
 import { CContent } from './content/content.component';
 import { CFooter } from './footer/footer.component';
 import { CHeader } from './header/header.component';
 import { Subscription } from 'rxjs';
-import { ConsoleLogger } from '@nestjs/common';
 
 @Component({
   selector: 'app-base-item',

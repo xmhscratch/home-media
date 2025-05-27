@@ -8,13 +8,12 @@ setup() {
 	shift
 
 	local usr_home_dir=$(getent passwd "$(id -u hms)" | cut -d: -f6)
-	local k3s_dir="$usr_home_dir"/.rancher/k3s
+	local ci_dir=/home/data/dist/ci/
 
-	mkdir -pv "$mnt"/"$k3s_dir"
-	mkdir -pv "$mnt"/"$k3s_dir"/ci/
+	mkdir -pv "$mnt"/"$ci_dir"
 	mkdir -pv "$mnt"/var/lib/rancher/k3s/agent/images/
 
-	cp -vfr /usr/sbin/hms/*.yml "$mnt"/"$k3s_dir"/ci/
+	cp -vfr /usr/sbin/hms/*.yml "$mnt"/"$ci_dir"
 	cp -vfrT \
 		/usr/sbin/hms/k3s-airgap-images-amd64.tar.zst \
 		"$mnt"/var/lib/rancher/k3s/agent/images/k3s-airgap-images-amd64.tar.zst

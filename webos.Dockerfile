@@ -99,6 +99,7 @@ COPY dist/docker/k3s-airgap-images-amd64.tar.zst    /tmp/docker/
 COPY dist/iso/.node-modules/                        /tmp/node_modules/
 COPY dist/iso/.apks/                                /tmp/apks/
 COPY dist/iso/.ci/                                  /tmp/ci/
+COPY dist/iso/node-modules.txt                      /tmp/
 RUN \
     addgroup root abuild; \
     mkdir -pv $HOME/.mkimage/; \

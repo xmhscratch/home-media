@@ -66,6 +66,11 @@ export class StorageService {
     ),
   );
 
+  defaultHeaders: HttpHeaders = new HttpHeaders({
+    enctype: 'multipart/form-data',
+    endpoint: <string>this.env.get('endpoint.backend'),
+  });
+
   onchange = new Subject<unknown>();
   switchNode$: Subscription = new Subscription();
 
@@ -132,6 +137,7 @@ export class StorageService {
   ): Observable<IINode[]> {
     return this.http
       .get<IINode[]>(`/storage/${rootId}/${nodeId || rootId}/${fnName}`, {
+        headers: this.defaultHeaders,
         params: new HttpParams({ fromString: `extend=1&branch=0` }),
         // observe: "body",
       })
@@ -141,6 +147,7 @@ export class StorageService {
   fetchOne(rootId: string, nodeId: string, fnName: string): Observable<IINode> {
     return this.http
       .get<IINode>(`/storage/${rootId}/${nodeId || rootId}/${fnName}`, {
+        headers: this.defaultHeaders,
         params: new HttpParams({ fromString: `extend=1&branch=0` }),
         // observe: "body",
       })
@@ -148,14 +155,9 @@ export class StorageService {
   }
 
   fetchRoots(): Observable<ITreeRootNode[]> {
-    const headers = new HttpHeaders({
-      enctype: 'multipart/form-data',
-      endpoint: <string>this.env.get('endpoint.backend'),
-    });
-
     return this.http
       .get<ITreeRootNode[]>(`/storage/roots`, {
-        headers,
+        headers: this.defaultHeaders,
         // params: new HttpParams({ fromString: `` }),
         // observe: "body",
       })
@@ -167,8 +169,15 @@ export class StorageService {
 
     zip(Object.keys(node), Object.values(node))
       .pipe(
-        map(([key, val]) => formData.append(key, <string | Blob>val)),
-        // tap((v) => { console.log(v) }),
+        // tap((v) => {
+        //   console.log(v);
+        // }),
+        map(([key, val]) => {
+          formData.append(key, <string | Blob>val);
+        }),
+        // tap((v) => {
+        //   console.log(v);
+        // }),
       )
       .subscribe()
       .unsubscribe();

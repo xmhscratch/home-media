@@ -14,7 +14,7 @@ const GLOBAL_ENV_CONFIG = new InjectionToken<IEnvConfig>('GLOBAL_ENV_CONFIG', {
       env: envName,
       endpoint: {
         backend: environment.endpoint.backend,
-        api: environment.endpoint.backend,
+        api: environment.endpoint.api,
         file: environment.endpoint.file,
         frontend: environment.endpoint.frontend,
       },

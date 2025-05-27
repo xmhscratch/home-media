@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "frontend:start": "ng serve --host=0.0.0.0 --disable-host-check --configuration=development",
+    "frontend:start": "ng serve --host=0.0.0.0 --watch --configuration=development",
     "frontend:build": "ng build --verbose --progress=false",
     "frontend:watch": "ng build --watch --configuration=development",
     "frontend:format": "npx prettier --write ./frontend/app ./frontend/environments ./frontend/polyfills ./frontend/app.controller.ts ./frontend/app.module.ts ./frontend/main.server.ts ./frontend/main.ts ./frontend/polyfills.ts ./frontend/server.ts",

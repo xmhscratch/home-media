@@ -9,6 +9,7 @@ DIST_DOCKER_DIR = $(DIST_DIR)/docker
 DIST_ISO_DIR = $(DIST_DIR)/iso
 
 BINARY = $(DIST_ISO_DIR)/alpine-hms-v3.21-x86_64.iso
+NODE_MODULES_DEPLIST = $(DIST_ISO_DIR)/node-modules.txt
 KUBE_IMAGE_OBJ = $(MANIFEST_DIR)/preload-images.txt
 PRELOAD_IMAGE_TARBALL = $(DIST_DOCKER_DIR)/preload-images.tar.gz
 AIRGAP_IMAGE_TARBALL = $(DIST_DOCKER_DIR)/k3s-airgap-images-amd64.tar.zst
@@ -139,7 +140,7 @@ webos_apks:
 	fi
 .PHONY: webos_apks
 
-webos_node_modules:
+webos_node_modules: export_node_modules_deplist
 	if [ -d $(DIST_ISO_DIR)/.node-modules/ ]; then \
 		return $$?; \
 	else \
@@ -155,6 +156,10 @@ webos_ci:
 	mkdir -pv $(DIST_ISO_DIR)/.ci/;
 	docker $(DBUILD_CMD) $(DBUILD_ARGS) --file=./webos.Dockerfile --target=export-ci --output type=local,dest=$(DIST_ISO_DIR) $(DOCK_ROOT_CTX);
 .PHONY: webos_ci
+
+export_node_modules_deplist:
+	npm list --all --json | jq -r '.dependencies | paths(scalars) as $$p | $$p | map(tostring) | map(select(. != "dependencies" and . != "global" and . != "version" and . != "resolved")) | join("\n")' | sort | uniq > $(NODE_MODULES_DEPLIST)
+.PHONY: export_node_modules_deplist
 
 go.mod: FORCE
 	go mod tidy
@@ -192,5 +197,6 @@ clean_cache: clean_docker_system clean_angular
 
 clean_all: clean_docker_system clean_app clean_bin clean_docker clean_angular
 	rm -f $(BINARY)
+	rm -rf $(NODE_MODULES_DEPLIST)
 	rm -rf node_modules
 .PHONY: clean_all

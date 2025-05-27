@@ -27,7 +27,7 @@ func main() {
 	app.Use(cors.New())
 	app.Use(
 		"/:nodeId<[0-9a-z]{24}>/:fileKey<^[0-9a-z]+(\\.[0-9a-z]{1,20}|)(\\.vtt|\\.mp4)$>",
-		filesrv.NewStorageHandler(cfg.DataPath, filesrv.StorageConfig{
+		filesrv.NewStorageHandler(cfg.StoragePath, filesrv.StorageConfig{
 			Compress:      false,
 			ByteRange:     true,
 			Browse:        false,

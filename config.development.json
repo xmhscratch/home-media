@@ -1,5 +1,5 @@
 {
-    "debug": false,
+    "debug": true,
     "redis": {
         "db": "0",
         "host": "master.redis",
@@ -7,7 +7,7 @@
         "password": ""
     },
     "sqlite": {
-        "path": "/home/data/"
+        "path": "/export/data/"
     },
     "endpoint": {
         "backend": "backend.hms:4100",
@@ -16,8 +16,8 @@
         "frontend": "frontend.hms:4000"
     },
     "configAddress": "10.43.0.100:4444",
-    "rootPath": "/home/dev/",
-    "binPath": "/home/dev/ci/",
-    "tmpPath": "/home/tmp/",
-    "dataPath": "/home/data/"
+    "rootPath": "/export/",
+    "binPath": "/export/bin/",
+    "tmpPath": "/export/tmp/",
+    "storagePath": "/export/storage/"
 }

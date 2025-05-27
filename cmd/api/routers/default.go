@@ -9,7 +9,7 @@ import (
 // Ping comment
 func (route *RouteContext) Ping() gin.HandlerFunc {
 	return func(ginCtx *gin.Context) {
-		ginCtx.String(http.StatusOK, "")
+		ginCtx.String(http.StatusOK, "{}")
 	}
 }
 

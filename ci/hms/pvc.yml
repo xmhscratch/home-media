@@ -5,7 +5,7 @@ metadata:
   name: pvc-dist
   namespace: hms
 spec:
-  storageClassName: storage-repo
+  storageClassName: data-repo
   accessModes:
     - ReadOnlyMany
   selector:
@@ -21,7 +21,7 @@ metadata:
   name: pvc-db
   namespace: hms
 spec:
-  storageClassName: storage-repo
+  storageClassName: data-repo
   accessModes:
     - ReadWriteMany
   selector:
@@ -30,3 +30,19 @@ spec:
   resources:
     requests:
       storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-storage
+  namespace: hms
+spec:
+  storageClassName: data-repo
+  accessModes:
+    - ReadWriteMany
+  selector:
+    matchLabels:
+      dirname: storage
+  resources:
+    requests:
+      storage: 1000Gi

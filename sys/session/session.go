@@ -73,7 +73,7 @@ func (T FileSourceType) InitSession(
 		return nil, true, err
 	}
 
-	if err = os.MkdirAll(filepath.Join(cfg.DataPath, ctx.NodeID), 0755); err != nil {
+	if err = os.MkdirAll(filepath.Join(cfg.StoragePath, ctx.NodeID), 0755); err != nil {
 		return nil, true, err
 	}
 

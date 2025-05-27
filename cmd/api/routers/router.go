@@ -38,6 +38,7 @@ func (ctx *RouteContext) Init(router *gin.Engine) {
 	// router.GET("/:ssid/files", ctx.GetFiles())
 	router.GET("/:ssid/1/*filePath", ctx.DownloadDirect())
 	router.GET("/:ssid/2/*filePath", ctx.DownloadTorrent())
+	router.GET("/ping", ctx.Ping())
 
 	// default
 	router.NoRoute(ctx.NoRoute())

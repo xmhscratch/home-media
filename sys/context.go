@@ -35,7 +35,7 @@ type ConfigFile struct {
 	ConfigAddress string                 `json:"configAddress"`
 	BinPath       string                 `json:"binPath"`
 	TmpPath       string                 `json:"tmpPath"`
-	DataPath      string                 `json:"dataPath"`
+	StoragePath   string                 `json:"storagePath"`
 }
 
 // Config comment

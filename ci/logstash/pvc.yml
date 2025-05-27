@@ -4,7 +4,7 @@ metadata:
   name: pvc-channel
   namespace: logstash
 spec:
-  storageClassName: storage-repo
+  storageClassName: data-repo
   accessModes:
   - ReadOnlyMany
   selector:

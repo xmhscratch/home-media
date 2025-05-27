@@ -21,7 +21,7 @@ func (ctx *SQSegmentInfo) Init(cfg *sys.Config) error {
 		rds            *redis.Client        = sys.NewClient(cfg)
 		genSegmentPath func(c int64) string = func(c int64) string {
 			return filepath.Join(
-				cfg.DataPath, ctx.SavePath[:24],
+				cfg.StoragePath, ctx.SavePath[:24],
 				fmt.Sprintf("%s_%03d", GetFileKeyName(ctx.SavePath), c),
 			)
 		}
@@ -78,7 +78,7 @@ func (ctx *SQSegmentInfo) PushQueue() error {
 			Member: &SQMessage{
 				KeyId:    ctx.KeyId,
 				Index:    int64(c),
-				Source:   filepath.Join(ctx.Config.DataPath, ctx.SavePath),
+				Source:   filepath.Join(ctx.Config.StoragePath, ctx.SavePath),
 				Start:    start,
 				Duration: FormatDuration(ctx.BestSegmentLength),
 				Output:   output,

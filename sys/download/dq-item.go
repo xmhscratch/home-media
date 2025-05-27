@@ -25,7 +25,7 @@ func (ctx DQItem) Key() string {
 }
 
 func (ctx *DQItem) VerifyInfo() (*DQItem, error) {
-	ctx.HasOriginSource = sys.CheckFileExists(filepath.Join(ctx.cfg.DataPath, ctx.dm.SavePath))
+	ctx.HasOriginSource = sys.CheckFileExists(filepath.Join(ctx.cfg.StoragePath, ctx.dm.SavePath))
 
 	if fInfStr, err := ctx.rds.HGet(
 		context.TODO(),
@@ -43,7 +43,7 @@ func (ctx *DQItem) VerifyInfo() (*DQItem, error) {
 
 	for i, sub := range ctx.dm.FileMeta.Subtitles {
 		subFilePath := filepath.Join(
-			ctx.cfg.DataPath,
+			ctx.cfg.StoragePath,
 			filepath.Dir(ctx.dm.SavePath),
 			sys.BuildString(ctx.dm.FileKey, ".", sub.LangCode, strconv.Itoa(int(sub.StreamIndex)), ".vtt"),
 		)
@@ -57,7 +57,7 @@ func (ctx *DQItem) VerifyInfo() (*DQItem, error) {
 
 	for i, dub := range ctx.dm.FileMeta.Dubs {
 		dubFilePath := filepath.Join(
-			ctx.cfg.DataPath,
+			ctx.cfg.StoragePath,
 			filepath.Dir(ctx.dm.SavePath),
 			sys.BuildString(ctx.dm.FileKey, ".", dub.LangCode, strconv.Itoa(int(dub.StreamIndex)), ".mp4"),
 		)
@@ -70,7 +70,7 @@ func (ctx *DQItem) VerifyInfo() (*DQItem, error) {
 	}
 
 	vidFilePath := filepath.Join(
-		ctx.cfg.DataPath,
+		ctx.cfg.StoragePath,
 		filepath.Dir(ctx.dm.SavePath),
 		sys.BuildString(ctx.dm.FileKey, ".mp4"),
 	)
@@ -106,7 +106,7 @@ func (ctx *DQItem) StartDownload() error {
 		stdin.WriteVar("DownloadURL", ctx.dm.DownloadURL)
 		stdin.WriteVar("Output", ctx.dm.SavePath)
 		stdin.WriteVar("BaseURL", ctx.cfg.EndPoint["api"])
-		stdin.WriteVar("RootDir", filepath.Join(ctx.cfg.DataPath))
+		stdin.WriteVar("RootDir", filepath.Join(ctx.cfg.StoragePath))
 
 		exitCode <- shell.Run()
 	}()
@@ -140,7 +140,7 @@ func (ctx *DQItem) UpdateDuration() error {
 		}
 
 		stdin.WriteVar("ExecBin", filepath.Join(ctx.cfg.BinPath, "./duration.sh"))
-		stdin.WriteVar("Input", filepath.Join(ctx.cfg.DataPath, ctx.dm.SavePath))
+		stdin.WriteVar("Input", filepath.Join(ctx.cfg.StoragePath, ctx.dm.SavePath))
 
 		exitCode <- shell.Run()
 	}()
@@ -174,7 +174,7 @@ func (ctx *DQItem) UpdateSubtitles() error {
 		}
 
 		stdin.WriteVar("ExecBin", filepath.Join(ctx.cfg.BinPath, "./subtitle.sh"))
-		stdin.WriteVar("Input", filepath.Join(ctx.cfg.DataPath, ctx.dm.SavePath))
+		stdin.WriteVar("Input", filepath.Join(ctx.cfg.StoragePath, ctx.dm.SavePath))
 
 		exitCode <- shell.Run()
 	}()
@@ -208,7 +208,7 @@ func (ctx *DQItem) UpdateDubs() error {
 		}
 
 		stdin.WriteVar("ExecBin", filepath.Join(ctx.cfg.BinPath, "./dub.sh"))
-		stdin.WriteVar("Input", filepath.Join(ctx.cfg.DataPath, ctx.dm.SavePath))
+		stdin.WriteVar("Input", filepath.Join(ctx.cfg.StoragePath, ctx.dm.SavePath))
 
 		exitCode <- shell.Run()
 	}()
@@ -259,11 +259,11 @@ func (ctx *DQItem) ExtractVideo() error {
 		}
 
 		stdin.WriteVar("ExecBin", filepath.Join(ctx.cfg.BinPath, "./extract-vid.sh"))
-		stdin.WriteVar("Input", filepath.Join(ctx.cfg.DataPath, ctx.dm.SavePath))
+		stdin.WriteVar("Input", filepath.Join(ctx.cfg.StoragePath, ctx.dm.SavePath))
 		stdin.WriteVar("StreamIndex", "0")
 		stdin.WriteVar("LangCode", "default")
 		stdin.WriteVar("Output", filepath.Join(
-			ctx.cfg.DataPath,
+			ctx.cfg.StoragePath,
 			filepath.Dir(ctx.dm.SavePath),
 			ctx.dm.FileKey,
 			// session.GetFileKeyName(ctx.dm.SavePath),
@@ -305,11 +305,11 @@ func (ctx *DQItem) ExtractDubs() error {
 				}
 
 				stdin.WriteVar("ExecBin", filepath.Join(ctx.cfg.BinPath, "./extract-dub.sh"))
-				stdin.WriteVar("Input", filepath.Join(ctx.cfg.DataPath, ctx.dm.SavePath))
+				stdin.WriteVar("Input", filepath.Join(ctx.cfg.StoragePath, ctx.dm.SavePath))
 				stdin.WriteVar("StreamIndex", strconv.FormatInt(dub.StreamIndex, 5<<1))
 				stdin.WriteVar("LangCode", sys.BuildString(dub.LangCode, strconv.FormatInt(dub.StreamIndex, 5<<1)))
 				stdin.WriteVar("Output", filepath.Join(
-					ctx.cfg.DataPath,
+					ctx.cfg.StoragePath,
 					filepath.Dir(ctx.dm.SavePath),
 					ctx.dm.FileKey,
 					// session.GetFileKeyName(ctx.dm.SavePath),
@@ -355,11 +355,11 @@ func (ctx *DQItem) ExtractSubtitles() error {
 				}
 
 				stdin.WriteVar("ExecBin", filepath.Join(ctx.cfg.BinPath, "./extract-sub.sh"))
-				stdin.WriteVar("Input", filepath.Join(ctx.cfg.DataPath, ctx.dm.SavePath))
+				stdin.WriteVar("Input", filepath.Join(ctx.cfg.StoragePath, ctx.dm.SavePath))
 				stdin.WriteVar("StreamIndex", strconv.FormatInt(sub.StreamIndex, 5<<1))
 				stdin.WriteVar("LangCode", sys.BuildString(sub.LangCode, strconv.FormatInt(sub.StreamIndex, 5<<1)))
 				stdin.WriteVar("Output", filepath.Join(
-					ctx.cfg.DataPath,
+					ctx.cfg.StoragePath,
 					filepath.Dir(ctx.dm.SavePath),
 					ctx.dm.FileKey,
 					// session.GetFileKeyName(ctx.dm.SavePath),

@@ -1,7 +1,7 @@
 import { Injectable, WritableSignal } from '@angular/core';
 import { signal } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 import { Observable, Subject, switchMap, map, tap } from 'rxjs';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
@@ -94,6 +94,9 @@ export class FileService {
 
   loadFiles(): Observable<TFileList> {
     return this.storageService.loadSession().pipe(
+      // tap((v) => {
+      //   console.log(v);
+      // }),
       switchMap(({ root, active, paths, nodes }) => {
         return this.storageService.createSession(active);
       }),
@@ -103,7 +106,9 @@ export class FileService {
         this.files.set(list);
         return list;
       }),
-      // tap((v) => { console.log(v) }),
+      // tap((v) => {
+      //   console.log(v);
+      // }),
     );
   }
 
@@ -159,7 +164,7 @@ export class FileService {
             <string>ldGet(result, 'sourceReady', '0'),
           );
         } else {
-          result = { ...result, ...(<{}>v.payload) };
+          result = { ...result, ...(<object>v.payload) };
         }
         return result;
       }),

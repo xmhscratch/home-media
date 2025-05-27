@@ -134,28 +134,6 @@ setup_root() {
 install_mounted_root() {
 	local mnt="$(realpath "$1")"
 	shift 1
-	local disks="${@}"
-	local rootdev=
-
-	rootdev=$(find_mount_dev "$mnt")
-	if [ -z "$rootdev" ]; then
-		echo "'$mnt' does not seem to be a mount point" >&2
-		return 1
-	fi
-
-	local apkflags="--initdb --progress --update-cache --clean-protected"
-	local pkgs=
-
-	pkgs="$pkgs $(cat /usr/sbin/apk-xorg | tr '\n' ' ')"
-	pkgs="$pkgs $(cat /usr/sbin/apk-font | tr '\n' ' ')"
-	pkgs="$pkgs $(cat /usr/sbin/apk-kube | tr '\n' ' ')"
-	# pkgs="$pkgs $(cat /usr/sbin/apk-pulseaudio | tr '\n' ' ')"
-	pkgs="$pkgs $(cat /usr/sbin/apk-chromium | tr '\n' ' ')"
-	pkgs="$pkgs $(cat /usr/sbin/apk-auth | tr '\n' ' ')"
-
-	local arch="$(apk --print-arch)"
-	local repositories_file="$mnt"/etc/apk/repositories
-	local keys_dir="$mnt"/etc/apk/keys
 
 	init_chroot_mounts "$mnt"
 
@@ -166,7 +144,6 @@ install_mounted_root() {
 	print_heading1 " Install application"
 	print_heading1 "----------------------"
 	setup_app "$mnt"
-	$SBIN_DIR/script/sshd.sh "$mnt"
 
 	printf "\n\n"
 	print_heading1 " Register user"
@@ -193,6 +170,29 @@ install_mounted_root() {
 setup_app() {
 	local mnt="$1"
 	shift 1
+
+	local disks="${@}"
+	local rootdev=
+
+	rootdev=$(find_mount_dev "$mnt")
+	if [ -z "$rootdev" ]; then
+		echo "'$mnt' does not seem to be a mount point" >&2
+		return 1
+	fi
+
+	local apkflags="--initdb --progress --update-cache --clean-protected"
+	local pkgs=
+
+	pkgs="$pkgs $(cat /usr/sbin/apk-xorg | tr '\n' ' ')"
+	pkgs="$pkgs $(cat /usr/sbin/apk-font | tr '\n' ' ')"
+	pkgs="$pkgs $(cat /usr/sbin/apk-kube | tr '\n' ' ')"
+	# pkgs="$pkgs $(cat /usr/sbin/apk-pulseaudio | tr '\n' ' ')"
+	pkgs="$pkgs $(cat /usr/sbin/apk-chromium | tr '\n' ' ')"
+	pkgs="$pkgs $(cat /usr/sbin/apk-auth | tr '\n' ' ')"
+
+	local arch="$(apk --print-arch)"
+	local repositories_file="$mnt"/etc/apk/repositories
+	local keys_dir="$mnt"/etc/apk/keys
 
 	printf "\n\n"
 	print_heading2 " Copy HMS files"
@@ -236,6 +236,10 @@ setup_app() {
 		--repositories-file "$repositories_file" \
 		--root "$mnt" --arch "$arch" \
 		$apkflags $pkgs
+
+	if [ ! -z "$DEV" ]; then
+		$SBIN_DIR/script/dev.sh "$mnt" $DEV
+	fi
 }
 
 native_disk_install() {

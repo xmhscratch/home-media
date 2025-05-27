@@ -19,5 +19,5 @@
     "rootPath": "/export/",
     "binPath": "/export/bin/",
     "tmpPath": "/export/tmp/",
-    "dataPath": "/export/data/"
+    "storagePath": "/export/storage/"
 }
