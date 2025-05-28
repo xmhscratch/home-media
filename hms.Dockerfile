@@ -13,7 +13,6 @@ ENV LD_LIBRARY_PATH="/usr/lib:/usr/lib64:\$LD_LIBRARY_PATH"
 ENV CGO_LDFLAGS="-L/usr/lib64"
 ENV CGO_CFLAGS="-I/usr/include/ffmpeg"
 ENV PKG_CONFIG_PATH="/usr/lib64/pkgconfig:\$PKG_CONFIG_PATH"
-COPY ci/*.sh /export/bin/
 RUN \
     apk add --no-cache \
         --repository "http://dl-cdn.alpinelinux.org/alpine/edge/main" \
@@ -27,9 +26,6 @@ RUN \
     ldconfig -v; \
     pkg-config --cflags -- libavcodec libavdevice libavfilter libavformat libswresample libswscale libavutil; \
     ffmpeg -version; \
-    # permissions
-    # chmod u+x /export/cmd/*; \
-    chmod u+x /export/bin/*.sh; \
     # cleanup
     apk del .build-deps; \
     rm -rf /var/cache/apk/*; \

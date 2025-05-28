@@ -40,12 +40,7 @@ setup() {
 	# sed -i "s@#rc_default_runlevel=@rc_default_runlevel=@g" "$mnt"/etc/rc.conf
 	# sed -i "s@#rc_cgroup_memory=\"\"@rc_cgroup_memory=\"memory.memsw.limit_in_bytes 4194304\"@g" "$mnt"/etc/rc.conf
 
-	for mod in \
-		autofs4 \
-		configs \
-		nf_conntrack \
-		br_netfilter \
-	; do
+	for mod in $(cat /usr/sbin/hms/kernel-modules.txt); do
 		if [[ -z "$(grep -qxF "$mod" "$mnt"/etc/modules)" ]]; then
 			echo "$mod" | tee -a "$mnt"/etc/modules
 		fi

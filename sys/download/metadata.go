@@ -31,7 +31,6 @@ func MetadataShell(shell *runtime.Shell, streamManager *runtime.StreamManager) {
 		var commandName = shell.ReadVar("EXECUTOR")
 		var arguments []string
 		arguments = append(arguments, shell.ReadVar("FFMPEG_INPUT_FILE"))
-		// fmt.Println(commandName, arguments)
 		var command = shell.Command(commandName, arguments...)
 		streamManager := streamManager.Clone()
 		defer streamManager.Destroy()

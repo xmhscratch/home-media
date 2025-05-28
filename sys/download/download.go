@@ -41,7 +41,6 @@ func DownloadShell(shell *runtime.Shell, streamManager *runtime.StreamManager) {
 		arguments = append(arguments, shell.ReadVar("BASE_URL"))
 		arguments = append(arguments, shell.ReadVar("ROOT_DIR"))
 		var command = shell.Command(commandName, arguments...)
-		// fmt.Println(commandName, arguments)
 		streamManager := streamManager.Clone()
 		defer streamManager.Destroy()
 		if stream, err := streamManager.Get(`0`); err != nil {

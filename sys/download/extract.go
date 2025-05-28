@@ -40,7 +40,6 @@ func ExtractShell(shell *runtime.Shell, streamManager *runtime.StreamManager) {
 		arguments = append(arguments, shell.ReadVar("STREAM_INDEX"))
 		arguments = append(arguments, shell.ReadVar("LANG_CODE"))
 		arguments = append(arguments, `'`+shell.ReadVar("FFMPEG_OUTPUT_FILE")+`'`)
-		// fmt.Println(commandName, arguments)
 		var command = shell.Command(commandName, arguments...)
 		streamManager := streamManager.Clone()
 		defer streamManager.Destroy()

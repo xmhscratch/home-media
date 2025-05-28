@@ -1,7 +1,7 @@
-vulkan-headers
-vulkan-loader
-vulkan-tools
 chromium
 chromium-chromedriver
 chromium-lang
 chromium-swiftshader
+vulkan-headers
+vulkan-loader
+vulkan-tools

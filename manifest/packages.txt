@@ -89,6 +89,7 @@ cjson
 clang19-headers
 clang19-libclang
 clang19-libs
+cni-plugin-flannel
 cni-plugins
 conmon
 conntrack-tools
@@ -96,6 +97,10 @@ conntrack-tools-openrc
 containerd
 containerd-openrc
 containers-common
+coreutils
+coreutils-env
+coreutils-fmt
+coreutils-sha512sum
 crc32c
 cri-o
 cri-o-openrc
@@ -113,6 +118,8 @@ dhcpcd
 dhcpcd-openrc
 dialog
 directfb
+dnsmasq
+dnsmasq-common
 doas
 docker
 docker-cli
@@ -137,6 +144,7 @@ ffmpeg-libswresample
 ffmpeg-libswscale
 fftw-single-libs
 file
+findutils
 flite
 font-alias
 font-cursor-misc
@@ -295,6 +303,7 @@ gtk4.0
 gvfs
 harfbuzz
 harfbuzz-subset
+helm
 hicolor-icon-theme
 hwdata-pci
 icu-data-full
@@ -308,6 +317,7 @@ iproute2
 iproute2-minimal
 iproute2-ss
 iproute2-tc
+ipset
 iptables
 iptables-openrc
 iso-codes
@@ -315,6 +325,7 @@ iw
 jack
 json-c
 json-glib
+k3s
 kbd
 kbd-bkeymaps
 kbd-misc
@@ -323,6 +334,7 @@ keyutils-libs
 kmod
 kmod-libs
 krb5-conf
+krb5-conf-1.0-r2
 krb5-libs
 lame-libs
 lcms2
@@ -335,6 +347,7 @@ libasyncns
 libatasmart
 libatk-1.0
 libatk-bridge-2.0
+libattr
 libb2
 libblkid
 libblockdev
@@ -424,6 +437,7 @@ libsasl
 libseccomp
 libsecret
 libsharpyuv
+libslirp
 libsm
 libsmartcols
 libsndfile
@@ -437,6 +451,8 @@ libstdc++
 libSvtAv1Enc
 libtasn1
 libtheora
+libtirpc
+libtirpc-conf
 libunibreak
 libunistring
 libunwind
@@ -482,8 +498,8 @@ libxv
 libxxf86vm
 libzbar
 libzmq
-linux-firmware-3com
 linux-firmware
+linux-firmware-3com
 linux-firmware-acenic
 linux-firmware-adaptec
 linux-firmware-advansys
@@ -497,11 +513,11 @@ linux-firmware-amlogic
 linux-firmware-amphion
 linux-firmware-ar3k
 linux-firmware-arm
-linux-firmware-ath6k
-linux-firmware-ath9k_htc
 linux-firmware-ath10k
 linux-firmware-ath11k
 linux-firmware-ath12k
+linux-firmware-ath6k
+linux-firmware-ath9k_htc
 linux-firmware-atmel
 linux-firmware-atusb
 linux-firmware-av7110
@@ -534,8 +550,8 @@ linux-firmware-intel
 linux-firmware-isci
 linux-firmware-ixp4xx
 linux-firmware-kaweth
-linux-firmware-keyspan_pda
 linux-firmware-keyspan
+linux-firmware-keyspan_pda
 linux-firmware-korg
 linux-firmware-libertas
 linux-firmware-liquidio
@@ -550,6 +566,7 @@ linux-firmware-mwl8k
 linux-firmware-mwlwifi
 linux-firmware-myricom
 linux-firmware-netronome
+linux-firmware-none
 linux-firmware-nvidia
 linux-firmware-nxp
 linux-firmware-ositech
@@ -590,11 +607,15 @@ linux-firmware-yam
 linux-firmware-yamaha
 linux-lts
 linux-pam
+linux-virt
 llvm19-libs
 log_proxy
+logrotate
 lvm2
 lvm2-libs
 lvm2-openrc
+lz4
+lz4-libs
 mariadb-connector-c
 mbedtls
 mcookie
@@ -621,6 +642,7 @@ ndctl-libs
 neon
 nettle
 network-extras
+nfs-utils
 nghttp2-libs
 npth
 nspr
@@ -658,6 +680,7 @@ pixman
 pkgconf
 pm-utils
 polkit-noelogind-libs
+popt
 ppp-atm
 ppp-chat
 ppp-daemon
@@ -735,6 +758,7 @@ rav1e-libs
 readline
 rest1
 roc-toolkit-libs
+rpcbind
 runc
 sbc
 scanelf
@@ -742,6 +766,7 @@ sfdisk
 shared-mime-info
 simdutf
 skalibs-libs
+slirp4netns
 snappy
 soundtouch
 soxr
@@ -805,24 +830,11 @@ xtables-addons-lts
 xvidcore
 xz-libs
 yaml
+zfs
+zfs-libs
+zfs-lts
+zfs-virt
+zfs-zsh-completion
 zlib
+zsh
 zstd-libs
-k3s
-cni-plugin-flannel
-coreutils-env
-coreutils
-coreutils-fmt
-coreutils-sha512sum
-libattr
-findutils
-ipset
-slirp4netns
-libslirp
-logrotate
-popt
-rpcbind
-libtirpc
-libtirpc-conf
-nfs-utils
-dnsmasq
-dnsmasq-common

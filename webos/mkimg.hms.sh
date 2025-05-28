@@ -42,7 +42,7 @@ profile_hms() {
             apks="$apks $_a-$_k"
         done
     done
-    apks="$apks linux-firmware"
+    apks="$apks linux-firmware zfs-lts"
 
     apkovl="aports/scripts/genapkovl-hms.sh"
 }

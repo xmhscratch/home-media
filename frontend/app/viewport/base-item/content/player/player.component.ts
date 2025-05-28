@@ -25,7 +25,7 @@ import { PanelModule } from 'primeng/panel';
 import { clamp as ldClamp } from 'lodash-es';
 import { Subscription, Subject, debounceTime, delay, of, first } from 'rxjs';
 
-import { IFileListItem, ISocketMessage } from '../../../../../types/storage';
+import { IFileListItem, ISocketMessage } from '@T/storage';
 import { EnvService } from '@/env.service';
 import { StorageService } from '@/storage.service';
 import { FileService, TFileList } from '@/file.service';
@@ -87,7 +87,7 @@ export class CPlayer implements OnInit, OnDestroy, AfterViewInit {
   @Input() file!: IFileListItem;
 
   baseURL: Signal<string> = signal<string>(
-    <string>this.envService.get('endpoint.file'),
+    <string>this.fileService.baseURL(),
   );
 
   f: WritableSignal<IFileListItem> = signal<IFileListItem>(this.file);
@@ -100,7 +100,7 @@ export class CPlayer implements OnInit, OnDestroy, AfterViewInit {
     private storageService: StorageService,
     private fileService: FileService,
     private cdRef: ChangeDetectorRef,
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     ((f: IFileListItem) => {
@@ -110,7 +110,6 @@ export class CPlayer implements OnInit, OnDestroy, AfterViewInit {
           this.loaded.set(true);
 
           if (m.sourceReady) {
-            console.log(this.f());
             of('')
               .pipe(delay(1), first())
               .subscribe(() => this.initPlayer());
@@ -133,7 +132,7 @@ export class CPlayer implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  ngAfterViewInit(): void {}
+  ngAfterViewInit(): void { }
 
   handleItemSelect(e: Event, f: IFileListItem) {
     if (!f) {

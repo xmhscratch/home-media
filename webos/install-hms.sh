@@ -141,7 +141,7 @@ install_mounted_root() {
 	EOF
 
 	printf "\n\n"
-	print_heading1 " Install application"
+	print_heading1 " Install alpine packages"
 	print_heading1 "----------------------"
 	setup_app "$mnt"
 
@@ -151,17 +151,19 @@ install_mounted_root() {
 	$SBIN_DIR/script/user.sh "$mnt"
 
 	printf "\n\n"
-	print_heading1 " Setup Xorg"
-	print_heading1 "----------------------"
-	$SBIN_DIR/script/xorg.sh "$mnt"
-
-	printf "\n\n"
-	print_heading1 " Finish installation"
+	print_heading1 " Setup system"
 	print_heading1 "----------------------"
 	$SBIN_DIR/script/system.sh "$mnt"
+	$SBIN_DIR/script/xorg.sh "$mnt"
 	$SBIN_DIR/script/nfs.sh "$mnt"
+	# $SBIN_DIR/script/zfs.sh "$mnt"
 	$SBIN_DIR/script/dnsmasq.sh "$mnt"
 	$SBIN_DIR/script/k3s.sh "$mnt"
+
+	printf "\n\n"
+	print_heading1 " Copying HMS files"
+	print_heading1 "----------------------"
+	$SBIN_DIR/script/hms.sh "$mnt"
 
 	cleanup_chroot_mounts "$mnt"
 	return $ret
@@ -193,40 +195,6 @@ setup_app() {
 	local arch="$(apk --print-arch)"
 	local repositories_file="$mnt"/etc/apk/repositories
 	local keys_dir="$mnt"/etc/apk/keys
-
-	printf "\n\n"
-	print_heading2 " Copy HMS files"
-	print_heading2 "----------------------"
-
-	local export_dir="$mnt"/home/data/dist/
-	mkdir -pv "$export_dir"
-	mkdir -pv "$export_dir"/channel/
-	mkdir -pv "$export_dir"/node_modules/
-	export_dir=$(realpath "$export_dir")
-
-	for exe in \
-		api \
-		downloader \
-		encoder \
-		file \
-	; do
-		cp -vfrT /usr/sbin/hms/"$exe" "$export_dir"/"$exe"
-	done
-	for dir in \
-		backend \
-		frontend \
-	; do
-		mkdir -pv "$export_dir"/"$dir"
-		cp -fr /usr/sbin/hms/"$dir"/* "$export_dir"/"$dir"
-	done
-	cp -fr /usr/sbin/hms/channel/* "$export_dir"/channel/
-	cp -fr /usr/sbin/hms/node_modules/* "$export_dir"/node_modules/
-
-	for exe in $(find /usr/sbin/hms/bin/* -type f | xargs basename -a); do
-		case $exe in
-			*) install -o root -g root -m 0755 /usr/sbin/hms/bin/"$exe" "$mnt"/usr/bin/"$exe" ;;
-		esac
-	done
 
 	printf "\n\n"
 	print_heading2 " Install system apks"

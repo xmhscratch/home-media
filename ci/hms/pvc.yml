@@ -37,7 +37,7 @@ metadata:
   name: pvc-storage
   namespace: hms
 spec:
-  storageClassName: data-repo
+  storageClassName: storage-repo
   accessModes:
     - ReadWriteMany
   selector:

@@ -89,10 +89,12 @@ COPY \
     webos/*.sh \
     manifest/apk-* \
     manifest/packages.txt \
+    manifest/kernel-modules.txt \
     /tmp/build/
 COPY webos/script/                                  /tmp/build/script/
 COPY channel/                                       /tmp/channel/
 COPY dist/app/                                      /tmp/app/
+COPY ci/*.sh                                        /tmp/bin/
 COPY dist/bin/                                      /tmp/bin/
 COPY dist/docker/preload-images.tar.gz              /tmp/docker/
 COPY dist/docker/k3s-airgap-images-amd64.tar.zst    /tmp/docker/

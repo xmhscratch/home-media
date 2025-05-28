@@ -17,7 +17,7 @@
     },
     "configAddress": "10.43.0.100:4444",
     "rootPath": "/export/",
-    "binPath": "/export/bin/",
     "tmpPath": "/export/tmp/",
+    "binPath": "/export/dist/bin/",
     "storagePath": "/export/storage/"
 }

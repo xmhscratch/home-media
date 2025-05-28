@@ -20,20 +20,36 @@ spec:
     spec:
       serviceAccountName: nfs-client-provisioner
       containers:
-        - name: nfs-client-provisioner
+        - name: nfs-client-data-provisioner
           image: registry.k8s.io/sig-storage/nfs-subdir-external-provisioner:v4.0.2
           volumeMounts:
-            - name: nfs-client-root
+            - name: nfs-client-data-root
               mountPath: /persistentvolumes
           env:
             - name: PROVISIONER_NAME
               value: k8s-sigs.io/nfs-subdir-external-provisioner
             - name: NFS_SERVER
-              value: 10.43.43.10
+              value: 10.43.50.1
+            - name: NFS_PATH
+              value: /ifs/kubernetes
+        - name: nfs-client-storage-provisioner
+          image: registry.k8s.io/sig-storage/nfs-subdir-external-provisioner:v4.0.2
+          volumeMounts:
+            - name: nfs-client-storage-root
+              mountPath: /persistentvolumes
+          env:
+            - name: PROVISIONER_NAME
+              value: k8s-sigs.io/nfs-subdir-external-provisioner
+            - name: NFS_SERVER
+              value: 10.43.60.1
             - name: NFS_PATH
               value: /ifs/kubernetes
       volumes:
-        - name: nfs-client-root
+        - name: nfs-client-data-root
           nfs:
-            server: 10.43.43.10
+            server: 10.43.50.1
+            path: /ifs/kubernetes
+        - name: nfs-client-storage-root
+          nfs:
+            server: 10.43.60.1
             path: /ifs/kubernetes

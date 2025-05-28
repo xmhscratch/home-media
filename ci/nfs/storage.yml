@@ -7,3 +7,13 @@ allowVolumeExpansion: true
 reclaimPolicy: Delete
 parameters:
   archiveOnDelete: "false"
+---
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: storage-repo
+provisioner: kubernetes.io/no-provisioner
+allowVolumeExpansion: true
+reclaimPolicy: Delete
+parameters:
+  archiveOnDelete: "false"

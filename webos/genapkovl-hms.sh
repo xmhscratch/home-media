@@ -42,10 +42,7 @@ iface eth0 inet dhcp
 EOF
 
 makefile root:root 0644 "$tmp"/etc/modules <<EOF
-br_netfilter
-nouveau
-autofs4
-configs
+$(cat /tmp/build/kernel-modules.txt)
 EOF
 
 mkdir -p "$tmp"/etc/apk
@@ -58,6 +55,7 @@ cat /tmp/build/apk-common >> "$tmp"/etc/apk/world
 echo "nameserver 1.1.1.1" >> "$tmp"/etc/resolv.conf
 ###########
 mkdir -pv "$tmp"/usr/sbin/hms/
+mkdir -pv "$tmp"/usr/sbin/hms/bin/
 mkdir -pv "$tmp"/usr/sbin/hms/channel/
 mkdir -pv "$tmp"/usr/sbin/hms/node_modules/
 mkdir -pv "$tmp"/usr/sbin/script/
@@ -66,31 +64,37 @@ mkdir -pv "$tmp"/etc/init.d/
 # files must be on both directories
 cp -vf \
 	/tmp/build/apk-* \
-	"$tmp"/usr/sbin/; \
-\
+	"$tmp"/usr/sbin/ \
+;
 # move files
 mv -vf \
 	/tmp/build/env-hms-answers.sh \
 	/tmp/build/install-hms.sh \
+	/tmp/build/hotplug.sh \
 	/tmp/build/postlogin.sh \
-	"$tmp"/usr/sbin/; \
-\
+	"$tmp"/usr/sbin/ \
+;
 mv -vf /tmp/build/script/* "$tmp"/usr/sbin/script/
 mv -vf /tmp/app/* "$tmp"/usr/sbin/hms/
+mv -vf /tmp/bin/* "$tmp"/usr/sbin/hms/bin/
 mv -vf /tmp/channel/* "$tmp"/usr/sbin/hms/channel/
 mv -vf /tmp/node_modules/* "$tmp"/usr/sbin/hms/node_modules/
 mv -vf \
 	/tmp/ci/*.yml \
 	/tmp/node-modules.txt \
+	/tmp/build/kernel-modules.txt \
 	/tmp/docker/preload-images.tar.gz \
 	/tmp/docker/k3s-airgap-images-amd64.tar.zst \
 	"$tmp"/usr/sbin/hms/; \
 \
 chmod +x \
+	"$tmp"/usr/sbin/hms/bin/* \
 	"$tmp"/usr/sbin/script/*.sh \
 	"$tmp"/usr/sbin/env-hms-answers.sh \
 	"$tmp"/usr/sbin/install-hms.sh \
-	"$tmp"/usr/sbin/postlogin.sh;
+	"$tmp"/usr/sbin/hotplug.sh \
+	"$tmp"/usr/sbin/postlogin.sh \
+;
 ###########
 
 rc_add devfs sysinit

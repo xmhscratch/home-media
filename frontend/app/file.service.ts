@@ -1,6 +1,7 @@
-import { Injectable, WritableSignal } from '@angular/core';
+import { Injectable, WritableSignal, Signal, Inject } from '@angular/core';
 import { signal } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
+import { DOCUMENT } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 import { Observable, Subject, switchMap, map, tap } from 'rxjs';
@@ -51,10 +52,16 @@ export class FileService {
 
   changed$: Subject<IFileListItem> = new Subject<IFileListItem>();
 
+  baseURL: Signal<string> = signal<string>(
+    `${this.document.location.protocol}//` +
+      <string>this.env.get('endpoint.file'),
+  );
+
   constructor(
     private env: EnvService,
     private storageService: StorageService,
     private http: HttpClient,
+    @Inject(DOCUMENT) private document: Document,
   ) {
     // this.changed$.subscribe({
     //   next: (x) => console.log(x),

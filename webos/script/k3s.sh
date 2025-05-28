@@ -22,7 +22,11 @@ setup() {
 		"$mnt"/"$usr_home_dir"/preload-images.tar.gz
 	gzip -d "$mnt"/"$usr_home_dir"/preload-images.tar.gz
 
-	cp -vfrT /usr/sbin/postlogin.sh "$mnt"/usr/bin/postlogin.sh
+	cp -vfr \
+		/usr/sbin/hotplug.sh \
+		/usr/sbin/postlogin.sh \
+		"$mnt"/usr/bin/ \
+	;
 
 	# openrc services and configuration files
 	makefile root:wheel 0644 "$mnt"/etc/conf.d/k3s <<-EOF

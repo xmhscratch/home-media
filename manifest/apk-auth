@@ -1,6 +1,6 @@
-seatd
-util-linux-login
 elogind
 polkit
 polkit-elogind
 polkit-openrc
+seatd
+util-linux-login

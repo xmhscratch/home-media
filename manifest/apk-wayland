@@ -1,3 +1,5 @@
+foot
+grim
 wayland
 wayland-libs-client
 wayland-libs-cursor
@@ -8,7 +10,5 @@ wayland-protocols
 wayland-static
 wayland-utils
 waylandpp
-xwayland
 wl-clipboard
-grim
-foot
+xwayland

@@ -44,7 +44,7 @@ spec:
   accessModes:
     - ReadWriteMany
   persistentVolumeReclaimPolicy: Delete
-  storageClassName: data-repo
+  storageClassName: storage-repo
   nfs:
     server: 127.0.0.1
-    path: /data/storage/
+    path: /storage/

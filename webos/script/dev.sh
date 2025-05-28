@@ -31,7 +31,9 @@ setup() {
 		--repositories-file "$repositories_file" \
 		--root "$mnt" --arch "$arch" \
 		--progress --update-cache --clean-protected \
-		nodejs go npm jq docker docker-openrc;
+		nodejs go npm jq docker docker-openrc \
+		$(([ ! -z "$VIRT" ] && [ "$VIRT" -eq 1 ]) && echo "zfs-virt") \
+	;
 
 	npm install --global --prefix "$mnt/$(npm root -g)" @angular/cli @nestjs/cli;
 	cat /usr/sbin/hms/node-modules.txt | xargs npm cache add --cache "$mnt/$(npm config get cache)" --verbose;
