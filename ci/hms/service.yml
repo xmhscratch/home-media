@@ -10,9 +10,13 @@ spec:
   selector:
     app: backend
   ports:
-  - name: backend
+  - name: http
     protocol: TCP
     port: 80
+    targetPort: 4100
+  - name: internal
+    protocol: TCP
+    port: 4100
     targetPort: 4100
 ---
 kind: Service
@@ -27,10 +31,18 @@ spec:
   selector:
     app: frontend
   ports:
-  - name: frontend
+  - name: http
     protocol: TCP
     port: 80
     targetPort: 4000
+  - name: internal
+    protocol: TCP
+    port: 4000
+    targetPort: 4000
+  - name: serve
+    protocol: TCP
+    port: 4200
+    targetPort: 4200
 ---
 kind: Service
 apiVersion: v1
@@ -44,9 +56,13 @@ spec:
   selector:
     app: api
   ports:
-  - name: api
+  - name: http
     protocol: TCP
     port: 80
+    targetPort: 4110
+  - name: internal
+    protocol: TCP
+    port: 4110
     targetPort: 4110
 ---
 kind: Service
@@ -61,7 +77,11 @@ spec:
   selector:
     app: file
   ports:
-  - name: file
+  - name: http
     protocol: TCP
     port: 80
+    targetPort: 4150
+  - name: internal
+    protocol: TCP
+    port: 4150
     targetPort: 4150

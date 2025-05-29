@@ -2,6 +2,7 @@ configMapGenerator:
 - name: runtime-config
   namespace: hms
   files:
+  - package.json
   - config.production.json
   - config.development.json
 generatorOptions:

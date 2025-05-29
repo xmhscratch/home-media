@@ -31,13 +31,13 @@
             ],
             "styles": [
               {
-                "input": "video.js/dist/video-js.min.css",
+                "input": "video.js/dist/video-js.css",
                 "inject": false,
                 "bundleName": "videojs"
               },
               "frontend/styles.scss"
             ],
-            "scripts": ["video.js/dist/video.min.js"],
+            "scripts": ["video.js/dist/video.js"],
             "server": "frontend/main.server.ts",
             "prerender": false,
             "ssr": {

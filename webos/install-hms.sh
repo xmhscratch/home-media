@@ -144,6 +144,9 @@ install_mounted_root() {
 	print_heading1 " Install alpine packages"
 	print_heading1 "----------------------"
 	setup_app "$mnt"
+	if [ ! -z "$DEV" ]; then
+		$SBIN_DIR/script/dev.sh "$mnt" "$DEV"
+	fi
 
 	printf "\n\n"
 	print_heading1 " Register user"
@@ -204,10 +207,6 @@ setup_app() {
 		--repositories-file "$repositories_file" \
 		--root "$mnt" --arch "$arch" \
 		$apkflags $pkgs
-
-	if [ ! -z "$DEV" ]; then
-		$SBIN_DIR/script/dev.sh "$mnt" $DEV
-	fi
 }
 
 native_disk_install() {

@@ -35,18 +35,16 @@ RUN apk add --no-cache \
     go get -v ./...; \
     go install -v ./...; \
     go mod vendor; \
-    [ -f /export/dist/app/api ] || { \
-        go build -ldflags="-s -w" -mod=vendor -o /export/dist/app/api ./cmd/api/main.go &>./dist/app/api.out; \
-    }; \
-    [ -f /export/dist/app/downloader ] || { \
-        go build -ldflags="-s -w" -mod=vendor -o /export/dist/app/downloader ./cmd/downloader/main.go &>./dist/app/downloader.out; \
-    }; \
-    [ -f /export/dist/app/encoder ] || { \
-        go build -ldflags="-s -w" -mod=vendor -o /export/dist/app/encoder ./cmd/encoder/main.go &>./dist/app/encoder.out; \
-    }; \
-    [ -f /export/dist/app/file ] || { \
-        go build -ldflags="-s -w" -mod=vendor -o /export/dist/app/file ./cmd/file/main.go &>./dist/app/file.out; \
-    };
+    for exe in \
+		api \
+		downloader \
+		encoder \
+		file \
+	; do \
+		[ -f /export/dist/app/$exe ] || { \
+            go build -ldflags="-s -w" -mod=vendor -o /export/dist/app/$exe ./cmd/$exe/main.go &>./dist/app/$exe.out; \
+        }; \
+	done;
 
 FROM scratch
 COPY --from=build-app /export/dist/app/ /

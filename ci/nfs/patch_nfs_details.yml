@@ -15,6 +15,12 @@ spec:
               value: 127.0.0.1
             - name: NFS_PATH
               value: /data/
+        - name: nfs-client-tmp-provisioner
+          env:
+            - name: NFS_SERVER
+              value: 127.0.0.1
+            - name: NFS_PATH
+              value: /tmp/
         - name: nfs-client-storage-provisioner
           env:
             - name: NFS_SERVER
@@ -26,6 +32,10 @@ spec:
           nfs:
             server: 127.0.0.1
             path: /data/
+        - name: nfs-client-tmp-root
+          nfs:
+            server: 127.0.0.1
+            path: /tmp/
         - name: nfs-client-storage-root
           nfs:
             server: 127.0.0.1

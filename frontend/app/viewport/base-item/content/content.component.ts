@@ -8,11 +8,11 @@ import { toObservable } from '@angular/core/rxjs-interop';
 import { MessageService } from 'primeng/api';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ButtonModule } from 'primeng/button';
-import { ProgressBar } from 'primeng/progressbar';
-import { Skeleton } from 'primeng/skeleton';
+// import { ProgressBar } from 'primeng/progressbar';
+// import { Skeleton } from 'primeng/skeleton';
 import { ScrollPanelModule } from 'primeng/scrollpanel';
 import { CardModule } from 'primeng/card';
-import { Message } from 'primeng/message';
+// import { Message } from 'primeng/message';
 import { PanelModule } from 'primeng/panel';
 
 import { Subscription } from 'rxjs';
@@ -20,8 +20,8 @@ import { Subscription } from 'rxjs';
 // import { switchMap, tap } from 'rxjs/operators';
 // import { map as ldMap } from 'lodash-es';
 
-import { FileSizePipe } from '@/filesize.pipe';
-import { IFileListItem } from '../../../../types/storage';
+// import { FileSizePipe } from '@/filesize.pipe';
+// import { IFileListItem } from '@T/storage';
 import { StorageService } from '@/storage.service';
 import { FileService, TFileList } from '@/file.service';
 import { CPlayer } from './player/player.component';

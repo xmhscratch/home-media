@@ -2,6 +2,7 @@ import {
   Component,
   Input,
   Signal,
+  // Inject,
   WritableSignal,
   ElementRef,
   ViewChild,
@@ -9,6 +10,7 @@ import {
   ChangeDetectorRef,
 } from '@angular/core';
 import { signal } from '@angular/core';
+// import { DOCUMENT } from '@angular/common';
 import { NgIf, PercentPipe } from '@angular/common';
 import { OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 
@@ -29,6 +31,7 @@ import { IFileListItem, ISocketMessage } from '@T/storage';
 import { EnvService } from '@/env.service';
 import { StorageService } from '@/storage.service';
 import { FileService, TFileList } from '@/file.service';
+import { FileURLPipe } from '@/fileurl.pipe';
 import { FileSizePipe } from '@/filesize.pipe';
 import { MyPercentPipe } from '@/mypercent.pipe';
 // import parseRange from 'range-parser';
@@ -47,6 +50,7 @@ const BUFFER_CHUNK_SIZE = 1024 * 100;
     ProgressBar,
     Message,
     PanelModule,
+    FileURLPipe,
     FileSizePipe,
     PercentPipe,
     MyPercentPipe,
@@ -174,11 +178,11 @@ export class CPlayer implements OnInit, OnDestroy, AfterViewInit {
     //   switchMap(() => { }),
     // ).subscribe()
 
-    const fileUrl = `${this.baseURL()}${this.f().nodeId}/${this.f().fileKey}.${dubs[0].lang_code}${dubs[0].stream_index}.mp4`;
+    const fileUrl = new URL(`${this.f().nodeId}/${this.f().fileKey}.${dubs[0].lang_code}${dubs[0].stream_index}.mp4`, this.baseURL());
     // this.fileService.fetchFile(fileUrl, 0, 1024 - 1).subscribe()
-    const response = await fetch(fileUrl);
+    const response = await fetch(fileUrl.href);
     const arrayBuffer = await response.arrayBuffer();
-    console.log(arrayBuffer);
+    // console.log(arrayBuffer);
     const audioBuffer = await context.decodeAudioData(arrayBuffer);
 
     // Create a GainNode for volume control
@@ -243,27 +247,22 @@ export class CPlayer implements OnInit, OnDestroy, AfterViewInit {
         return;
       }
 
-      // @ts-ignore
       this.player.on('playing', async () => {
         await audio.start(this.getPlayerCurrentTime());
       });
 
-      // @ts-ignore
       this.player.on('pause', async () => {
         await audio.pause();
       });
 
-      // @ts-ignore
       this.player.on('volumechange', async () => {
         audio.setVolume(this.getPlayerCurrentVolume());
       });
 
-      // @ts-ignore
       this.player.on('seeked', async () => {
         await audio.start(this.getPlayerCurrentTime());
       });
 
-      // @ts-ignore
       this.player.on('dispose', async () => {
         await audio.close();
       });

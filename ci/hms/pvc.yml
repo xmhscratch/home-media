@@ -34,6 +34,22 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
+  name: pvc-tmp
+  namespace: hms
+spec:
+  storageClassName: tmp-repo
+  accessModes:
+    - ReadWriteMany
+  selector:
+    matchLabels:
+      dirname: tmp
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
   name: pvc-storage
   namespace: hms
 spec:

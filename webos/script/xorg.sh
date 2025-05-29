@@ -164,11 +164,13 @@ setup() {
 	fi
 	EOF
 
+	# --app="http://127.0.0.1:8001/api/v1/namespaces/default/services/https:kubernetes-dashboard:/proxy/" \
+	# --app="http://frontend.hms/" \
 	makefile root:wheel 0755 "$mnt"/"$usr_home_dir"/.xinitrc <<-EOF
 	#!/bin/sh
-	{ sleep 1; xrandr --output Virtual-1 --mode "1368x768R"; } &
+	{ sleep 1; xrandr --output Virtual-1 --mode "1440x900R"; } &
 	exec dbus-launch --sh-syntax --exit-with-session chromium \
-	    --window-size="1368,768" \
+	    --window-size="1440,900" \
 	    --window-position="0,0" \
 	    --app="http://127.0.0.1:8001/api/v1/namespaces/default/services/https:kubernetes-dashboard:/proxy/" \
 	    --no-sandbox \

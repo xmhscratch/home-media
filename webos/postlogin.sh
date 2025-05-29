@@ -84,7 +84,7 @@ wait_apiserver() {
 	local k3s_tlscert_dir="$k3s_root_dir"/server/tls
 
 	check_ready "curl -s --cert $k3s_tlscert_dir/client-admin.crt --key $k3s_tlscert_dir/client-admin.key --cacert $k3s_tlscert_dir/server-ca.crt -H \"Authorization: Bearer $k3s_bearer_token\" https://127.0.0.1:6443/readyz | xargs -I @ sh -c '[ \"@\" == \"ok\" ] && echo -e || false'" 1 $CHECK_TIMEOUT
-	if ! rc-service k3s-proxy --quiet status; then
+	if rc-service --exists k3s-proxy; then
 		rc-service k3s-proxy --ifnotstarted start
 	fi
 	check_ready "curl -s http://127.0.0.1:8001/readyz | xargs -I @ sh -c '[ \"@\" == \"ok\" ] && echo -e || false'" 1 $CHECK_TIMEOUT
@@ -103,6 +103,7 @@ init() {
 	check_ready "ss -lx | grep -E '.*kubelet\.sock\ '" 1 $CHECK_TIMEOUT
 
 	if [ ! -f "$usr_home_dir"/.renovated ]; then
+		mkdir -pv /home/tmp/ && chmod 0755 /home/tmp/
 		mkdir -pv /home/storage/ && chmod 0755 /home/storage/
 		mkdir -pv /home/data/db/ && chmod 0775 /home/data/db/
 		mkdir -pv /home/data/channel/ && chmod 0664 /home/data/channel/

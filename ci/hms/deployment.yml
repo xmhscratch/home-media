@@ -44,6 +44,8 @@ spec:
               readOnly: true
             - name: pvc-db
               mountPath: /export/db/
+            - name: pvc-tmp
+              mountPath: /tmp/
             - name: pvc-storage
               mountPath: /export/storage/
             - name: runtime-config
@@ -55,6 +57,9 @@ spec:
         - name: pvc-db
           persistentVolumeClaim:
             claimName: pvc-db
+        - name: pvc-tmp
+          persistentVolumeClaim:
+            claimName: pvc-tmp
         - name: pvc-storage
           persistentVolumeClaim:
             claimName: pvc-storage
@@ -154,6 +159,8 @@ spec:
               readOnly: true
             - name: pvc-db
               mountPath: /export/db/
+            - name: pvc-tmp
+              mountPath: /tmp/
             - name: pvc-storage
               mountPath: /export/storage/
             - name: runtime-config
@@ -165,6 +172,9 @@ spec:
         - name: pvc-db
           persistentVolumeClaim:
             claimName: pvc-db
+        - name: pvc-tmp
+          persistentVolumeClaim:
+            claimName: pvc-tmp
         - name: pvc-storage
           persistentVolumeClaim:
             claimName: pvc-storage
@@ -218,6 +228,8 @@ spec:
               readOnly: true
             - name: pvc-db
               mountPath: /export/db/
+            - name: pvc-tmp
+              mountPath: /tmp/
             - name: pvc-storage
               mountPath: /export/storage/
             - name: runtime-config
@@ -229,6 +241,9 @@ spec:
         - name: pvc-db
           persistentVolumeClaim:
             claimName: pvc-db
+        - name: pvc-tmp
+          persistentVolumeClaim:
+            claimName: pvc-tmp
         - name: pvc-storage
           persistentVolumeClaim:
             claimName: pvc-storage
@@ -279,6 +294,8 @@ spec:
               readOnly: true
             - name: pvc-db
               mountPath: /export/db/
+            - name: pvc-tmp
+              mountPath: /tmp/
             - name: pvc-storage
               mountPath: /export/storage/
             - name: runtime-config
@@ -290,6 +307,9 @@ spec:
         - name: pvc-db
           persistentVolumeClaim:
             claimName: pvc-db
+        - name: pvc-tmp
+          persistentVolumeClaim:
+            claimName: pvc-tmp
         - name: pvc-storage
           persistentVolumeClaim:
             claimName: pvc-storage
@@ -340,6 +360,8 @@ spec:
               readOnly: true
             - name: pvc-db
               mountPath: /export/db/
+            - name: pvc-tmp
+              mountPath: /tmp/
             - name: pvc-storage
               mountPath: /export/storage/
             - name: runtime-config
@@ -351,6 +373,9 @@ spec:
         - name: pvc-db
           persistentVolumeClaim:
             claimName: pvc-db
+        - name: pvc-tmp
+          persistentVolumeClaim:
+            claimName: pvc-tmp
         - name: pvc-storage
           persistentVolumeClaim:
             claimName: pvc-storage

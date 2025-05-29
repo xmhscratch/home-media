@@ -32,6 +32,18 @@ spec:
               value: 10.43.50.1
             - name: NFS_PATH
               value: /ifs/kubernetes
+        - name: nfs-client-tmp-provisioner
+          image: registry.k8s.io/sig-storage/nfs-subdir-external-provisioner:v4.0.2
+          volumeMounts:
+            - name: nfs-client-tmp-root
+              mountPath: /persistentvolumes
+          env:
+            - name: PROVISIONER_NAME
+              value: k8s-sigs.io/nfs-subdir-external-provisioner
+            - name: NFS_SERVER
+              value: 10.43.60.1
+            - name: NFS_PATH
+              value: /ifs/kubernetes
         - name: nfs-client-storage-provisioner
           image: registry.k8s.io/sig-storage/nfs-subdir-external-provisioner:v4.0.2
           volumeMounts:
@@ -41,7 +53,7 @@ spec:
             - name: PROVISIONER_NAME
               value: k8s-sigs.io/nfs-subdir-external-provisioner
             - name: NFS_SERVER
-              value: 10.43.60.1
+              value: 10.43.70.1
             - name: NFS_PATH
               value: /ifs/kubernetes
       volumes:
@@ -49,7 +61,11 @@ spec:
           nfs:
             server: 10.43.50.1
             path: /ifs/kubernetes
-        - name: nfs-client-storage-root
+        - name: nfs-client-tmp-root
           nfs:
             server: 10.43.60.1
+            path: /ifs/kubernetes
+        - name: nfs-client-storage-root
+          nfs:
+            server: 10.43.70.1
             path: /ifs/kubernetes

@@ -35,6 +35,23 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
+  name: pv-tmp
+  labels:
+    dirname: tmp
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: tmp-repo
+  nfs:
+    server: 127.0.0.1
+    path: /tmp/
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
   name: pv-storage
   labels:
     dirname: storage
