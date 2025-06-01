@@ -1,7 +1,6 @@
 #!/bin/sh
 
-SBIN_DIR=/usr/sbin
-. "$SBIN_DIR/script/util.sh"
+. "$(dirname $(realpath $0))/util.sh"
 
 setup() {
 	local mnt="$1"
@@ -18,6 +17,7 @@ setup() {
 		downloader \
 		encoder \
 		file \
+		tui \
 	; do
 		cp -vfrT /usr/sbin/hms/"$exe" "$export_dir"/"$exe"
 	done
@@ -32,9 +32,11 @@ setup() {
 	cp -fr /usr/sbin/hms/node_modules/* "$export_dir"/node_modules/
 
 	for exe in $(find /usr/sbin/hms/bin/* -type f | xargs basename -a); do
-		case $exe in
-			*) install -o root -g root -m 0755 /usr/sbin/hms/bin/"$exe" "$export_dir"/bin/"$exe" ;;
-		esac
+		install -o root -g root -m 0775 /usr/sbin/hms/bin/"$exe" "$export_dir"/bin/"$exe" ;;
+	done
+
+	for exe in $(find /usr/sbin/hms/sbin/* -type f | xargs basename -a); do
+		install -o root -g root -m 0775 /usr/sbin/hms/sbin/"$exe" /usr/bin/hms/"$exe" ;;
 	done
 }
 

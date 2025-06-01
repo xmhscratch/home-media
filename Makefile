@@ -125,7 +125,7 @@ app: clean_docker_system gonode
 # 	docker $(DBUILD_CMD) $(DBUILD_ARGS) --file=./$@.Dockerfile --output type=local,dest=$(DIST_BIN_DIR) $(DOCK_ROOT_CTX)
 # .PHONY: kube
 
-webos: clean_docker_system $(AIRGAP_IMAGE_TARBALL) $(PRELOAD_IMAGE_TARBALL) $(HMS_TARBALL) webos_apks webos_node_modules webos_ci
+webos: clean_docker_system $(AIRGAP_IMAGE_TARBALL) $(PRELOAD_IMAGE_TARBALL) $(HMS_TARBALL) webos_apks webos_node_modules webos_ci copy_bin
 	rm -rf $(DIST_APP_DIR)/*.out
 	mkdir -pv $(DIST_ISO_DIR)
 	docker $(DBUILD_CMD) $(DBUILD_ARGS) --file=./$@.Dockerfile --target=export-iso --output type=local,dest=$(DIST_ISO_DIR) $(DOCK_ROOT_CTX)
@@ -156,6 +156,11 @@ webos_ci:
 	mkdir -pv $(DIST_ISO_DIR)/.ci/;
 	docker $(DBUILD_CMD) $(DBUILD_ARGS) --file=./webos.Dockerfile --target=export-ci --output type=local,dest=$(DIST_ISO_DIR) $(DOCK_ROOT_CTX);
 .PHONY: webos_ci
+
+copy_bin:
+	cp -vrf $(WEBOS_DIR)/bin/* $(DIST_BIN_DIR)
+	chmod +x $(DIST_BIN_DIR)/*
+.PHONY: copy_bin
 
 export_node_modules_deplist:
 	npm list --all --json | jq -r '.dependencies | paths(scalars) as $$p | $$p | map(tostring) | map(select(. != "dependencies" and . != "global" and . != "version" and . != "resolved")) | join("\n")' | sort | uniq > $(NODE_MODULES_DEPLIST)

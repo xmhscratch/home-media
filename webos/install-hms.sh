@@ -151,17 +151,17 @@ install_mounted_root() {
 	printf "\n\n"
 	print_heading1 " Register user"
 	print_heading1 "----------------------"
-	$SBIN_DIR/script/user.sh "$mnt"
+	$SBIN_DIR/script/user.sh "$mnt" hms
 
 	printf "\n\n"
 	print_heading1 " Setup system"
 	print_heading1 "----------------------"
 	$SBIN_DIR/script/system.sh "$mnt"
-	$SBIN_DIR/script/xorg.sh "$mnt"
+	$SBIN_DIR/script/xorg.sh "$mnt" hms
 	$SBIN_DIR/script/nfs.sh "$mnt"
 	# $SBIN_DIR/script/zfs.sh "$mnt"
 	$SBIN_DIR/script/dnsmasq.sh "$mnt"
-	$SBIN_DIR/script/k3s.sh "$mnt"
+	$SBIN_DIR/script/k3s.sh "$mnt" hms
 
 	printf "\n\n"
 	print_heading1 " Copying HMS files"

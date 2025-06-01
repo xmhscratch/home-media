@@ -1,5 +1,7 @@
 #!/bin/sh
 
+. "/usr/bin/hms/util.sh"
+
 CHECK_TIMEOUT=${CHECK_TIMEOUT:-1000}
 CHECK_INTERVAL=${CHECK_INTERVAL:-0.1}
 
@@ -91,12 +93,13 @@ wait_apiserver() {
 }
 
 init() {
+	local usr={1:-hms}
 	exportfs -afv
 
     udevadm control --reload
     udevadm trigger
 
-	local usr_home_dir=$(getent passwd "$(id -u hms)" | cut -d: -f6)
+	local usr_home_dir=$(getent passwd "$(id -u $usr)" | cut -d: -f6)
 	local ci_dir=/home/data/dist/ci/
 
 	check_ready "ss -lx | grep -E '.*containerd\.sock\ '" 1 $CHECK_TIMEOUT
@@ -132,4 +135,4 @@ init() {
 	fi
 }
 
-init
+init hms

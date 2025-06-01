@@ -1,7 +1,6 @@
 #!/bin/sh
 
-SBIN_DIR=/usr/sbin
-. "$SBIN_DIR/script/util.sh"
+. "$(dirname $(realpath $0))/util.sh"
 
 ZFS_POOL_NAME=${ZFS_POOL_NAME:-"storage-repo"}
 ZFS_ASHIFT=${ZFS_ASHIFT:-12}
@@ -18,7 +17,7 @@ setup() {
 	shift
 
 	makefile root:wheel 0664 "$mnt"/etc/udev/rules.d/01-hotplug.rules <<-EOF
-    KERNEL=="sd[b-z]", SUBSYSTEM=="block", ACTION=="add", RUN+="/usr/bin/hotplug.sh"
+    KERNEL=="sd[b-z]", SUBSYSTEM=="block", ACTION=="add", RUN+="/usr/bin/hms/hotplug.sh"
 	EOF
 
     local bypart=/dev/disk/by-partuuid

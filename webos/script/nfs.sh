@@ -1,7 +1,6 @@
 #!/bin/sh
 
-SBIN_DIR=/usr/sbin
-. "$SBIN_DIR/script/util.sh"
+. "$(dirname $(realpath $0))/util.sh"
 
 setup() {
 	local mnt="$1"

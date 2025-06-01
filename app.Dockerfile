@@ -11,6 +11,7 @@ RUN apk add --no-cache \
         # git \
         # build-base \
         # apk-tools \
+        upx \
         alpine-conf; \
     \
     cd /export/; \
@@ -40,9 +41,17 @@ RUN apk add --no-cache \
 		downloader \
 		encoder \
 		file \
+		tui \
 	; do \
 		[ -f /export/dist/app/$exe ] || { \
             go build -ldflags="-s -w" -mod=vendor -o /export/dist/app/$exe ./cmd/$exe/main.go &>./dist/app/$exe.out; \
+            cp -vrf /export/dist/app/$exe /export/dist/app/$exe.uncompress; \
+            upx \
+                --no-owner --no-time --no-color -9 -vf --ultra-brute \
+                -o/export/dist/app/$exe \
+                /export/dist/app/$exe.uncompress \
+            ; \
+            rm -rf /export/dist/app/$exe.uncompress; \
         }; \
 	done;
 

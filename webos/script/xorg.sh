@@ -1,11 +1,11 @@
 #!/bin/sh
 
-SBIN_DIR=/usr/sbin
-. "$SBIN_DIR/script/util.sh"
+. "$(dirname $(realpath $0))/util.sh"
 
 setup() {
 	local mnt="$1"
-	shift
+	local usr=${2:-hms}
+	shift 2
 
 	mkdir -pv "$mnt"/etc/conf.d/
 	mkdir -pv "$mnt"/etc/X11/xinit/
@@ -153,11 +153,11 @@ setup() {
 	EndSection
 	EOF
 
-	local usr_home_dir=$(getent passwd "hms" | cut -d: -f6)
+	local usr_home_dir=$(getent passwd "$usr" | cut -d: -f6)
 
 	makefile root:wheel 0755 "$mnt"/"$usr_home_dir"/.profile <<-EOF
 	#!/bin/sh
-	sudo /usr/bin/postlogin.sh;
+	sudo /usr/bin/hms/startup.sh;
 	dbus-update-activation-environment DISPLAY QT_QPA_PLATFORM WLR_BACKENDS XDG_SESSION_TYPE XDG_VTNR XDG_RUNTIME_DIR XDG_CURRENT_DESKTOP XCURSOR_SIZE XCURSOR_THEME;
 	if [ -n "\$DISPLAY" ] && [ "\$XDG_VTNR" -eq 1 ]; then
 	    xinit ~/.xinitrc -- \$DISPLAY
@@ -172,7 +172,7 @@ setup() {
 	exec dbus-launch --sh-syntax --exit-with-session chromium \
 	    --window-size="1440,900" \
 	    --window-position="0,0" \
-	    --app="http://127.0.0.1:8001/api/v1/namespaces/default/services/https:kubernetes-dashboard:/proxy/" \
+	    --app="http://frontend.hms/" \
 	    --no-sandbox \
 	    --kiosk \
 	    --start-fullscreen \
@@ -183,4 +183,4 @@ setup() {
 	EOF
 }
 
-setup $1
+setup $1 $2

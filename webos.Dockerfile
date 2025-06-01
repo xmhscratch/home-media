@@ -95,7 +95,7 @@ COPY webos/script/                                  /tmp/build/script/
 COPY channel/                                       /tmp/channel/
 COPY dist/app/                                      /tmp/app/
 COPY ci/*.sh                                        /tmp/bin/
-COPY dist/bin/                                      /tmp/bin/
+COPY dist/bin/                                      /tmp/sbin/
 COPY dist/docker/preload-images.tar.gz              /tmp/docker/
 COPY dist/docker/k3s-airgap-images-amd64.tar.zst    /tmp/docker/
 COPY dist/iso/.node-modules/                        /tmp/node_modules/

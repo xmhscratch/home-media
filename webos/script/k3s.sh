@@ -1,13 +1,13 @@
 #!/bin/sh
 
-SBIN_DIR=/usr/sbin
-. "$SBIN_DIR/script/util.sh"
+. "$(dirname $(realpath $0))/util.sh"
 
 setup() {
 	local mnt="$1"
-	shift
+	local usr=${2:-hms}
+	shift 2
 
-	local usr_home_dir=$(getent passwd "$(id -u hms)" | cut -d: -f6)
+	local usr_home_dir=$(getent passwd "$(id -u $usr)" | cut -d: -f6)
 	local ci_dir=/home/data/dist/ci/
 
 	mkdir -pv "$mnt"/"$ci_dir"
@@ -21,12 +21,6 @@ setup() {
 		/usr/sbin/hms/preload-images.tar.gz \
 		"$mnt"/"$usr_home_dir"/preload-images.tar.gz
 	gzip -d "$mnt"/"$usr_home_dir"/preload-images.tar.gz
-
-	cp -vfr \
-		/usr/sbin/hotplug.sh \
-		/usr/sbin/postlogin.sh \
-		"$mnt"/usr/bin/ \
-	;
 
 	# openrc services and configuration files
 	makefile root:wheel 0644 "$mnt"/etc/conf.d/k3s <<-EOF
@@ -68,4 +62,4 @@ setup() {
 	rc_add k3s dnsmasq default
 }
 
-setup $1
+setup $1 $2

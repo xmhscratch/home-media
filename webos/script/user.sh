@@ -1,27 +1,27 @@
 #!/bin/sh
 
-SBIN_DIR=/usr/sbin
-. "$SBIN_DIR/script/util.sh"
+. "$(dirname $(realpath $0))/util.sh"
 
 setup() {
 	local mnt="$1"
-	shift
+	local usr=${2:-hms}
+	shift 2
 
-	if [[ -z $( id "hms" &>/dev/null ) ]]; then
-		adduser -D "hms" &>/dev/null
+	if [[ -z $( id "$usr" &>/dev/null ) ]]; then
+		adduser -D "$usr" &>/dev/null
 	fi
 
-	passwd -d hms
+	passwd -d $usr
 	mkdir -pv "$mnt"/etc/sudoers.d/
 
-	makefile root:root 0440 "$mnt"/etc/sudoers.d/hms <<-EOF
-	hms ALL=(ALL) NOPASSWD: ALL
+	makefile root:root 0440 "$mnt"/etc/sudoers.d/$usr <<-EOF
+	$usr ALL=(ALL) NOPASSWD: ALL
 	Defaults env_keep += "DISPLAY QT_QPA_PLATFORM WLR_BACKENDS XDG_SESSION_TYPE XDG_VTNR XDG_RUNTIME_DIR DBUS_SESSION_BUS_ADDRESS DBUS_SESSION_BUS_PID XDG_CURRENT_DESKTOP XCURSOR_SIZE XCURSOR_THEME"
 	EOF
 
 	makefile root:root 0755 "$mnt"/usr/sbin/autologin <<-EOF
 	#!/bin/sh
-	exec login -f hms
+	exec login -f $usr
 	EOF
 	chmod +x "$mnt"/usr/sbin/autologin
 
@@ -59,12 +59,12 @@ setup() {
 		in_group=0
 		[[ ! -z "$(grep -E '^'$grp':' /etc/group)" ]] || continue
 		for j in $(grep -E '^'$grp':' /etc/group | sed -e 's/^.*://' | tr ',' ' '); do
-			if [ $j == "hms" ]; then in_group=1; fi
+			if [ $j == "$usr" ]; then in_group=1; fi
 		done
 		if [ $in_group -eq 0 ]; then
-			adduser hms $grp
+			adduser $usr $grp
 		fi
 	done
 }
 
-setup $1
+setup $1 $2

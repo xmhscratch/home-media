@@ -1,5 +1,7 @@
 #!/bin/sh
 
+. "/usr/bin/hms/util.sh"
+
 ZFS_POOL_NAME=${ZFS_POOL_NAME:-"storage-repo"}
 ZFS_ASHIFT=${ZFS_ASHIFT:-12}
 

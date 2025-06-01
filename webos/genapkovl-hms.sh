@@ -20,19 +20,19 @@ makefile() {
 }
 
 rc_add() {
-	mkdir -p "$tmp"/etc/runlevels/"$2"
+	mkdir -pv "$tmp"/etc/runlevels/"$2"
 	ln -sf /etc/init.d/"$1" "$tmp"/etc/runlevels/"$2"/"$1"
 }
 
 tmp="$(mktemp -d)"
 trap cleanup EXIT
 
-mkdir -p "$tmp"/etc
+mkdir -pv "$tmp"/etc
 makefile root:root 0644 "$tmp"/etc/hostname <<EOF
 $HOSTNAME
 EOF
 
-mkdir -p "$tmp"/etc/network
+mkdir -pv "$tmp"/etc/network
 makefile root:root 0644 "$tmp"/etc/network/interfaces <<EOF
 auto lo
 iface lo inet loopback
@@ -45,7 +45,7 @@ makefile root:root 0644 "$tmp"/etc/modules <<EOF
 $(cat /tmp/build/kernel-modules.txt)
 EOF
 
-mkdir -p "$tmp"/etc/apk
+mkdir -pv "$tmp"/etc/apk
 makefile root:root 0644 "$tmp"/etc/apk/world <<EOF
 alpine-base
 EOF
@@ -56,10 +56,10 @@ echo "nameserver 1.1.1.1" >> "$tmp"/etc/resolv.conf
 ###########
 mkdir -pv "$tmp"/usr/sbin/hms/
 mkdir -pv "$tmp"/usr/sbin/hms/bin/
+mkdir -pv "$tmp"/usr/sbin/hms/sbin/
 mkdir -pv "$tmp"/usr/sbin/hms/channel/
 mkdir -pv "$tmp"/usr/sbin/hms/node_modules/
 mkdir -pv "$tmp"/usr/sbin/script/
-mkdir -pv "$tmp"/etc/init.d/
 
 # files must be on both directories
 cp -vf \
@@ -70,13 +70,12 @@ cp -vf \
 mv -vf \
 	/tmp/build/env-hms-answers.sh \
 	/tmp/build/install-hms.sh \
-	/tmp/build/hotplug.sh \
-	/tmp/build/postlogin.sh \
 	"$tmp"/usr/sbin/ \
 ;
 mv -vf /tmp/build/script/* "$tmp"/usr/sbin/script/
 mv -vf /tmp/app/* "$tmp"/usr/sbin/hms/
 mv -vf /tmp/bin/* "$tmp"/usr/sbin/hms/bin/
+mv -vf /tmp/sbin/* "$tmp"/usr/sbin/hms/sbin/
 mv -vf /tmp/channel/* "$tmp"/usr/sbin/hms/channel/
 mv -vf /tmp/node_modules/* "$tmp"/usr/sbin/hms/node_modules/
 mv -vf \
@@ -89,12 +88,46 @@ mv -vf \
 \
 chmod +x \
 	"$tmp"/usr/sbin/hms/bin/* \
+	"$tmp"/usr/sbin/hms/sbin/* \
 	"$tmp"/usr/sbin/script/*.sh \
 	"$tmp"/usr/sbin/env-hms-answers.sh \
 	"$tmp"/usr/sbin/install-hms.sh \
-	"$tmp"/usr/sbin/hotplug.sh \
-	"$tmp"/usr/sbin/postlogin.sh \
 ;
+###########
+SBIN_DIR="$tmp"/usr/sbin/
+$SBIN_DIR/script/user.sh "$tmp" root
+makefile root:root 0644 "$tmp"/etc/inittab <<EOF
+# /etc/inittab
+
+::sysinit:/sbin/openrc sysinit
+::sysinit:/sbin/openrc boot
+::wait:/sbin/openrc default
+
+# Set up a couple of getty's
+tty1::respawn:/sbin/getty -n -l /usr/sbin/autologin 38400 tty1
+tty2::respawn:/sbin/getty -n -l /usr/sbin/autologin 38400 tty2
+tty3::respawn:/sbin/getty -n -l /usr/sbin/autologin 38400 tty3
+tty4::respawn:/sbin/getty -n -l /usr/sbin/autologin 38400 tty4
+tty5::respawn:/sbin/getty -n -l /usr/sbin/autologin 38400 tty5
+tty6::respawn:/sbin/getty -n -l /usr/sbin/autologin 38400 tty6
+
+# Put a getty on the serial port
+#ttyS0::respawn:/sbin/getty -n -l /usr/sbin/autologin -L 115200 ttyS0 vt100
+
+# Stuff to do for the 3-finger salute
+::ctrlaltdel:/sbin/reboot
+
+# Stuff to do before rebooting
+::shutdown:/sbin/openrc shutdown
+EOF
+###########
+mkdir -pv "$tmp"/root/
+makefile root:root 0755 "$tmp"/root/.profile <<-EOF
+#!/bin/sh
+echo "================================================="
+EOF
+###########
+mkdir -pv "$tmp"/etc/init.d/
 ###########
 
 rc_add devfs sysinit
@@ -114,4 +147,4 @@ rc_add mount-ro shutdown
 rc_add killprocs shutdown
 rc_add savecache shutdown
 
-tar -c -C "$tmp" etc usr | gzip -9n > $HOSTNAME.apkovl.tar.gz
+tar -c -C "$tmp" etc usr root | gzip -9n > $HOSTNAME.apkovl.tar.gz
