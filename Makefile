@@ -23,9 +23,18 @@ $(BINARY): app webos
 
 # CACHE=1 make dist/docker/preload-images.tar.gz
 $(PRELOAD_IMAGE_TARBALL): IMG_LIST = $$(cat $(KUBE_IMAGE_OBJ) | tr '\n' ' ')
-$(PRELOAD_IMAGE_TARBALL): FORCE $(KUBE_IMAGE_OBJ)
+$(PRELOAD_IMAGE_TARBALL): FORCE $(KUBE_IMAGE_OBJ) hms
+	if [ ! -z "$(CACHE)" ] && [ "$(CACHE)" -eq 0 ]; then \
+		rm -rf $(PRELOAD_IMAGE_TARBALL); \
+		while read -r img; do \
+			if expr "$$img" : "localhost:5000" > /dev/null; then continue; fi; \
+			imgid="$(shell docker images -q $$img)"; \
+			[ -z "$$imgid" ] || docker image rm -f $$imgid; \
+		done < $(KUBE_IMAGE_OBJ); \
+		echo -e 'y' | docker system prune; \
+	fi
 	while read -r img; do \
-		if expr "$$img" : "^localhost" > /dev/null; then continue; fi; \
+		if expr "$$img" : "localhost:5000" > /dev/null; then continue; fi; \
 		docker pull $$img; \
 	done < $(KUBE_IMAGE_OBJ)
 	mkdir -pv $(DIST_DOCKER_DIR)
@@ -36,6 +45,9 @@ $(PRELOAD_IMAGE_TARBALL): FORCE $(KUBE_IMAGE_OBJ)
 
 # CACHE=1 make dist/docker/k3s-airgap-images-amd64.tar.zst
 $(AIRGAP_IMAGE_TARBALL): FORCE
+	if [ ! -z "$(CACHE)" ] && [ "$(CACHE)" -eq 0 ]; then \
+		rm -rf $(AIRGAP_IMAGE_TARBALL); \
+	fi
 	if [ ! -f "$(AIRGAP_IMAGE_TARBALL)" ]; then \
 		mkdir -pv $(DIST_DOCKER_DIR); \
 		curl -SL --progress-bar --output $(AIRGAP_IMAGE_TARBALL) \
@@ -55,52 +67,87 @@ DOCK_GONODE_CTX = ci/gonode/
 DOCK_SYSENV_CTX = ci/sysenv/
 
 gonode: clean_docker_system
-	docker $(DBUILD_CMD) $(DBUILD_ARGS) -t $(DBUILD_REPO)/$@:$(DBUILD_VERS) $(DOCK_GONODE_CTX)
-	if [ ! -f "$(GONODE_TARBALL)" ]; then \
-		mkdir -pv $(DIST_DOCKER_DIR); \
-		docker save $(DBUILD_REPO)/$@:$(DBUILD_VERS) > $(GONODE_TARBALL); \
+	if [ ! -z "$(CACHE)" ] && [ "$(CACHE)" -eq 0 ]; then \
+		imgid="$(shell docker images -q $(DBUILD_REPO)/$@:$(DBUILD_VERS))"; \
+		[ -z "$$imgid" ] || docker image rm $$imgid; \
+	fi
+	if [ $(shell docker images | grep '$(DBUILD_REPO)/$@:$(DBUILD_VERS)' | wc -l) -eq 0 ]; then \
+		docker $(DBUILD_CMD) $(DBUILD_ARGS) -t $(DBUILD_REPO)/$@:$(DBUILD_VERS) $(DOCK_GONODE_CTX); \
 	fi
 .PHONY: gonode
+
+$(GONODE_TARBALL): FORCE
+	if [ ! -z "$(CACHE)" ] && [ "$(CACHE)" -eq 0 ]; then \
+		rm -rf $(GONODE_TARBALL); \
+	fi
+	if [ ! -f "$(GONODE_TARBALL)" ]; then \
+		mkdir -pv $(DIST_DOCKER_DIR); \
+		docker save $(DBUILD_REPO)/gonode:$(DBUILD_VERS) | gzip -9n > $(GONODE_TARBALL); \
+	fi
 
 load_gonode: gonode
 	docker load --input $(GONODE_TARBALL)
 .PHONY: load_gonode
 
 builder: clean_docker_system gonode
-	docker $(DBUILD_CMD) $(DBUILD_ARGS) --file=$(DOCK_GONODE_CTX)/$@.Dockerfile -t $(DBUILD_REPO)/$@:$(DBUILD_VERS) $(DOCK_GONODE_CTX)
-	if [ ! -f "$(BUILDER_TARBALL)" ]; then \
-		mkdir -pv $(DIST_DOCKER_DIR); \
-		docker save $(DBUILD_REPO)/$@:$(DBUILD_VERS) > $(BUILDER_TARBALL); \
+	if [ ! -z "$(CACHE)" ] && [ "$(CACHE)" -eq 0 ]; then \
+		imgid="$(shell docker images -q $(DBUILD_REPO)/$@:$(DBUILD_VERS))"; \
+		[ -z "$$imgid" ] || docker image rm $$imgid; \
+	fi
+	if [ $(shell docker images | grep '$(DBUILD_REPO)/$@:$(DBUILD_VERS)' | wc -l) -eq 0 ]; then \
+		docker $(DBUILD_CMD) $(DBUILD_ARGS) --file=$(DOCK_GONODE_CTX)/$@.Dockerfile -t $(DBUILD_REPO)/$@:$(DBUILD_VERS) $(DOCK_GONODE_CTX); \
 	fi
 .PHONY: builder
+
+$(BUILDER_TARBALL): FORCE gonode
+	if [ ! -z "$(CACHE)" ] && [ "$(CACHE)" -eq 0 ]; then \
+		rm -rf $(BUILDER_TARBALL); \
+	fi
+	if [ ! -f "$(BUILDER_TARBALL)" ]; then \
+		mkdir -pv $(DIST_DOCKER_DIR); \
+		docker save $(DBUILD_REPO)/builder:$(DBUILD_VERS) | gzip -9n > $(BUILDER_TARBALL); \
+	fi
 
 load_builder: builder
 	docker load --input $(BUILDER_TARBALL)
 .PHONY: load_builder
 
 sysenv: clean_docker_system gonode
-	docker $(DBUILD_CMD) $(DBUILD_ARGS) -t $(DBUILD_REPO)/$@:$(DBUILD_VERS) $(DOCK_SYSENV_CTX)
-	if [ ! -f "$(SYSENV_TARBALL)" ]; then \
-		mkdir -pv $(DIST_DOCKER_DIR); \
-		docker save $(DBUILD_REPO)/$@:$(DBUILD_VERS) > $(SYSENV_TARBALL); \
+	if [ ! -z "$(CACHE)" ] && [ "$(CACHE)" -eq 0 ]; then \
+		imgid="$(shell docker images -q $(DBUILD_REPO)/$@:$(DBUILD_VERS))"; \
+		[ -z "$$imgid" ] || docker image rm $$imgid; \
+	fi
+	if [ $(shell docker images | grep '$(DBUILD_REPO)/$@:$(DBUILD_VERS)' | wc -l) -eq 0 ]; then \
+		docker $(DBUILD_CMD) $(DBUILD_ARGS) -t $(DBUILD_REPO)/$@:$(DBUILD_VERS) $(DOCK_SYSENV_CTX); \
 	fi
 .PHONY: sysenv
+
+$(SYSENV_TARBALL): FORCE sysenv
+	if [ ! -z "$(CACHE)" ] && [ "$(CACHE)" -eq 0 ]; then \
+		rm -rf $(SYSENV_TARBALL); \
+	fi
+	if [ ! -f "$(SYSENV_TARBALL)" ]; then \
+		mkdir -pv $(DIST_DOCKER_DIR); \
+		docker save $(DBUILD_REPO)/sysenv:$(DBUILD_VERS) | gzip -9n > $(SYSENV_TARBALL); \
+	fi
 
 load_sysenv: sysenv
 	docker load --input $(SYSENV_TARBALL)
 .PHONY: load_sysenv
 
 hms: clean_docker_system sysenv
-	if [ -z "$(CACHE)" ] || [ "$(CACHE)" -ne 1 ]; then \
-		img="$(shell docker images -q $(DBUILD_REPO)/$@:$(DBUILD_VERS))"; \
-		[ -z "$$img" ] || docker image rm $$img; \
+	if [ ! -z "$(CACHE)" ] && [ "$(CACHE)" -eq 0 ]; then \
+		imgid="$(shell docker images -q $(DBUILD_REPO)/$@:$(DBUILD_VERS))"; \
+		[ -z "$$imgid" ] || docker image rm $$imgid; \
 	fi
-	docker $(DBUILD_CMD) $(DBUILD_ARGS) --file=./$@.Dockerfile -t $(DBUILD_REPO)/$@:$(DBUILD_VERS) $(DOCK_ROOT_CTX)
+	if [ $(shell docker images | grep '$(DBUILD_REPO)/$@:$(DBUILD_VERS)' | wc -l) -eq 0 ]; then \
+		docker $(DBUILD_CMD) $(DBUILD_ARGS) --file=./$@.Dockerfile -t $(DBUILD_REPO)/$@:$(DBUILD_VERS) $(DOCK_ROOT_CTX); \
+	fi
 .PHONY: hms
 
 # CACHE=1 make dist/docker/hms.tar.gz
-$(HMS_TARBALL): hms
-	if [ -z "$(CACHE)" ] || [ "$(CACHE)" -ne 1 ]; then \
+$(HMS_TARBALL): FORCE hms
+	if [ ! -z "$(CACHE)" ] && [ "$(CACHE)" -eq 0 ]; then \
 		rm -rf $(HMS_TARBALL); \
 	fi
 	if [ ! -f "$(HMS_TARBALL)" ]; then \
@@ -113,7 +160,7 @@ load_hms: hms
 .PHONY: load_hms
 
 app: clean_docker_system gonode
-	if [ -z "$(CACHE)" ] || [ "$(CACHE)" -ne 1 ]; then \
+	if [ ! -z "$(CACHE)" ] && [ "$(CACHE)" -eq 0 ]; then \
 		rm -rf $(DIST_APP_DIR); \
 	fi
 	mkdir -pv $(DIST_APP_DIR)
@@ -125,13 +172,13 @@ app: clean_docker_system gonode
 # 	docker $(DBUILD_CMD) $(DBUILD_ARGS) --file=./$@.Dockerfile --output type=local,dest=$(DIST_BIN_DIR) $(DOCK_ROOT_CTX)
 # .PHONY: kube
 
-webos: clean_docker_system $(AIRGAP_IMAGE_TARBALL) $(PRELOAD_IMAGE_TARBALL) $(HMS_TARBALL) webos_apks webos_node_modules webos_ci copy_bin
+webos: builder clean_docker_system $(AIRGAP_IMAGE_TARBALL) $(PRELOAD_IMAGE_TARBALL) $(HMS_TARBALL) webos_apks webos_node_modules webos_ci copy_bin
 	rm -rf $(DIST_APP_DIR)/*.out
 	mkdir -pv $(DIST_ISO_DIR)
 	docker $(DBUILD_CMD) $(DBUILD_ARGS) --file=./$@.Dockerfile --target=export-iso --output type=local,dest=$(DIST_ISO_DIR) $(DOCK_ROOT_CTX)
 .PHONY: webos
 
-webos_apks:
+webos_apks: builder
 	if [ -d $(DIST_ISO_DIR)/.apks/ ]; then \
 		return $$?; \
 	else \
@@ -140,7 +187,7 @@ webos_apks:
 	fi
 .PHONY: webos_apks
 
-webos_node_modules: export_node_modules_deplist
+webos_node_modules: builder export_node_modules_deplist
 	if [ -d $(DIST_ISO_DIR)/.node-modules/ ]; then \
 		return $$?; \
 	else \
@@ -149,7 +196,7 @@ webos_node_modules: export_node_modules_deplist
 	fi
 .PHONY: webos_node_modules
 
-webos_ci:
+webos_ci: builder
 	if [ -d $(DIST_ISO_DIR)/.ci/ ]; then \
 		return $$?; \
 	fi
@@ -158,11 +205,13 @@ webos_ci:
 .PHONY: webos_ci
 
 copy_bin:
+	mkdir -pv $(DIST_BIN_DIR)
 	cp -vrf $(WEBOS_DIR)/bin/* $(DIST_BIN_DIR)
 	chmod +x $(DIST_BIN_DIR)/*
 .PHONY: copy_bin
 
 export_node_modules_deplist:
+	npm install --verbose;
 	npm list --all --json | jq -r '.dependencies | paths(scalars) as $$p | $$p | map(tostring) | map(select(. != "dependencies" and . != "global" and . != "version" and . != "resolved")) | join("\n")' | sort | uniq > $(NODE_MODULES_DEPLIST)
 .PHONY: export_node_modules_deplist
 
@@ -200,8 +249,8 @@ clean_cache: clean_docker_system clean_angular
 	rm -rf $(DIST_ISO_DIR)/.node-modules
 .PHONY: clean_cache
 
-clean_all: clean_docker_system clean_app clean_bin clean_docker clean_angular
+clean: clean_docker_system clean_app clean_bin clean_docker clean_angular
 	rm -f $(BINARY)
 	rm -rf $(NODE_MODULES_DEPLIST)
 	rm -rf node_modules
-.PHONY: clean_all
+.PHONY: clean

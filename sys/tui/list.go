@@ -68,7 +68,15 @@ func (m *ListModel) MarshalData() (data []list.Item, err error) {
 		if _, ok := v[1]; !ok {
 			v[1] = "(empty)"
 		}
-		unsorted[i] = item{title: v[0], desc: v[1]}
+		var (
+			title string = v[0]
+			desc  string = ""
+		)
+		for j := range len(v) - 1 {
+			desc += v[j+1] + "\n"
+		}
+		// log.Println(desc)
+		unsorted[i] = item{title, desc}
 	}
 	data = []list.Item{}
 	for i := range len(unsorted) {

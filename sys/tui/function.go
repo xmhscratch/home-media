@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"regexp"
 	"strings"
 )
 
@@ -97,9 +96,4 @@ func NewComponent_Pipe(header string, args ...string) error {
 		return fmt.Errorf("error running program: %s", err)
 	}
 	return err
-}
-
-func normalizeTSVLine(line string) string {
-	re := regexp.MustCompile(`[\t]{1,}`)
-	return re.ReplaceAllString(line, "\t")
 }

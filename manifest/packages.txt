@@ -334,7 +334,6 @@ keyutils-libs
 kmod
 kmod-libs
 krb5-conf
-krb5-conf-1.0-r2
 krb5-libs
 lame-libs
 lcms2
@@ -768,6 +767,7 @@ simdutf
 skalibs-libs
 slirp4netns
 snappy
+socat
 soundtouch
 soxr
 spandsp

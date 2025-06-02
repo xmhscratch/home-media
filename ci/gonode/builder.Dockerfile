@@ -20,4 +20,5 @@ RUN apk update && apk add --no-cache \
     \
     # cleanup
     rm -rf /var/cache/apk/*; \
-    rm -rf /tmp/*;
+    rm -rf /tmp/*; \
+    apk update;

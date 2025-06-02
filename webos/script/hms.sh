@@ -38,6 +38,29 @@ setup() {
 	for exe in $(find /usr/sbin/hms/sbin/* -type f | xargs basename -a); do
 		install -o root -g root -m 0775 /usr/sbin/hms/sbin/"$exe" /usr/bin/hms/"$exe" ;;
 	done
+
+	makefile root:wheel 0775 "$mnt"/usr/sbin/hms/tui-collectd <<-EOF
+	socat -d -d UNIX-LISTEN:/run/tui.sock,fork SYSTEM:'$export_dir/bin/tui'
+	EOF
+
+	makefile root:wheel 0775 "$mnt"/etc/init.d/tui-collectd <<-EOF
+	#!/sbin/openrc-run
+
+	command="/usr/sbin/hms/tui-collectd"
+	command_background=false
+	name="tui-collectd"
+
+	depend() {
+		need localmount
+	}
+
+	respawn_delay=2
+	respawn_max=3
+	respawn_period=60
+	supervisor=supervise-daemon
+	EOF
+
+	rc_add k3s dnsmasq default
 }
 
 setup $1

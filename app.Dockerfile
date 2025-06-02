@@ -1,41 +1,43 @@
-FROM localhost:5000/gonode:latest AS build-app
+FROM localhost:5000/builder:latest AS build-app
 USER root
 ENV GO_ENV=production
 ENV NODE_ENV=production
 COPY . /export/
-RUN apk add --no-cache \
-        # alpine-sdk \
-        # coreutils \
-        # wget \
-        # openssh \
-        # git \
-        # build-base \
-        # apk-tools \
+COPY dist/app/  /export/dist/app/
+RUN apk add \
         upx \
-        alpine-conf; \
-    \
+        alpine-conf \
+    ; \
     cd /export/; \
-    npm install -g \
-        @angular/cli \
-        @nestjs/cli; \
     \
-    npm install --save-dev \
-        @nestjs/testing \
-        @nestjs/mapped-types \
-        @types/jest; \
+    if [ ! -d /export/dist/app/frontend/ ] || [ ! -d /export/dist/app/backend/ ]; then \
+        npm install -g \
+            @angular/cli \
+            @nestjs/cli; \
+        \
+        npm install --save-dev \
+            @nestjs/testing \
+            @nestjs/mapped-types \
+            @types/jest; \
+        \
+        npm install --include=dev; \
+    fi; \
     \
-    npm install --include=dev; \
+    [ -d /export/dist/app/frontend/ ] || { \
+        mkdir -pv /export/dist/app/frontend/; \
+        npm run frontend:build &>./dist/app/frontend.out; \
+    }; \
+    [ -d /export/dist/app/backend/ ] || { \
+        mkdir -pv /export/dist/app/backend/; \
+        npm run backend:build &>./dist/app/backend.out; \
+    }; \
     \
-    mkdir -pv /export/dist/app/frontend/; \
-    npm run frontend:build &>./dist/app/frontend.out; \
-    \
-    mkdir -pv /export/dist/app/backend/; \
-    npm run backend:build &>./dist/app/backend.out; \
-    \
-    go mod tidy; \
-    go get -v ./...; \
-    go install -v ./...; \
-    go mod vendor; \
+    if [ ! -f /export/dist/app/api ] || [ ! -f /export/dist/app/downloader ] || [ ! -f /export/dist/app/encoder ] || [ ! -f /export/dist/app/file ] || [ ! -f /export/dist/app/tui ]; then \
+        go mod tidy; \
+        go get -v ./...; \
+        go install -v ./...; \
+        go mod vendor; \
+    fi; \
     for exe in \
 		api \
 		downloader \

@@ -14,10 +14,8 @@ RUN \
     ###########
     archdir="/export/iso/.apks/$ARCH"; \
     mkdir -pv "$archdir"; \
-    apk update; \
     \
     pkgs=$(cat /tmp/build/packages.txt | tr '\n' ' '); \
-    echo $pkgs; \
     apk fetch --link --recursive --output "$archdir" $pkgs; \
     if [[ $(find "$archdir"/*.apk -type f | wc -l) -gt 0 ]]; then \
         apk index \
@@ -111,7 +109,6 @@ RUN \
     ###########
     cd $HOME/.mkimage/; \
     git clone --depth=1 --branch=3.21-stable https://gitlab.alpinelinux.org/alpine/aports.git ./aports; \
-    sudo apk update; \
     export APORTS=$(realpath "$HOME/.mkimage/aports/"); \
     mv -vf \
         /tmp/build/genapkovl-hms.sh \

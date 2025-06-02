@@ -8,12 +8,9 @@ import (
 )
 
 var Sample_ListInput = `
-Raspberry Pi’s					I have ’em all over my house
-Nutella							It's good on toast
-Bitter melon					It cools you down
-Nice socks						And by that I mean socks without holes
-Eight hours of sleep			I had this once
-Cats							Usually
+Raspberry Pi’s			I have ’em all over my house	Nutella			It's good on toast
+Bitter melon			It cools you down				Nice socks		And by that I mean socks without holes
+Eight hours of sleep	I had this once					Cats			Usually
 `
 
 func TestFromRawPipe(t *testing.T) {
@@ -35,6 +32,6 @@ func TestList(t *testing.T) {
 		os.Exit(1)
 		// return err
 	}
-
-	log.Println(m.MarshalData())
+	m.MarshalData()
+	log.Println()
 }

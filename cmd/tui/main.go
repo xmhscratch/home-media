@@ -42,3 +42,13 @@ func main() {
 		os.Exit(1)
 	}
 }
+
+// echo "hello" | socat - UNIX-CONNECT:/tmp/stdout.sock
+
+// conn, err := net.Dial("unix", "/tmp/stdout.sock")
+// if err != nil {
+// 	panic(err)
+// }
+// defer conn.Close()
+
+// conn.Write([]byte("hello world\n"))
