@@ -39,16 +39,16 @@ setup() {
 		install -o root -g root -m 0775 /usr/sbin/hms/sbin/"$exe" /usr/bin/hms/"$exe" ;;
 	done
 
-	makefile root:wheel 0775 "$mnt"/usr/sbin/hms/tui-collectd <<-EOF
-	socat -d -d UNIX-LISTEN:/run/tui.sock,fork SYSTEM:'$export_dir/bin/tui'
-	EOF
+	# makefile root:wheel 0775 "$mnt"/usr/sbin/hms/tuid <<-EOF
+	# socat -d -d UNIX-LISTEN:/run/tuid.sock,fork SYSTEM:'$export_dir/bin/tui'
+	# EOF
 
-	makefile root:wheel 0775 "$mnt"/etc/init.d/tui-collectd <<-EOF
+	makefile root:wheel 0775 "$mnt"/etc/init.d/tuid <<-EOF
 	#!/sbin/openrc-run
 
-	command="/usr/sbin/hms/tui-collectd"
+	command="/usr/sbin/hms/tuid"
 	command_background=false
-	name="tui-collectd"
+	name="tuid"
 
 	depend() {
 		need localmount
@@ -60,7 +60,7 @@ setup() {
 	supervisor=supervise-daemon
 	EOF
 
-	rc_add k3s dnsmasq default
+	rc_add tuid default
 }
 
 setup $1

@@ -10,6 +10,12 @@ var SampleFilePath = "/[Erai-raws] Re Zero kara Hajimeru Isekai Seikatsu 3rd Sea
 
 var SampleConfig *sys.Config
 
+var Sample_ListInput = `
+Raspberry Pi’s			I have ’em all over my house	Nutella			It's good on toast
+Bitter melon			It cools you down				Nice socks		And by that I mean socks without holes
+Eight hours of sleep	I had this once					Cats			Usually
+`
+
 func init() {
 	var err error
 
