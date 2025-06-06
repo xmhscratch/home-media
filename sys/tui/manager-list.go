@@ -4,7 +4,29 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
+	tea "github.com/charmbracelet/bubbletea"
 )
+
+type ListItem struct {
+	title, desc string
+}
+
+func (i ListItem) Title() string       { return i.title }
+func (i ListItem) Description() string { return i.desc }
+func (i ListItem) FilterValue() string { return i.title }
+
+func (ctx *TuiManager) NewListModel() ListModel {
+	m := ListModel{
+		ViewModel: list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0),
+	}
+	m.UpdateList(ctx.PipeData)
+	return m
+}
+
+func (m *ListModel) UpdateList(pipeData T_PipeData) tea.Cmd {
+	var items []list.Item = parseListData(pipeData)
+	return m.ViewModel.SetItems(items)
+}
 
 func parseListData(pipeData T_PipeData) (data []list.Item) {
 	var unsorted = map[int]list.Item{}
