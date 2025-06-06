@@ -31,6 +31,22 @@ func (m *TextModel) UpdateText(pipeData T_PipeData) tea.Cmd {
 	return nil
 }
 
+func (m *TextModel) RenderView() string {
+	var (
+		text    string
+		current int    = m.current
+		rawText string = m.rawText
+	)
+	if current <= 1 {
+		text = ""
+	} else {
+		text = rawText[0:current]
+	}
+	m.ViewModel.SetCursor(current)
+	return Styles.Main.Render(fmt.Sprintf("%s%s", text, m.ViewModel.View()))
+
+}
+
 func parseTextData(pipeData T_PipeData) string {
 	var sb strings.Builder
 	for i := range len(pipeData) {

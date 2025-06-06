@@ -22,27 +22,65 @@ var Sample_ListInput1 = map[int]map[int]string{
 	0: map[int]string{
 		0: "Raspberry Pi’s",
 		1: "I have ’em all over my house",
+		2: "--verbose=1",
 	},
 	1: map[int]string{
 		0: "Nutella",
 		1: "It's good on toast",
+		2: "--verbose=2",
 	},
 	2: map[int]string{
 		0: "Bitter melon",
 		1: "It cools you down",
+		2: "--verbose=3",
 	},
 	3: map[int]string{
 		0: "Nice socks",
 		1: "And by that I mean socks without holes",
+		2: "--verbose=4",
 	},
 	4: map[int]string{
 		0: "Eight hours of sleep",
 		1: "I had this once",
+		2: "--verbose=5",
 	},
 	5: map[int]string{
 		0: "Cats",
 		1: "Usually",
+		2: "--verbose=6",
 	},
+}
+
+var Sample_InstallPackages = []string{
+	"vegeutils",
+	"libgardening",
+	"currykit",
+	"spicerack",
+	"fullenglish",
+	"eggy",
+	"bad-kitty",
+	"chai",
+	"hojicha",
+	"libtacos",
+	"babys-monads",
+	"libpurring",
+	"currywurst-devel",
+	"xmodmeow",
+	"licorice-utils",
+	"cashew-apple",
+	"rock-lobster",
+	"standmixer",
+	"coffee-CUPS",
+	"libesszet",
+	"zeichenorientierte-benutzerschnittstellen",
+	"schnurrkit",
+	"old-socks-devel",
+	"jalapeño",
+	"molasses-utils",
+	"xkohlrabi",
+	"party-gherkin",
+	"snow-peas",
+	"libyuzu",
 }
 
 func init() {

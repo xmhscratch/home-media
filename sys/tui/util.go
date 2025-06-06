@@ -47,6 +47,14 @@ func ReadFromPipe() (string, error) {
 	return ToRawData(os.Stdin)
 }
 
+func (ctx T_OutputMode) String() string {
+	return strconv.Itoa(int(ctx))
+}
+
+// func (ctx T_PipeData) DumpStruct(msg string) string {
+// 	return map[int]map[int]string{0: map[int]string{0: msg.T_OutputMode.String(), 1: msg.string}}
+// }
+
 func ParseInput(rawInput string) (data T_PipeData, err error) {
 	var (
 		reader  *strings.Reader

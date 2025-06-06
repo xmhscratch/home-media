@@ -33,6 +33,10 @@ func (ctx *TuiManager) NewGlamourModel(pipeData T_PipeData) (GlamourModel, error
 	return m, nil
 }
 
+func (m *GlamourModel) RenderView() string {
+	return ""
+}
+
 func (m *GlamourModel) SetGlamourContent(input string) error {
 	str, err := m.renderer.Render(input)
 	if err != nil {

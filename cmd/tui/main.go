@@ -26,4 +26,5 @@ func main() {
 
 }
 
-// echo "hello" | socat - UNIX-CONNECT:/run/tuid.sock
+// echo "hello" | socat - unix:///run/tuid.sock
+// echo "4|$(cat ./cmd/tui/sample.txt)" | socat - unix:///run/tuid.sock

@@ -5,15 +5,18 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/samber/lo"
 )
 
 type ListItem struct {
 	title, desc string
+	value       string
 }
 
 func (i ListItem) Title() string       { return i.title }
 func (i ListItem) Description() string { return i.desc }
 func (i ListItem) FilterValue() string { return i.title }
+func (i ListItem) GetValue() string    { return i.value }
 
 func (ctx *TuiManager) NewListModel() ListModel {
 	m := ListModel{
@@ -24,32 +27,54 @@ func (ctx *TuiManager) NewListModel() ListModel {
 }
 
 func (m *ListModel) UpdateList(pipeData T_PipeData) tea.Cmd {
-	var items []list.Item = parseListData(pipeData)
-	return m.ViewModel.SetItems(items)
+	var items map[int]ListItem = parseListData(pipeData)
+	data := []list.Item{}
+	for i := range len(items) {
+		data = append(data, items[i])
+	}
+	m.Items = items
+	return m.ViewModel.SetItems(data)
 }
 
-func parseListData(pipeData T_PipeData) (data []list.Item) {
-	var unsorted = map[int]list.Item{}
+func (m *ListModel) RenderView() string {
+	return Styles.Main.Render(m.ViewModel.View())
+}
+
+func (m *ListModel) BindExtraKeyCommands(mgr TuiManager, msg tea.KeyMsg) tea.Cmd {
+	if msg.String() == "enter" {
+		// selIndex := m.ViewModel.GlobalIndex()
+		// selItem := m.Items[selIndex]
+		// m.Program.Send(pipeResMsg{OUTPUT_VIEW_TEXT, "", selItem.GetValue()})
+		// m.CommandExec selItem.GetValue()
+	}
+	return nil
+}
+
+func parseListData(pipeData T_PipeData) (data map[int]ListItem) {
+	data = map[int]ListItem{}
+
 	for i, v := range pipeData {
-		if _, ok := v[0]; !ok {
-			v[0] = "(empty)"
-		}
-		if _, ok := v[1]; !ok {
-			v[1] = "(empty)"
-		}
 		var (
-			title string = v[0]
-			desc  string = ""
+			title string = "(empty)"
+			desc  string = "(empty)"
+			value string = ""
 		)
-		for j := range len(v) - 1 {
-			desc += strings.TrimSpace(v[j+1])
+		if _, ok := v[0]; ok {
+			title = v[0]
 		}
+		if _, ok := v[1]; ok {
+			desc = strings.TrimSpace(v[1])
+		}
+		vs := lo.FilterMapToSlice(v, func(ik int, iv string) (string, bool) {
+			if ik <= 1 {
+				return "", false
+			}
+			return iv, true
+		})
+		value = strings.Join(vs, " ")
 		// log.Println(desc)
-		unsorted[i] = ListItem{title, desc}
+		data[i] = ListItem{title, desc, value}
 	}
-	data = []list.Item{}
-	for i := range len(unsorted) {
-		data = append(data, unsorted[i])
-	}
+
 	return data
 }
