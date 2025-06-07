@@ -15,7 +15,7 @@ import (
 // 	"testing"
 // )
 
-func TestWw(t *testing.T) {
+func TestList(t *testing.T) {
 	re := regexp2.MustCompile(`^((\d+(?=\|))((?=\|)..[^\|\n]*|)((?=\|).*)|.*)$`, regexp2.RE2)
 	testcases := map[int]string{
 		0: "1||hello||world",

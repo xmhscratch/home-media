@@ -7,6 +7,7 @@ import (
 )
 
 func main() {
+	// tui.NewTest()
 	var (
 		err error
 		m   *tui.TuiManager
@@ -23,7 +24,6 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-
 }
 
 // echo "hello" | socat - unix:///run/tuid.sock

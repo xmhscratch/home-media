@@ -83,6 +83,31 @@ var Sample_InstallPackages = []string{
 	"libyuzu",
 }
 
+var Sample_InstallPackages1 = `(1/21) Installing libcap-getcap (2.71-r0)
+(2/21) Installing fakeroot (1.36-r0)
+(3/21) Installing lzip (1.24.1-r1)
+(4/21) Installing patch (2.7.6-r10)
+(5/21) Installing pkgconf (2.3.0-r0)
+(6/21) Installing acl-libs (2.3.2-r1)
+(7/21) Installing tar (1.35-r2)
+(8/21) Installing abuild (3.14.1-r4)
+Executing abuild-3.14.1-r4.pre-install
+(9/21) Installing abuild-sudo (3.14.1-r4)
+(10/21) Installing libmagic (5.46-r2)
+(11/21) Installing file (5.46-r2)
+(12/21) Installing libstdc++-dev (14.2.0-r4)
+(13/21) Installing g++ (14.2.0-r4)
+(14/21) Installing make (4.4.1-r2)
+(15/21) Installing fortify-headers (1.1-r5)
+(16/21) Installing build-base (0.5-r3)
+(17/21) Installing libexpat (2.7.0-r0)
+(18/21) Installing git (2.47.2-r0)
+(19/21) Installing git-init-template (2.47.2-r0)
+(20/21) Installing alpine-sdk (1.1-r0)
+(21/21) Installing git-zsh-completion (5.9-r4)
+Executing busybox-1.37.0-r12.trigger
+OK: 918 MiB in 139 packages`
+
 func init() {
 	var err error
 

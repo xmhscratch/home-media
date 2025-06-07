@@ -27,3 +27,7 @@ func (m *SpinnerModel) UpdateSpinner(pipeData T_PipeData) tea.Cmd {
 	m.loadingText = parseTextData(pipeData)
 	return nil
 }
+
+func (m *SpinnerModel) TickCmd() tea.Cmd {
+	return m.ViewModel.Tick
+}

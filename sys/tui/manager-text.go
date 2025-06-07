@@ -26,16 +26,27 @@ func (m *TextModel) UpdateText(pipeData T_PipeData) tea.Cmd {
 	m.ViewModel.Focus()
 
 	m.current = 0
+	m.historyText += m.rawText
 	m.rawText = parseTextData(pipeData)
 
 	return nil
 }
 
+func (m *TextModel) TickCmd() tea.Cmd {
+	m.current += 1
+	if m.current > len(m.rawText) {
+		m.current = len(m.rawText)
+		return textinput.Blink
+	}
+	return tickCmd(REFRESH_RATE)
+}
+
 func (m *TextModel) RenderView() string {
 	var (
-		text    string
-		current int    = m.current
-		rawText string = m.rawText
+		text        string
+		current     int    = m.current
+		historyText string = m.historyText
+		rawText     string = m.rawText
 	)
 	if current <= 1 {
 		text = ""
@@ -43,8 +54,7 @@ func (m *TextModel) RenderView() string {
 		text = rawText[0:current]
 	}
 	m.ViewModel.SetCursor(current)
-	return Styles.Main.Render(fmt.Sprintf("%s%s", text, m.ViewModel.View()))
-
+	return Styles.Main.Render(fmt.Sprintf("%s%s%s", historyText, text, m.ViewModel.View()))
 }
 
 func parseTextData(pipeData T_PipeData) string {

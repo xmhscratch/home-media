@@ -16,6 +16,9 @@ import (
 type T_PipeData (map[int]map[int]string)
 type T_OutputMode (int)
 
+const RGXP_MESSAGE_PAYLOAD = `^((\d+(?=\|))((?=\|)..[^\|\n]*|)((?=\|).*)|.*)$`
+const RGXP_INSTALL_PKGINFO = `\(([\d]+)\/([\d]+)\)[\ ]*Installing[\ ]*([\w\S]+)[\ ]*\([a-z\d.-]+\)`
+
 const (
 	_                     T_OutputMode = iota
 	OUTPUT_VIEW_SPINNER   T_OutputMode = 1
@@ -24,6 +27,7 @@ const (
 	OUTPUT_VIEW_LIST      T_OutputMode = 4
 	OUTPUT_VIEW_INSTALLER T_OutputMode = 5
 )
+const REFRESH_RATE int = 5
 
 type DefinedStyle struct {
 	Main           lipgloss.Style
@@ -52,9 +56,7 @@ type TuiManager struct {
 		Text      TextModel
 		Installer InstallerModel
 	}
-	RefreshRate     int
-	SpinnerTick     tea.Cmd
-	CursorBlinkTick tea.Cmd
+	SpinnerTick tea.Cmd
 }
 
 type SpinnerModel struct {
@@ -63,9 +65,10 @@ type SpinnerModel struct {
 }
 
 type TextModel struct {
-	ViewModel textinput.Model
-	rawText   string
-	current   int
+	ViewModel   textinput.Model
+	historyText string
+	rawText     string
+	current     int
 }
 
 type ListModel struct {
@@ -79,15 +82,22 @@ type GlamourModel struct {
 	renderer  *glamour.TermRenderer
 }
 
+type InstallerViewModel struct {
+	Progress progress.Model
+	Spinner  spinner.Model
+}
+
 type InstallerModel struct {
-	ViewModel     progress.Model
-	packages      []string
-	index         int
-	width         int
-	height        int
-	SpinnerModel  spinner.Model
-	ProgressModel progress.Model
-	done          bool
+	ViewModel      InstallerViewModel
+	packages       map[int]string
+	notes          map[int]string
+	total          int
+	line           int
+	index          int
+	width          int
+	height         int
+	statusInfoText string
+	statusPkgText  string
 }
 
 type T_SocketResponse struct {
@@ -101,7 +111,7 @@ type pipeResMsg struct {
 	string
 }
 
-type installedPkgMsg struct{ string }
+type installPackageMsg struct{ int }
 type tickMsg struct{ time.Time }
 
 var Styles *DefinedStyle = &DefinedStyle{
@@ -114,7 +124,7 @@ var Styles *DefinedStyle = &DefinedStyle{
 	ProgressEmpty:  lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render("░"),
 	Dot:            lipgloss.NewStyle().Foreground(lipgloss.Color("236")).Render(" • "),
 	RampColor:      makeRampStyles("#B14FFF", "#00FFA3", 71),
-	CurrentPkgName: lipgloss.NewStyle().Foreground(lipgloss.Color("211")),
+	CurrentPkgName: lipgloss.NewStyle().Foreground(lipgloss.Color("211")).Bold(true),
 	Done:           lipgloss.NewStyle().Margin(1, 2),
 	CheckMark:      lipgloss.NewStyle().Foreground(lipgloss.Color("42")).SetString("✓"),
 }

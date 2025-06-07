@@ -8,9 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/bubbles/progress"
-	"github.com/charmbracelet/bubbles/spinner"
-	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/dlclark/regexp2"
 )
@@ -18,8 +15,7 @@ import (
 func NewTuiManager() (*TuiManager, error) {
 	var err error
 	m := &TuiManager{
-		CurrentOutputMode: OUTPUT_VIEW_TEXT,
-		RefreshRate:       5,
+		CurrentOutputMode: OUTPUT_VIEW_INSTALLER,
 	}
 
 	m.Header = ""
@@ -32,15 +28,13 @@ func NewTuiManager() (*TuiManager, error) {
 	m.Output.Spinner = m.NewSpinnerModel()
 	m.Output.Text = m.NewTextModel()
 	m.Output.List = m.NewListModel()
-
-	m.SpinnerTick = m.Output.Spinner.ViewModel.Tick
-	m.CursorBlinkTick = textinput.Blink
+	m.Output.Installer = m.NewInstallerModel()
 
 	return m, err
 }
 
 func (m TuiManager) Init() tea.Cmd {
-	return tickCmd(m.RefreshRate)
+	return tickCmd(REFRESH_RATE)
 }
 
 func (m TuiManager) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -48,27 +42,17 @@ func (m TuiManager) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tickMsg:
 		switch m.CurrentOutputMode {
 		case OUTPUT_VIEW_SPINNER:
-			return m, m.SpinnerTick
-
+			return m, m.Output.Spinner.TickCmd()
 		case OUTPUT_VIEW_TEXT:
-			m.Output.Text.current += 1
-			if m.Output.Text.current > len(m.Output.Text.rawText) {
-				m.Output.Text.current = len(m.Output.Text.rawText)
-				return m, m.CursorBlinkTick
-			}
-			return m, tickCmd(m.RefreshRate)
-
+			return m, m.Output.Text.TickCmd()
 		case OUTPUT_VIEW_INSTALLER:
-			return m, tea.Batch(
-				downloadAndInstall(m.Output.Installer.packages[m.Output.Installer.index]),
-				m.Output.Installer.SpinnerModel.Tick,
-			)
+			return m, m.Output.Installer.TickCmd()
 		}
 
 	case tea.WindowSizeMsg:
 		h, v := Styles.Main.GetFrameSize()
 		m.Output.List.ViewModel.SetSize(msg.Width-h, msg.Height-v)
-		m.Output.Installer.SetSize(msg.Width, msg.Height)
+		m.Output.Installer.SetSize(msg.Width-h, msg.Height-v)
 
 	case tea.KeyMsg:
 		if msg.String() == "esc" {
@@ -76,29 +60,10 @@ func (m TuiManager) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		go func() {
 			switch m.CurrentOutputMode {
-			case OUTPUT_VIEW_SPINNER:
 			case OUTPUT_VIEW_LIST:
 				m.Output.List.BindExtraKeyCommands(m, msg)
 			}
 		}()
-
-	case spinner.TickMsg:
-		switch m.CurrentOutputMode {
-		case OUTPUT_VIEW_INSTALLER:
-			var cmd tea.Cmd
-			m.Output.Installer.SpinnerModel, cmd = m.Output.Installer.SpinnerModel.Update(msg)
-			return m, cmd
-		}
-
-	case progress.FrameMsg:
-		switch m.CurrentOutputMode {
-		case OUTPUT_VIEW_INSTALLER:
-			newModel, cmd := m.Output.Installer.ProgressModel.Update(msg)
-			if newModel, ok := newModel.(progress.Model); ok {
-				m.Output.Installer.ProgressModel = newModel
-			}
-			return m, cmd
-		}
 
 	case pipeResMsg:
 		pipeData, err := ParseInput(msg.string)
@@ -112,37 +77,22 @@ func (m TuiManager) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		switch m.CurrentOutputMode {
 		case OUTPUT_VIEW_SPINNER:
-			return m, tea.Batch(m.UpdateOutputModels(), m.SpinnerTick)
+			return m, tea.Sequence(tea.ExitAltScreen, m.UpdateOutputModels(), m.Output.Spinner.TickCmd())
 		case OUTPUT_VIEW_TEXT:
-			return m, tea.Batch(m.UpdateOutputModels(), tickCmd(m.RefreshRate))
-		case OUTPUT_VIEW_LIST:
-			m.Output.List.CommandExec = msg.opts
-			return m, m.UpdateOutputModels()
+			return m, tea.Sequence(tea.ExitAltScreen, m.UpdateOutputModels(), tickCmd(REFRESH_RATE))
+		// case OUTPUT_VIEW_LIST:
+		// m.Output.List.CommandExec = msg.opts
+		// return m, tea.Sequence(tea.EnterAltScreen, m.UpdateOutputModels())
 		case OUTPUT_VIEW_INSTALLER:
-			return m, m.UpdateOutputModels()
+			return m, tea.Sequence(tea.ExitAltScreen, m.UpdateOutputModels())
 		}
-		return m, m.UpdateOutputModels()
+		return m, tea.Sequence(tea.ExitAltScreen, m.UpdateOutputModels())
 
-	case installedPkgMsg:
-		pkg := m.Output.Installer.packages[m.Output.Installer.index]
-		if m.Output.Installer.index >= len(m.Output.Installer.packages)-1 {
-			// Everything's been installed. We're done!
-			m.Output.Installer.done = true
-			return m, tea.Sequence(
-				tea.Printf("%s %s", Styles.CheckMark, pkg), // print the last success message
-				tea.ClearScreen,
-			)
+	default:
+		switch m.CurrentOutputMode {
+		case OUTPUT_VIEW_INSTALLER:
+			return m, m.Output.Installer.BindExtraCustomCommands(m, msg)
 		}
-
-		// Update progress bar
-		m.Output.Installer.index++
-		progressCmd := m.Output.Installer.ProgressModel.SetPercent(float64(m.Output.Installer.index) / float64(len(m.Output.Installer.packages)))
-
-		return m, tea.Batch(
-			progressCmd,
-			tea.Printf("%s %s", Styles.CheckMark, pkg),                                // print success message above our program
-			downloadAndInstall(m.Output.Installer.packages[m.Output.Installer.index]), // download the next package
-		)
 	}
 
 	var (
@@ -161,9 +111,6 @@ func (m TuiManager) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	m.Output.List.ViewModel, cmd = m.Output.List.ViewModel.Update(msg)
 	cmds = append(cmds, cmd)
-
-	// m.Output.Installer.ViewModel, cmd = m.Output.Installer.ViewModel.Update(msg)
-	// cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
 }
@@ -191,7 +138,7 @@ func (m TuiManager) View() string {
 
 func (ctx *TuiManager) UpdateOutputModels() tea.Cmd {
 	return tea.Batch(
-		tea.ClearScreen,
+		// tea.ClearScreen,
 		ctx.Output.Error.UpdateError(ctx.PipeData),
 		ctx.Output.Spinner.UpdateSpinner(ctx.PipeData),
 		ctx.Output.Text.UpdateText(ctx.PipeData),
@@ -201,7 +148,7 @@ func (ctx *TuiManager) UpdateOutputModels() tea.Cmd {
 }
 
 func (m *TuiManager) Start() error {
-	m.Program = tea.NewProgram(m, tea.WithAltScreen())
+	m.Program = tea.NewProgram(m)
 	if _, err := m.Program.Run(); err != nil {
 		return err
 	}
@@ -246,7 +193,7 @@ func (m *TuiManager) ListenToSocket() {
 			continue
 		}
 
-		re := regexp2.MustCompile(`^((\d+(?=\|))((?=\|)..[^\|\n]*|)((?=\|).*)|.*)$`, regexp2.RE2|regexp2.Singleline)
+		re := regexp2.MustCompile(RGXP_MESSAGE_PAYLOAD, regexp2.RE2|regexp2.Singleline)
 		matches, err := re.FindStringMatch(res.msg)
 		if err != nil {
 			m.Program.Send(pipeResMsg{OUTPUT_VIEW_ERROR, "", res.err.Error()})
@@ -290,11 +237,5 @@ func (m *TuiManager) ListenToSocket() {
 func tickCmd(speed int) tea.Cmd {
 	return tea.Tick(time.Duration(speed)*time.Millisecond, func(t time.Time) tea.Msg {
 		return tickMsg{t}
-	})
-}
-
-func downloadAndInstall(pkgName string) tea.Cmd {
-	return tea.Tick(time.Duration(5)*time.Second, func(t time.Time) tea.Msg {
-		return installedPkgMsg{pkgName}
 	})
 }

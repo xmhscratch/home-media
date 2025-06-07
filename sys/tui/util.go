@@ -129,3 +129,10 @@ func colorFloatToHex(f float64) (s string) {
 	}
 	return
 }
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
