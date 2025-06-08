@@ -15,6 +15,10 @@ import (
 )
 
 func (ctx *TuiManager) NewInstallerModel() InstallerModel {
+	return newInstallerModel()
+}
+
+func newInstallerModel() InstallerModel {
 	p := progress.New(
 		progress.WithDefaultGradient(),
 		progress.WithWidth(40),
@@ -23,41 +27,82 @@ func (ctx *TuiManager) NewInstallerModel() InstallerModel {
 	s := spinner.New()
 	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
 
-	return InstallerModel{
-		packages:  map[int]string{},
-		notes:     map[int]string{},
-		total:     0,
-		ViewModel: InstallerViewModel{p, s},
+	var _index int = 0
+	m := InstallerModel{
+		ViewModel:      InstallerViewModel{p, s},
+		packages:       map[int]string{},
+		notes:          map[int]string{},
+		total:          0,
+		line:           0,
+		index:          _index,
+		width:          0,
+		height:         0,
+		done:           0,
+		statusInfoText: "",
+		statusPkgText:  "",
+		_cursor:        &(_index),
 	}
+	return m
 }
 
 func (m *InstallerModel) UpdateInstaller(pipeData T_PipeData) tea.Cmd {
-	packages, notes, total := parsePkgsData(pipeData)
+	packages, notes, total := insertPackagesData(pipeData, m._cursor)
+
+	if m.total != 0 && m.index == m.total && (total != 0 && m.total != total || *m._cursor < m.index) {
+		m.done = REFRESH_RATE_IN_SECONDS * 3
+		return m.TickCmd()
+	}
 
 	if m.total == 0 {
 		m.total = total
 	}
-	for i := range len(notes) {
-		m.notes[len(m.packages)+i] = notes[i]
-	}
-	// fmt.Printf("%v\n", m.notes)
 	m.packages = lo.Assign(m.packages, packages)
+
+	mergedNotes := lo.MapValues(notes, func(v string, k int) string {
+		if _, ok := m.notes[k]; !ok {
+			return v
+		} else {
+			return strings.Join([]string{"", v}, "\n")
+		}
+	})
+	m.notes = lo.Assign(m.notes, mergedNotes)
 
 	return processPkgMsg(m)
 }
 
-func (m *InstallerModel) SetSize(w int, h int) tea.Cmd {
+func (m *InstallerModel) Reset() tea.Cmd {
+	*m = newInstallerModel()
+
+	return tea.Batch(
+		tea.ClearScreen,
+		tea.WindowSize(),
+	)
+}
+
+func (m *InstallerModel) SetSize(w int, h int) {
 	m.width = w
 	m.height = h
-
-	return nil
 }
 
 func (m *InstallerModel) TickCmd() tea.Cmd {
+	if m.done > 0 {
+		m.done -= 1
+		if m.done <= 0 {
+			return m.Reset()
+		}
+		return tickCmd(REFRESH_RATE)
+	}
 	return tea.Batch(
 		processPkgMsg(m),
 		m.ViewModel.Spinner.Tick,
 	)
+}
+
+func (m *InstallerModel) BindExtraKeyCommands(mgr TuiManager, msg tea.KeyMsg) tea.Cmd {
+	if msg.String() == "enter" {
+		return m.Reset()
+	}
+	return nil
 }
 
 func (m *InstallerModel) BindExtraCustomCommands(mgr TuiManager, msg tea.Msg) tea.Cmd {
@@ -82,7 +127,7 @@ func (m *InstallerModel) BindExtraCustomCommands(mgr TuiManager, msg tea.Msg) te
 
 		if m.index > len(m.packages)-1 {
 			m.line += len(m.notes)
-			m.statusInfoText += fmt.Sprintf("%s\n", Styles.Subtle.Render(m.notes[msg.int-1]))
+			m.statusInfoText += fmt.Sprintf("%s\n", Styles.Subtle.Render(m.notes[*m._cursor]))
 			return nil
 		}
 
@@ -100,12 +145,12 @@ func (m *InstallerModel) BindExtraCustomCommands(mgr TuiManager, msg tea.Msg) te
 
 func (m *InstallerModel) RenderView() string {
 	if m.total == 0 {
-		return Styles.Main.Render()
+		return Styles.Main.Render("")
 	}
 
 	if m.line == m.total+len(m.notes) {
-		return m.statusInfoText + Styles.Main.Render(
-			Styles.Done.Render(fmt.Sprintf("Done! Installed %d packages.\n%v", m.total, m.line)),
+		return Styles.Main.Render(m.statusInfoText) + Styles.Main.Render(
+			Styles.Done.Render(fmt.Sprintf("Done! Installed %d packages. Closing in %ds...\n", m.total, (m.done/REFRESH_RATE_IN_SECONDS)+1)),
 		)
 	}
 
@@ -120,7 +165,7 @@ func (m *InstallerModel) RenderView() string {
 	cellsRemaining := max(0, m.width-lipgloss.Width(spin+info+prog+pkgCount))
 	gap := strings.Repeat(" ", cellsRemaining)
 
-	return m.statusInfoText + Styles.Main.Render(spin+info+gap+prog+pkgCount)
+	return Styles.Main.Render(m.statusInfoText) + Styles.Main.Render(spin+info+gap+prog+pkgCount)
 }
 
 func processPkgMsg(m *InstallerModel) tea.Cmd {
@@ -132,7 +177,7 @@ func processPkgMsg(m *InstallerModel) tea.Cmd {
 	})
 }
 
-func parsePkgsData(pipeData T_PipeData) (map[int]string, map[int]string, int) {
+func insertPackagesData(pipeData T_PipeData, _cursor *int) (map[int]string, map[int]string, int) {
 	var (
 		packages map[int]string = map[int]string{}
 		notes    map[int]string = map[int]string{}
@@ -141,7 +186,6 @@ func parsePkgsData(pipeData T_PipeData) (map[int]string, map[int]string, int) {
 
 	re := regexp2.MustCompile(RGXP_INSTALL_PKGINFO, regexp2.RE2|regexp2.Multiline)
 
-	var curIndex int = 0
 	for _, v := range pipeData {
 		matches, err := re.FindStringMatch(v[0])
 		if err != nil {
@@ -149,29 +193,29 @@ func parsePkgsData(pipeData T_PipeData) (map[int]string, map[int]string, int) {
 		}
 
 		if matches == nil {
-			if notes[curIndex] == "" {
-				notes[curIndex] = v[0]
+			if _, ok := notes[*_cursor]; !ok {
+				notes[*_cursor] = v[0]
 			} else {
-				notes[curIndex] = strings.Join([]string{notes[curIndex], v[0]}, "\n")
+				notes[*_cursor] = strings.Join([]string{notes[*_cursor], v[0]}, "\n")
 			}
 			continue
 		}
 
-		indexPkg, err := strconv.Atoi(matches.GroupByNumber(1).String())
+		pkgIndex, err := strconv.Atoi(matches.GroupByNumber(1).String())
 		if err != nil {
-			indexPkg = 0
+			pkgIndex = 0
 		} else {
-			indexPkg = indexPkg - 1
+			pkgIndex = pkgIndex - 1
 		}
-		totalPkg, err := strconv.Atoi(matches.GroupByNumber(2).String())
-		if err != nil {
-			totalPkg = 0
-		}
-		total = max(total, totalPkg)
-		namePkg := matches.GroupByNumber(3).String()
+		*_cursor = pkgIndex
 
-		curIndex = indexPkg
-		packages[indexPkg] = namePkg
+		pkgTotal, err := strconv.Atoi(matches.GroupByNumber(2).String())
+		if err != nil {
+			pkgTotal = 0
+		}
+		total = max(total, pkgTotal)
+		pkgName := matches.GroupByNumber(3).String()
+		packages[*_cursor] = pkgName
 	}
 
 	return packages, notes, total

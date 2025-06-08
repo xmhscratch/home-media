@@ -28,6 +28,7 @@ const (
 	OUTPUT_VIEW_INSTALLER T_OutputMode = 5
 )
 const REFRESH_RATE int = 5
+const REFRESH_RATE_IN_SECONDS int = 1000 / 5
 
 type DefinedStyle struct {
 	Main           lipgloss.Style
@@ -56,7 +57,6 @@ type TuiManager struct {
 		Text      TextModel
 		Installer InstallerModel
 	}
-	SpinnerTick tea.Cmd
 }
 
 type SpinnerModel struct {
@@ -68,13 +68,15 @@ type TextModel struct {
 	ViewModel   textinput.Model
 	historyText string
 	rawText     string
-	current     int
+	_stack      []string
+	_cursor     *int
 }
 
 type ListModel struct {
 	ViewModel   list.Model
 	Items       map[int]ListItem
 	CommandExec string
+	uid         string
 }
 
 type GlamourModel struct {
@@ -96,8 +98,10 @@ type InstallerModel struct {
 	index          int
 	width          int
 	height         int
+	done           int
 	statusInfoText string
 	statusPkgText  string
+	_cursor        *int // reference to current reading line
 }
 
 type T_SocketResponse struct {

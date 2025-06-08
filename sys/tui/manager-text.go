@@ -9,14 +9,12 @@ import (
 )
 
 func (ctx *TuiManager) NewTextModel() TextModel {
-	m := TextModel{}
-	m.ViewModel = textinput.New()
-	m.UpdateText(ctx.PipeData)
-
-	return m
+	return newTextModel()
 }
 
-func (m *TextModel) UpdateText(pipeData T_PipeData) tea.Cmd {
+func newTextModel() TextModel {
+	m := TextModel{}
+	m.ViewModel = textinput.New()
 	m.ViewModel.Prompt = ""
 	m.ViewModel.Cursor.Style = Styles.Cursor
 	m.ViewModel.Width = 48
@@ -25,36 +23,48 @@ func (m *TextModel) UpdateText(pipeData T_PipeData) tea.Cmd {
 	m.ViewModel.CursorEnd()
 	m.ViewModel.Focus()
 
-	m.current = 0
-	m.historyText += m.rawText
-	m.rawText = parseTextData(pipeData)
+	var _cursor int = 0
+	m._stack = []string{}
+	m._cursor = &(_cursor)
+	m.historyText = ""
+	m.rawText = ""
 
+	return m
+}
+
+func (m *TextModel) Reset() tea.Cmd {
+	*m = newTextModel()
+	return tea.ClearScreen
+}
+
+func (m *TextModel) UpdateText(pipeData T_PipeData) tea.Cmd {
+	m._stack = append(m._stack, parseTextData(pipeData))
 	return nil
 }
 
 func (m *TextModel) TickCmd() tea.Cmd {
-	m.current += 1
-	if m.current > len(m.rawText) {
-		m.current = len(m.rawText)
+	if len(m._stack) == 1 && *m._cursor == 0 {
+		m.rawText = m._stack[0]
+		m._stack = []string{}
+	}
+	if len(m._stack) > 1 && *m._cursor == 0 {
+		m.rawText = m._stack[0]
+		m._stack = m._stack[1:]
+	}
+	if len(m._stack) == 0 && *m._cursor >= len(m.rawText)-1 {
 		return textinput.Blink
 	}
+	m.historyText += m.rawText[*m._cursor : *m._cursor+1]
+	*m._cursor += 1
+	if *m._cursor >= len(m.rawText) {
+		*m._cursor = 0
+	}
+	m.ViewModel.SetCursor(len(m.historyText))
 	return tickCmd(REFRESH_RATE)
 }
 
 func (m *TextModel) RenderView() string {
-	var (
-		text        string
-		current     int    = m.current
-		historyText string = m.historyText
-		rawText     string = m.rawText
-	)
-	if current <= 1 {
-		text = ""
-	} else {
-		text = rawText[0:current]
-	}
-	m.ViewModel.SetCursor(current)
-	return Styles.Main.Render(fmt.Sprintf("%s%s%s", historyText, text, m.ViewModel.View()))
+	return Styles.Main.Render(fmt.Sprintf("%s%s", m.historyText, m.ViewModel.View()))
 }
 
 func parseTextData(pipeData T_PipeData) string {

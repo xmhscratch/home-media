@@ -3,6 +3,7 @@ package tui
 import (
 	"home-media/sys/sample"
 	"log"
+	"os"
 	"strings"
 	"testing"
 
@@ -40,9 +41,12 @@ func TestList(t *testing.T) {
 }
 
 func TestParseListData(t *testing.T) {
-	parseListData(sample.Sample_ListInput1)
-	// rawInput := parseListData(sample.Sample_ListInput1)
-	// log.Println(rawInput)
+	pipeData, err := ParseInput(sample.Sample_ListInput)
+	if err != nil {
+		os.Exit(1)
+		// return err
+	}
+	log.Println(parseListData(pipeData))
 }
 
 // func TestFromRawPipe(t *testing.T) {

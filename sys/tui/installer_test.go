@@ -12,8 +12,8 @@ import (
 	"time"
 )
 
-func TestParsePkgsData(t *testing.T) {
-	pipeData1, err := ParseInput(sample.Sample_InstallPackages1)
+func TestInstaller(t *testing.T) {
+	pipeData1, err := ParseInput(sample.Sample_InstallPackages)
 	if err != nil {
 		os.Exit(1)
 	}
@@ -26,8 +26,12 @@ func TestParsePkgsData(t *testing.T) {
 	// 	myTotal    int            = 0
 	// )
 
+	// var c int = 0
+	// var _cursor *int = &c
+	// var _notes map[int]string = map[int]string{}
+
 	for i := range len(pipeData1) {
-		time.Sleep(time.Second * time.Duration(1))
+		time.Sleep(time.Millisecond * time.Duration(50))
 
 		line := pipeData1[i][0]
 
@@ -36,24 +40,23 @@ func TestParsePkgsData(t *testing.T) {
 		// 	// log.Fatal(err)
 		// 	continue
 		// }
-		// packages, notes, total := parsePkgsData(pipeData)
-		// fmt.Printf("%v\n", notes)
+		// _, notes, _ := insertPackagesData(pipeData, _cursor)
+		// newNotes := lo.MapValues(notes, func(v string, k int) string {
+		// 	if _, ok := _notes[k]; !ok {
+		// 		return v
+		// 	} else {
+		// 		return strings.Join([]string{_notes[k], v}, "\n")
+		// 	}
+		// })
+		// _notes = lo.Assign(_notes, newNotes)
+		// fmt.Printf("%v\n", _notes)
 
 		// if myTotal == 0 {
 		// 	myTotal = total
 		// }
 
-		// myPackages = append(myPackages, packages...)
-		// myNotes[i] = lo.Reduce(lo.Times(len(notes), func(i int) int {
-		// 	return int(i)
-		// }), func(agg string, index int, _ int) string {
-		// 	return strings.Join([]string{agg, notes[index]}, "\n")
-		// }, "")
-		// if myNotes[i] == "" {
-		// 	delete(myNotes, i)
-		// }
-
-		src := strings.NewReader(fmt.Sprintf("%s|%s", OUTPUT_VIEW_INSTALLER, line))
+		// src := strings.NewReader(fmt.Sprintf("%s|%s", OUTPUT_VIEW_INSTALLER, line))
+		src := strings.NewReader(fmt.Sprintf("%s|%s", OUTPUT_VIEW_TEXT, line))
 		buf := make([]byte, 1)
 
 		go func() {

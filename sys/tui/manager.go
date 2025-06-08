@@ -15,7 +15,7 @@ import (
 func NewTuiManager() (*TuiManager, error) {
 	var err error
 	m := &TuiManager{
-		CurrentOutputMode: OUTPUT_VIEW_INSTALLER,
+		CurrentOutputMode: OUTPUT_VIEW_LIST,
 	}
 
 	m.Header = ""
@@ -45,48 +45,53 @@ func (m TuiManager) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, m.Output.Spinner.TickCmd()
 		case OUTPUT_VIEW_TEXT:
 			return m, m.Output.Text.TickCmd()
+		case OUTPUT_VIEW_LIST:
+			return m, m.Output.List.TickCmd()
 		case OUTPUT_VIEW_INSTALLER:
 			return m, m.Output.Installer.TickCmd()
 		}
 
 	case tea.WindowSizeMsg:
 		h, v := Styles.Main.GetFrameSize()
-		m.Output.List.ViewModel.SetSize(msg.Width-h, msg.Height-v)
+		m.Output.List.SetSize(msg.Width-h, msg.Height-v)
 		m.Output.Installer.SetSize(msg.Width-h, msg.Height-v)
 
 	case tea.KeyMsg:
 		if msg.String() == "esc" {
 			return m, tea.Quit
 		}
-		go func() {
-			switch m.CurrentOutputMode {
-			case OUTPUT_VIEW_LIST:
-				m.Output.List.BindExtraKeyCommands(m, msg)
-			}
-		}()
+		switch m.CurrentOutputMode {
+		case OUTPUT_VIEW_LIST:
+			var cmd tea.Cmd
+			m.Output.List.ViewModel, cmd = m.Output.List.ViewModel.Update(msg)
+			return m, tea.Batch(cmd, m.Output.List.BindExtraKeyCommands(m, msg))
+		case OUTPUT_VIEW_INSTALLER:
+			return m, m.Output.Installer.BindExtraKeyCommands(m, msg)
+		}
 
 	case pipeResMsg:
 		pipeData, err := ParseInput(msg.string)
 		if err != nil {
 			m.CurrentOutputMode = OUTPUT_VIEW_ERROR
 			m.PipeData, _ = ParseInput(err.Error())
-			return m, m.UpdateOutputModels()
+			return m, m.UpdateOutputModels(true)
 		}
+		var withFreshScreen bool = m.CurrentOutputMode != msg.T_OutputMode
 		m.CurrentOutputMode = msg.T_OutputMode
 		m.PipeData = pipeData
 
 		switch m.CurrentOutputMode {
 		case OUTPUT_VIEW_SPINNER:
-			return m, tea.Sequence(tea.ExitAltScreen, m.UpdateOutputModels(), m.Output.Spinner.TickCmd())
+			return m, tea.Sequence(tea.ExitAltScreen, m.UpdateOutputModels(withFreshScreen), m.Output.Spinner.TickCmd())
 		case OUTPUT_VIEW_TEXT:
-			return m, tea.Sequence(tea.ExitAltScreen, m.UpdateOutputModels(), tickCmd(REFRESH_RATE))
-		// case OUTPUT_VIEW_LIST:
-		// m.Output.List.CommandExec = msg.opts
-		// return m, tea.Sequence(tea.EnterAltScreen, m.UpdateOutputModels())
+			return m, tea.Sequence(tea.ExitAltScreen, m.UpdateOutputModels(withFreshScreen), m.Output.Text.TickCmd())
+		case OUTPUT_VIEW_LIST:
+			m.Output.List.CommandExec = msg.opts
+			return m, tea.Sequence(tea.EnterAltScreen, m.UpdateOutputModels(withFreshScreen))
 		case OUTPUT_VIEW_INSTALLER:
-			return m, tea.Sequence(tea.ExitAltScreen, m.UpdateOutputModels())
+			return m, tea.Sequence(tea.ExitAltScreen, m.UpdateOutputModels(withFreshScreen))
 		}
-		return m, tea.Sequence(tea.ExitAltScreen, m.UpdateOutputModels())
+		return m, tea.Sequence(tea.ExitAltScreen, m.UpdateOutputModels(withFreshScreen))
 
 	default:
 		switch m.CurrentOutputMode {
@@ -136,15 +141,25 @@ func (m TuiManager) View() string {
 	return ""
 }
 
-func (ctx *TuiManager) UpdateOutputModels() tea.Cmd {
-	return tea.Batch(
-		// tea.ClearScreen,
+func (ctx *TuiManager) UpdateOutputModels(withFreshScreen bool) tea.Cmd {
+	var cmds []tea.Cmd
+	if withFreshScreen {
+		cmds = append(cmds, tea.Batch(
+			// ctx.Output.Error.Reset(),
+			// ctx.Output.Spinner.Reset(),
+			ctx.Output.Text.Reset(),
+			ctx.Output.List.Reset(),
+			ctx.Output.Installer.Reset(),
+		))
+	}
+	cmds = append(cmds, tea.Batch(
 		ctx.Output.Error.UpdateError(ctx.PipeData),
 		ctx.Output.Spinner.UpdateSpinner(ctx.PipeData),
 		ctx.Output.Text.UpdateText(ctx.PipeData),
 		ctx.Output.List.UpdateList(ctx.PipeData),
 		ctx.Output.Installer.UpdateInstaller(ctx.PipeData),
-	)
+	))
+	return tea.Sequence(cmds...)
 }
 
 func (m *TuiManager) Start() error {

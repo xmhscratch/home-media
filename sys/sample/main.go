@@ -12,78 +12,30 @@ var SampleFilePath = "/[Erai-raws] Re Zero kara Hajimeru Isekai Seikatsu 3rd Sea
 
 var SampleConfig *sys.Config
 
-var Sample_ListInput = `
-Raspberry Pi’s			I have ’em all over my house	Nutella			It's good on toast
-Bitter melon			It cools you down				Nice socks		And by that I mean socks without holes
-Eight hours of sleep	I had this once					Cats			Usually
-`
+var Sample_ListInput = `Raspberry Pi’s					I have ’em all over my house						Nutella							It's good on toast
+Bitter melon					It cools you down
+Nice socks						And by that I mean socks without holes
+Eight hours of sleep			I had this once
+Cats							Usually
+Plantasia, the album			My plants love it too
+Pour over coffee				It takes forever to make though
+VR								Virtual reality...what is there to say?
+Noguchi Lamps					Such pleasing organic forms
+Linux							Pretty much the best OS
+Business school					Just kidding
+Pottery							Wet clay is a great feeling
+Shampoo							Nothing like clean hair
+Table tennis					It’s surprisingly exhausting
+Milk crates						Great for packing in your extra stuff
+Afternoon tea					Especially the tea sandwich part
+Stickers						The thicker the vinyl the better
+20° Weather						Celsius, not Fahrenheit
+Warm light						Like around 2700 Kelvin
+The vernal equinox				The autumnal equinox is pretty good too
+Gaffer’s tape					Basically sticky fabric
+Terrycloth						In other words, towel fabric`
 
-var Sample_ListInput1 = map[int]map[int]string{
-	0: map[int]string{
-		0: "Raspberry Pi’s",
-		1: "I have ’em all over my house",
-		2: "--verbose=1",
-	},
-	1: map[int]string{
-		0: "Nutella",
-		1: "It's good on toast",
-		2: "--verbose=2",
-	},
-	2: map[int]string{
-		0: "Bitter melon",
-		1: "It cools you down",
-		2: "--verbose=3",
-	},
-	3: map[int]string{
-		0: "Nice socks",
-		1: "And by that I mean socks without holes",
-		2: "--verbose=4",
-	},
-	4: map[int]string{
-		0: "Eight hours of sleep",
-		1: "I had this once",
-		2: "--verbose=5",
-	},
-	5: map[int]string{
-		0: "Cats",
-		1: "Usually",
-		2: "--verbose=6",
-	},
-}
-
-var Sample_InstallPackages = []string{
-	"vegeutils",
-	"libgardening",
-	"currykit",
-	"spicerack",
-	"fullenglish",
-	"eggy",
-	"bad-kitty",
-	"chai",
-	"hojicha",
-	"libtacos",
-	"babys-monads",
-	"libpurring",
-	"currywurst-devel",
-	"xmodmeow",
-	"licorice-utils",
-	"cashew-apple",
-	"rock-lobster",
-	"standmixer",
-	"coffee-CUPS",
-	"libesszet",
-	"zeichenorientierte-benutzerschnittstellen",
-	"schnurrkit",
-	"old-socks-devel",
-	"jalapeño",
-	"molasses-utils",
-	"xkohlrabi",
-	"party-gherkin",
-	"snow-peas",
-	"libyuzu",
-}
-
-var Sample_InstallPackages1 = `(1/21) Installing libcap-getcap (2.71-r0)
+var Sample_InstallPackages = `(1/21) Installing libcap-getcap (2.71-r0)
 (2/21) Installing fakeroot (1.36-r0)
 (3/21) Installing lzip (1.24.1-r1)
 (4/21) Installing patch (2.7.6-r10)
