@@ -2,10 +2,11 @@ package tui
 
 import (
 	"fmt"
+	"home-media/sys/command"
+	"home-media/sys/runtime"
 	"net"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -87,11 +88,42 @@ func (m TuiManager) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Sequence(tea.ExitAltScreen, m.UpdateOutputModels(withFreshScreen), m.Output.Text.TickCmd())
 		case OUTPUT_VIEW_LIST:
 			m.Output.List.CommandExec = msg.opts
-			return m, tea.Sequence(tea.EnterAltScreen, m.UpdateOutputModels(withFreshScreen))
+			return m, tea.Sequence(tea.ExitAltScreen, m.UpdateOutputModels(withFreshScreen))
+			// return m, tea.Sequence(tea.EnterAltScreen, m.UpdateOutputModels(withFreshScreen))
 		case OUTPUT_VIEW_INSTALLER:
 			return m, tea.Sequence(tea.ExitAltScreen, m.UpdateOutputModels(withFreshScreen))
 		}
 		return m, tea.Sequence(tea.ExitAltScreen, m.UpdateOutputModels(withFreshScreen))
+
+	case execProgram:
+		var exitCode chan int = make(chan int)
+
+		go func() {
+			stdin := command.NewCommandReader()
+			stdout := command.NewNullWriter()
+			stderr := command.NewNullWriter()
+
+			shell := runtime.Shell{
+				PID: os.Getpid(),
+
+				Stdin:  stdin,
+				Stdout: stdout,
+				Stderr: stderr,
+
+				Args: os.Args,
+
+				Main: CmdExecShell,
+			}
+
+			stdin.WriteVar("ExecBin", msg.string)
+			stdin.WriteVar("ExecArgs", msg.args)
+
+			exitCode <- shell.Run()
+		}()
+		<-exitCode
+		close(exitCode)
+
+		return m, tea.Quit
 
 	default:
 		switch m.CurrentOutputMode {
@@ -141,24 +173,27 @@ func (m TuiManager) View() string {
 	return ""
 }
 
-func (ctx *TuiManager) UpdateOutputModels(withFreshScreen bool) tea.Cmd {
+func (m *TuiManager) UpdateOutputModels(withFreshScreen bool) tea.Cmd {
 	var cmds []tea.Cmd
 	if withFreshScreen {
-		cmds = append(cmds, tea.Batch(
-			// ctx.Output.Error.Reset(),
-			// ctx.Output.Spinner.Reset(),
-			ctx.Output.Text.Reset(),
-			ctx.Output.List.Reset(),
-			ctx.Output.Installer.Reset(),
-		))
+		cmds = append(
+			cmds,
+			// m.Output.Error.Reset(),
+			// m.Output.Spinner.Reset(),
+			m.Output.Text.Reset(),
+			m.Output.List.Reset(),
+			m.Output.Installer.Reset(),
+		)
 	}
-	cmds = append(cmds, tea.Batch(
-		ctx.Output.Error.UpdateError(ctx.PipeData),
-		ctx.Output.Spinner.UpdateSpinner(ctx.PipeData),
-		ctx.Output.Text.UpdateText(ctx.PipeData),
-		ctx.Output.List.UpdateList(ctx.PipeData),
-		ctx.Output.Installer.UpdateInstaller(ctx.PipeData),
-	))
+	// fmt.Printf("%v\n", m.PipeData)
+	cmds = append(
+		cmds,
+		m.Output.Error.UpdateError(m.PipeData),
+		m.Output.Spinner.UpdateSpinner(m.PipeData),
+		m.Output.Text.UpdateText(m.PipeData),
+		m.Output.List.UpdateList(m.PipeData),
+		m.Output.Installer.UpdateInstaller(m.PipeData),
+	)
 	return tea.Sequence(cmds...)
 }
 
@@ -223,7 +258,7 @@ func (m *TuiManager) ListenToSocket() {
 		)
 
 		if matches.GroupByNumber(4).String() != "" {
-			messagePayload = strings.Trim(matches.GroupByNumber(4).String(), "|")
+			messagePayload = trimRS(matches.GroupByNumber(4).String())
 		} else {
 			messagePayload = matches.GroupByNumber(1).String()
 		}
@@ -235,7 +270,7 @@ func (m *TuiManager) ListenToSocket() {
 		}
 
 		if matches.GroupByNumber(3).String() != "" {
-			optsPayload = strings.Trim(matches.GroupByNumber(3).String(), "|")
+			optsPayload = trimRS(matches.GroupByNumber(3).String())
 		}
 
 		outputMode, err := strconv.Atoi(modePayload)

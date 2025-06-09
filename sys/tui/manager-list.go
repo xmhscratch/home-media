@@ -40,7 +40,9 @@ func (m *ListModel) UpdateList(pipeData T_PipeData) tea.Cmd {
 		uid   string
 		items map[int]ListItem
 	)
+
 	items, uid = parseListData(pipeData)
+	// fmt.Printf("%v\n", items)
 	// if m.uid != uid {
 	// 	return m.Reset()
 	// }
@@ -48,13 +50,16 @@ func (m *ListModel) UpdateList(pipeData T_PipeData) tea.Cmd {
 	m.Items = items
 
 	var cmds []tea.Cmd
+	cmds = append(cmds, m.TickCmd())
 	for index := range len(items) {
 		cmds = append(cmds, m.ViewModel.InsertItem(index, list.Item(items[index])))
 	}
+
 	return tea.Sequence(cmds...)
 }
 
 func (m *ListModel) TickCmd() tea.Cmd {
+	// fmt.Printf("%v\n", m.Items)
 	return nil
 }
 
@@ -63,18 +68,20 @@ func (m *ListModel) SetSize(w int, h int) {
 }
 
 func (m *ListModel) RenderView() string {
+	// return Styles.Main.Render("")
 	return Styles.Main.Render(m.ViewModel.View())
 }
 
 func (m *ListModel) BindExtraKeyCommands(mgr TuiManager, msg tea.KeyMsg) tea.Cmd {
 	if msg.String() == "enter" {
-		// selIndex := m.ViewModel.GlobalIndex()
-		// selItem := m.Items[selIndex]
+		selIndex := m.ViewModel.GlobalIndex()
+		selItem := m.Items[selIndex]
 		go func() {
-			// mgr.Program.Send(pipeResMsg{OUTPUT_VIEW_TEXT, "", m.CommandExec})
+			mgr.Program.Send(execProgram{
+				m.CommandExec,
+				selItem.GetValue(),
+			})
 			// mgr.Program.Send(pipeResMsg{OUTPUT_VIEW_TEXT, "", fmt.Sprintf("%s\n%s\n%s", selItem.Title(), selItem.Description(), selItem.GetValue())})
-			// m.CommandExec
-			// selItem.GetValue()
 		}()
 	}
 	return nil
@@ -88,7 +95,7 @@ func parseListData(pipeData T_PipeData) (data map[int]ListItem, uid string) {
 		var (
 			title string = "(empty)"
 			desc  string = "(empty)"
-			value string = ""
+			bArgs []byte = make([]byte, 0)
 		)
 		if _, ok := pipeData[i][0]; ok {
 			title = pipeData[i][0]
@@ -96,14 +103,19 @@ func parseListData(pipeData T_PipeData) (data map[int]ListItem, uid string) {
 		if _, ok := pipeData[i][1]; ok {
 			desc = strings.TrimSpace(pipeData[i][1])
 		}
-		vs := lo.FilterMapToSlice(pipeData[i], func(ik int, iv string) (string, bool) {
+		// log.Println(desc)
+
+		args := lo.FilterMapToSlice(pipeData[i], func(ik int, iv string) (string, bool) {
 			if ik <= 1 {
 				return "", false
 			}
 			return iv, true
 		})
-		value = strings.Join(vs, "\t")
-		// log.Println(desc)
+		for i := range len(args) {
+			fmt.Appendf(bArgs, " %s", args[i])
+		}
+		value := string(bArgs)
+
 		data[i] = ListItem{title, desc, value}
 		ids = append(ids, title)
 	}

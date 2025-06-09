@@ -136,3 +136,12 @@ func max(a, b int) int {
 	}
 	return b
 }
+
+func trimRS(s string) string {
+	return strings.Map(func(r rune) rune {
+		if r == ASCII_RS {
+			return -1
+		}
+		return r
+	}, s)
+}

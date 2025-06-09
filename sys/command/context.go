@@ -29,7 +29,8 @@ type SessionFileWriter struct {
 }
 
 type CommandFrags struct {
-	ExecBin     string `json:"executor"`
+	ExecBin     string `json:"execBin"`
+	ExecArgs    string `json:"execArgs"`
 	Input       string `json:"input"`
 	Start       string `json:"start"`
 	Duration    string `json:"duration"`

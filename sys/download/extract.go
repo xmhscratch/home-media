@@ -23,7 +23,7 @@ func ExtractShell(shell *runtime.Shell, streamManager *runtime.StreamManager) {
 	}
 
 	shell.ExitCode = 0
-	shell.SetVar("EXECUTOR", cmdFrag.ExecBin)
+	shell.SetVar("EXEC_BIN", cmdFrag.ExecBin)
 	shell.ExitCode = 0
 	shell.SetVar("FFMPEG_INPUT_FILE", cmdFrag.Input)
 	shell.ExitCode = 0
@@ -34,7 +34,7 @@ func ExtractShell(shell *runtime.Shell, streamManager *runtime.StreamManager) {
 	shell.SetVar("FFMPEG_OUTPUT_FILE", cmdFrag.Output)
 
 	func() {
-		var commandName = shell.ReadVar("EXECUTOR")
+		var commandName = shell.ReadVar("EXEC_BIN")
 		var arguments []string
 		arguments = append(arguments, `'`+shell.ReadVar("FFMPEG_INPUT_FILE")+`'`)
 		arguments = append(arguments, shell.ReadVar("STREAM_INDEX"))

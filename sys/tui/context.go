@@ -16,7 +16,8 @@ import (
 type T_PipeData (map[int]map[int]string)
 type T_OutputMode (int)
 
-const RGXP_MESSAGE_PAYLOAD = `^((\d+(?=\|))((?=\|)..[^\|\n]*|)((?=\|).*)|.*)$`
+const ASCII_RS = 0x1E
+const RGXP_MESSAGE_PAYLOAD = `^((\d+(?=\x1E))((?=\x1E)..[^\x1E\n]*|)((?=\x1E).*)|.*)$`
 const RGXP_INSTALL_PKGINFO = `\(([\d]+)\/([\d]+)\)[\ ]*Installing[\ ]*([\w\S]+)[\ ]*\([a-z\d.-]+\)`
 
 const (
@@ -107,6 +108,11 @@ type InstallerModel struct {
 type T_SocketResponse struct {
 	msg string
 	err error
+}
+
+type execProgram struct {
+	string
+	args string
 }
 
 type pipeResMsg struct {

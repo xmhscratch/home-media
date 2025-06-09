@@ -55,8 +55,7 @@ func TestInstaller(t *testing.T) {
 		// 	myTotal = total
 		// }
 
-		// src := strings.NewReader(fmt.Sprintf("%s|%s", OUTPUT_VIEW_INSTALLER, line))
-		src := strings.NewReader(fmt.Sprintf("%s|%s", OUTPUT_VIEW_TEXT, line))
+		src := strings.NewReader(fmt.Sprintf("%s%c%s", OUTPUT_VIEW_TEXT, ASCII_RS, line))
 		buf := make([]byte, 1)
 
 		go func() {

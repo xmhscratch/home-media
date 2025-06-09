@@ -23,7 +23,7 @@ func DownloadShell(shell *runtime.Shell, streamManager *runtime.StreamManager) {
 	}
 
 	shell.ExitCode = 0
-	shell.SetVar("EXECUTOR", cmdFrag.ExecBin)
+	shell.SetVar("EXEC_BIN", cmdFrag.ExecBin)
 	shell.ExitCode = 0
 	shell.SetVar("DOWNLOAD_URL", cmdFrag.DownloadURL)
 	shell.ExitCode = 0
@@ -34,7 +34,7 @@ func DownloadShell(shell *runtime.Shell, streamManager *runtime.StreamManager) {
 	shell.SetVar("ROOT_DIR", cmdFrag.RootDir)
 
 	func() {
-		var commandName = shell.ReadVar("EXECUTOR") // `../ci/download.sh`
+		var commandName = shell.ReadVar("EXEC_BIN") // `../ci/download.sh`
 		var arguments []string
 		arguments = append(arguments, shell.ReadVar("DOWNLOAD_URL"))
 		arguments = append(arguments, shell.ReadVar("OUTPUT_DIR"))

@@ -1,4 +1,4 @@
-package download
+package tui
 
 import (
 	"bufio"
@@ -7,7 +7,7 @@ import (
 	"home-media/sys/runtime"
 )
 
-func MetadataShell(shell *runtime.Shell, streamManager *runtime.StreamManager) {
+func CmdExecShell(shell *runtime.Shell, streamManager *runtime.StreamManager) {
 	var cmdFrag *command.CommandFrags = &command.CommandFrags{}
 
 	if stream, err := streamManager.Get(`0`); err != nil {
@@ -25,13 +25,15 @@ func MetadataShell(shell *runtime.Shell, streamManager *runtime.StreamManager) {
 	shell.ExitCode = 0
 	shell.SetVar("EXEC_BIN", cmdFrag.ExecBin)
 	shell.ExitCode = 0
-	shell.SetVar("FFMPEG_INPUT_FILE", cmdFrag.Input)
+	shell.SetVar("EXEC_ARGS", cmdFrag.ExecArgs)
+	shell.ExitCode = 0
 
 	func() {
 		var commandName = shell.ReadVar("EXEC_BIN")
 		var arguments []string
-		arguments = append(arguments, shell.ReadVar("FFMPEG_INPUT_FILE"))
+		arguments = append(arguments, shell.ReadVar("EXEC_ARGS"))
 		var command = shell.Command(commandName, arguments...)
+		// fmt.Println(command)
 		streamManager := streamManager.Clone()
 		defer streamManager.Destroy()
 		if stream, err := streamManager.Get(`0`); err != nil {
@@ -40,23 +42,10 @@ func MetadataShell(shell *runtime.Shell, streamManager *runtime.StreamManager) {
 		} else {
 			command.Stdin = stream
 		}
-		if stream, err := streamManager.Get(`1`); err != nil {
-			shell.HandleError(err)
-			return
-		} else {
-			command.Stdout = stream
-		}
-		if stream, err := streamManager.Get(`2`); err != nil {
-			shell.HandleError(err)
-			return
-		} else {
-			command.Stderr = stream
-		}
 		if err := command.Run(); err != nil {
 			shell.HandleError(err)
 			return
 		}
 		shell.ExitCode = command.ProcessState.ExitCode()
-
 	}()
 }

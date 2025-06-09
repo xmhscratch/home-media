@@ -1,10 +1,10 @@
 package tui
 
 import (
+	"fmt"
 	"home-media/sys/sample"
 	"log"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/dlclark/regexp2"
@@ -16,8 +16,18 @@ import (
 // 	"testing"
 // )
 
+func TestRegex(t *testing.T) {
+	re := regexp2.MustCompile(`^((\d+(?=\x1E))((?=\x1E)..[^\x1E\n]*|)((?=\x1E).*)|.*)$`, regexp2.RE2|regexp2.Singleline)
+	matches, _ := re.FindStringMatch(fmt.Sprintf("6%c%cecho 123 | tee -a ./test.txt%c%c%s", ASCII_RS, ASCII_RS, ASCII_RS, ASCII_RS, sample.Sample_ListInput))
+	log.Println(matches.GroupByNumber(0).String())
+	log.Println(matches.GroupByNumber(1).String())
+	log.Println(matches.GroupByNumber(2).String())
+	log.Println(trimRS(matches.GroupByNumber(3).String()))
+	log.Println(trimRS(matches.GroupByNumber(4).String()))
+}
+
 func TestList(t *testing.T) {
-	re := regexp2.MustCompile(`^((\d+(?=\|))((?=\|)..[^\|\n]*|)((?=\|).*)|.*)$`, regexp2.RE2)
+	re := regexp2.MustCompile(`^((\d+(?=\|))((?=\|)..[^\|\n]*|)((?=\|).*)|.*)$`, regexp2.RE2|regexp2.Singleline)
 	testcases := map[int]string{
 		0: "1||hello||world",
 		1: "1|2hello||world|1|432",
@@ -31,11 +41,11 @@ func TestList(t *testing.T) {
 	}
 	for _, v := range testcases {
 		matches, _ := re.FindStringMatch(v)
-		log.Println(matches.GroupByNumber(0))
+		log.Println(matches.GroupByNumber(0).String())
 		log.Println(matches.GroupByNumber(1).String())
 		log.Println(matches.GroupByNumber(2).String())
-		log.Println(strings.Trim(matches.GroupByNumber(3).String(), "|"))
-		log.Println(strings.Trim(matches.GroupByNumber(4).String(), "|"))
+		log.Println(trimRS(matches.GroupByNumber(3).String()))
+		log.Println(trimRS(matches.GroupByNumber(4).String()))
 		log.Println("========================")
 	}
 }

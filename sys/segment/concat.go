@@ -23,14 +23,14 @@ func ConcatShell(shell *runtime.Shell, streamManager *runtime.StreamManager) {
 	}
 
 	shell.ExitCode = 0
-	shell.SetVar("EXECUTOR", cmdFrag.ExecBin)
+	shell.SetVar("EXEC_BIN", cmdFrag.ExecBin)
 	shell.ExitCode = 0
 	shell.SetVar("INPUT", cmdFrag.Input)
 	shell.ExitCode = 0
 	shell.SetVar("OUTPUT", cmdFrag.Output)
 
 	func() {
-		var commandName = shell.ReadVar("EXECUTOR") // `../ci/concat.sh`
+		var commandName = shell.ReadVar("EXEC_BIN") // `../ci/concat.sh`
 		var arguments []string
 		arguments = append(arguments, shell.ReadVar("INPUT"))
 		arguments = append(arguments, shell.ReadVar("OUTPUT"))

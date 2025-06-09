@@ -27,4 +27,4 @@ func main() {
 }
 
 // echo "hello" | socat - unix:///run/tuid.sock
-// echo "4|$(cat ./cmd/tui/sample.txt)" | socat - unix:///run/tuid.sock
+// echo "4"$'\x1E'"$(cat ./cmd/tui/sample.txt)" | socat - unix:///run/tuid.sock
