@@ -90,6 +90,7 @@ chmod +x \
 	"$tmp"/usr/sbin/hms/bin/* \
 	"$tmp"/usr/sbin/hms/sbin/* \
 	"$tmp"/usr/sbin/script/*.sh \
+	"$tmp"/usr/sbin/script/*.pl \
 	"$tmp"/usr/sbin/env-hms-answers.sh \
 	"$tmp"/usr/sbin/install-hms.sh \
 ;

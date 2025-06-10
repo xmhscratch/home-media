@@ -39,28 +39,36 @@ setup() {
 		install -o root -g root -m 0775 /usr/sbin/hms/sbin/"$exe" /usr/bin/hms/"$exe" ;;
 	done
 
-	# makefile root:wheel 0775 "$mnt"/usr/sbin/hms/tuid <<-EOF
-	# socat -d -d UNIX-LISTEN:/run/tuid.sock,fork SYSTEM:'$export_dir/bin/tui'
-	# EOF
-
-	makefile root:wheel 0775 "$mnt"/etc/init.d/tuid <<-EOF
+	makefile root:wheel 0775 "$mnt"/etc/init.d/tuidx <<-EOF
 	#!/sbin/openrc-run
 
-	command="/usr/sbin/hms/tuid"
-	command_background=false
-	name="tuid"
+	TUIDX_LOGFILE="\${TUIDX_LOGFILE:-/var/log/\${RC_SVCNAME}.log}"
+	TUIDX_ERRFILE="\${TUIDX_ERRFILE:-/var/log/\${RC_SVCNAME}.err}"
+
+	name="tuidx"
+	command="/usr/bin/socat"
+	command_args="unix-listen:/run/tuidx.sock,fork,perm=0700 SYSTEM:'/usr/bin/hms/tuidx.pl'"
+	command_background="yes"
+	pidfile="/run/\${RC_SVCNAME}.pid"
+	output_log="\${TUIDX_LOGFILE}"
+	error_log="\${TUIDX_ERRFILE}"
 
 	depend() {
-		need localmount
+	    need net
+	    provide tuidx
+	}
+
+	start_pre() {
+	    checkpath -f -m 0744 -o root:wheel "\${TUIDX_LOGFILE}"
+	    checkpath -f -m 0744 -o root:wheel "\${TUIDX_ERRFILE}"
 	}
 
 	respawn_delay=2
 	respawn_max=3
 	respawn_period=60
-	supervisor=supervise-daemon
 	EOF
 
-	rc_add tuid default
+	rc_add tuidx default
 }
 
 setup $1

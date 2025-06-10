@@ -98,7 +98,7 @@ func (shell *Shell) HandleError(err error) {
 func (shell *Shell) Command(name string, args ...string) *exec.Cmd {
 	cmd := exec.Command(name, args...)
 	cmd.Env = syscall.Environ()
-	// fmt.Println(cmd, args)
+	fmt.Println(cmd, args)
 	return cmd
 }
 

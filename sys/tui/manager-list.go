@@ -12,13 +12,13 @@ import (
 
 type ListItem struct {
 	title, desc string
-	value       string
+	value       []string
 }
 
 func (i ListItem) Title() string       { return i.title }
 func (i ListItem) Description() string { return i.desc }
 func (i ListItem) FilterValue() string { return i.title }
-func (i ListItem) GetValue() string    { return i.value }
+func (i ListItem) GetValue() []string  { return i.value }
 
 func (ctx *TuiManager) NewListModel() ListModel {
 	return newListModel()
@@ -93,9 +93,9 @@ func parseListData(pipeData T_PipeData) (data map[int]ListItem, uid string) {
 
 	for i := range len(pipeData) {
 		var (
-			title string = "(empty)"
-			desc  string = "(empty)"
-			bArgs []byte = make([]byte, 0)
+			title string   = "(empty)"
+			desc  string   = "(empty)"
+			value []string = []string{}
 		)
 		if _, ok := pipeData[i][0]; ok {
 			title = pipeData[i][0]
@@ -105,16 +105,12 @@ func parseListData(pipeData T_PipeData) (data map[int]ListItem, uid string) {
 		}
 		// log.Println(desc)
 
-		args := lo.FilterMapToSlice(pipeData[i], func(ik int, iv string) (string, bool) {
+		value = lo.FilterMapToSlice(pipeData[i], func(ik int, iv string) (string, bool) {
 			if ik <= 1 {
 				return "", false
 			}
 			return iv, true
 		})
-		for i := range len(args) {
-			fmt.Appendf(bArgs, " %s", args[i])
-		}
-		value := string(bArgs)
 
 		data[i] = ListItem{title, desc, value}
 		ids = append(ids, title)

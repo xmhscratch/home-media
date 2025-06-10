@@ -45,7 +45,7 @@ setup() {
 	pidfile="/var/run/\${RC_SVCNAME}.pid"
 
 	start_pre() {
-	    checkpath -f -m 0774 -o root:wheel "\${K3S_PROXY_LOGFILE}"
+	    checkpath -f -m 0744 -o root:wheel "\${K3S_PROXY_LOGFILE}"
 	}
 
 	depend() {

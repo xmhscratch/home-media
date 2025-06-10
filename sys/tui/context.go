@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"home-media/sys"
 	"time"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -19,14 +20,16 @@ type T_OutputMode (int)
 const ASCII_RS = 0x1E
 const RGXP_MESSAGE_PAYLOAD = `^((\d+(?=\x1E))((?=\x1E)..[^\x1E\n]*|)((?=\x1E).*)|.*)$`
 const RGXP_INSTALL_PKGINFO = `\(([\d]+)\/([\d]+)\)[\ ]*Installing[\ ]*([\w\S]+)[\ ]*\([a-z\d.-]+\)`
-
+const UNIX_VW_SOCKET_PATH = "/run/tuidw.sock"
+const UNIX_EX_SOCKET_PATH = "/run/tuidx.sock"
 const (
 	_                     T_OutputMode = iota
-	OUTPUT_VIEW_SPINNER   T_OutputMode = 1
-	OUTPUT_VIEW_TEXT      T_OutputMode = 2
-	OUTPUT_VIEW_ERROR     T_OutputMode = 3
-	OUTPUT_VIEW_LIST      T_OutputMode = 4
-	OUTPUT_VIEW_INSTALLER T_OutputMode = 5
+	OUTPUT_SOCKET         T_OutputMode = 1
+	OUTPUT_VIEW_SPINNER   T_OutputMode = 2
+	OUTPUT_VIEW_TEXT      T_OutputMode = 3
+	OUTPUT_VIEW_ERROR     T_OutputMode = 4
+	OUTPUT_VIEW_LIST      T_OutputMode = 5
+	OUTPUT_VIEW_INSTALLER T_OutputMode = 6
 )
 const REFRESH_RATE int = 5
 const REFRESH_RATE_IN_SECONDS int = 1000 / 5
@@ -47,6 +50,7 @@ type DefinedStyle struct {
 }
 
 type TuiManager struct {
+	Config            *sys.Config
 	Program           *tea.Program
 	Header            string
 	CurrentOutputMode T_OutputMode
@@ -112,7 +116,7 @@ type T_SocketResponse struct {
 
 type execProgram struct {
 	string
-	args string
+	args []string
 }
 
 type pipeResMsg struct {

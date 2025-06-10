@@ -2,20 +2,23 @@ package tui
 
 import (
 	"fmt"
-	"home-media/sys/command"
-	"home-media/sys/runtime"
+	"home-media/sys"
+	"io"
+	"log"
 	"net"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/dlclark/regexp2"
 )
 
-func NewTuiManager() (*TuiManager, error) {
+func NewTuiManager(cfg *sys.Config) (*TuiManager, error) {
 	var err error
 	m := &TuiManager{
+		Config:            cfg,
 		CurrentOutputMode: OUTPUT_VIEW_LIST,
 	}
 
@@ -96,33 +99,16 @@ func (m TuiManager) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Sequence(tea.ExitAltScreen, m.UpdateOutputModels(withFreshScreen))
 
 	case execProgram:
-		var exitCode chan int = make(chan int)
+		cmdArgs := []any{}
+		for i := range len(msg.args) {
+			cmdArgs = append(cmdArgs, strconv.Quote(msg.args[i]))
+		}
+		cmdStr := fmt.Sprintf(msg.string, cmdArgs...)
 
-		go func() {
-			stdin := command.NewCommandReader()
-			stdout := command.NewNullWriter()
-			stderr := command.NewNullWriter()
+		re := regexp2.MustCompile(`\%\!\(EXTRA[\s]{0,}([\s\S]+(?:\=[\s\S]+[\,\s]{0,})+)*\)$`, regexp2.RE2|regexp2.Singleline)
+		genCmd, _ := re.Replace(cmdStr, "", -1, 1)
 
-			shell := runtime.Shell{
-				PID: os.Getpid(),
-
-				Stdin:  stdin,
-				Stdout: stdout,
-				Stderr: stderr,
-
-				Args: os.Args,
-
-				Main: CmdExecShell,
-			}
-
-			stdin.WriteVar("ExecBin", msg.string)
-			stdin.WriteVar("ExecArgs", msg.args)
-
-			exitCode <- shell.Run()
-		}()
-		<-exitCode
-		close(exitCode)
-
+		m.ExecuteCommandSocket(strconv.Quote(genCmd))
 		return m, tea.Quit
 
 	default:
@@ -205,18 +191,35 @@ func (m *TuiManager) Start() error {
 	return nil
 }
 
+func (m *TuiManager) ExecuteCommandSocket(msg string) {
+	cmdStr := fmt.Sprintf("%s%csh%c%s", OUTPUT_SOCKET, ASCII_RS, ASCII_RS, msg)
+	// fmt.Printf("%v\n", cmd)
+	src := strings.NewReader(cmdStr)
+	buf := make([]byte, 1)
+
+	conn, err := net.Dial("unix", UNIX_EX_SOCKET_PATH)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+
+	_, err = io.CopyBuffer(conn, src, buf)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
 func (m *TuiManager) ListenToSocket() {
-	socketPath := "/run/tuid.sock"
-	if _, err := os.Stat(socketPath); err == nil {
-		os.Remove(socketPath)
+	if _, err := os.Stat(UNIX_VW_SOCKET_PATH); err == nil {
+		os.Remove(UNIX_VW_SOCKET_PATH)
 	}
 
-	listener, err := net.Listen("unix", socketPath)
+	listener, err := net.Listen("unix", UNIX_VW_SOCKET_PATH)
 	if err != nil {
 		panic(err)
 	}
 	defer listener.Close()
-	fmt.Println("listening on", socketPath)
+	fmt.Println("listening on", UNIX_VW_SOCKET_PATH)
 
 	for {
 		conn, err := listener.Accept()
