@@ -32,7 +32,7 @@
             "styles": [
               {
                 "input": "video.js/dist/video-js.css",
-                "inject": false,
+                "inject": true,
                 "bundleName": "videojs"
               },
               "frontend/styles.scss"

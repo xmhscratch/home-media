@@ -32,11 +32,12 @@ setup() {
 	cp -fr /usr/sbin/hms/node_modules/* "$export_dir"/node_modules/
 
 	for exe in $(find /usr/sbin/hms/bin/* -type f | xargs basename -a); do
-		install -o root -g root -m 0775 /usr/sbin/hms/bin/"$exe" "$export_dir"/bin/"$exe" ;;
+		install -o root -g root -m 0775 /usr/sbin/hms/bin/"$exe" "$export_dir"/bin/"$exe";
 	done
 
+	mkdir -pv "$mnt"/usr/bin/hms/;
 	for exe in $(find /usr/sbin/hms/sbin/* -type f | xargs basename -a); do
-		install -o root -g root -m 0775 /usr/sbin/hms/sbin/"$exe" /usr/bin/hms/"$exe" ;;
+		install -o root -g root -m 0775 /usr/sbin/hms/sbin/"$exe" "$mnt"/usr/bin/hms/"$exe";
 	done
 
 	makefile root:wheel 0775 "$mnt"/etc/init.d/tuidx <<-EOF

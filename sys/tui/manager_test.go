@@ -19,7 +19,7 @@ import (
 
 func TestQuote(t *testing.T) {
 	cmdArgs := []any{"asd1", "asd2", "asd3"}
-	fmt.Println(fmt.Sprintf("%s %s %s", cmdArgs...))
+	fmt.Printf("%s %s %s", cmdArgs...)
 
 	// str := `./exec.sh "echo asd1 | tee -a ./test.txt"`
 	// // print string with double quotes

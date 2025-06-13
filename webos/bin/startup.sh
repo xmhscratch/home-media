@@ -45,9 +45,9 @@ pod_ready_filter="PodReadyToStartContainers=True;Initialized=True;Ready=True;Con
 wait_system() {
 	local ingress_nginx_check_cmd="kubectl get pods -n ingress-nginx -l app.kubernetes.io/instance=ingress-nginx,app.kubernetes.io/name=ingress-nginx -o jsonpath=\"$json_display_format\""
 	check_ready "$ingress_nginx_check_cmd | grep Initialized=True" 3 $CHECK_TIMEOUT
-	check_ready "$ingress_nginx_check_cmd | grep -E '^ingress\-nginx\-controller.+PodReadyToStartContainers=True;Initialized=True;Ready=True;ContainersReady=True;PodScheduled=True;'" 1 $CHECK_TIMEOUT
+	check_ready "$ingress_nginx_check_cmd | grep -E '^ingress\-nginx\-controller.+$pod_ready_filter'" 1 $CHECK_TIMEOUT
 
-	local kube_system_check_cmd="kubectl get pods -n kube-system -o jsonpath=\"{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{'\n'}{end}\""
+	local kube_system_check_cmd="kubectl get pods -n kube-system -o jsonpath=\"$json_display_format\""
 	check_ready "$kube_system_check_cmd | grep -E '$pod_ready_filter'" 4 $CHECK_TIMEOUT
 }
 
@@ -93,7 +93,7 @@ wait_apiserver() {
 }
 
 init() {
-	local usr={1:-hms}
+	local usr=${1:-"hms"}
 	exportfs -afv
 
     udevadm control --reload

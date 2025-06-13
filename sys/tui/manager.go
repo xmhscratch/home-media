@@ -105,10 +105,10 @@ func (m TuiManager) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		cmdStr := fmt.Sprintf(msg.string, cmdArgs...)
 
-		re := regexp2.MustCompile(`\%\!\(EXTRA[\s]{0,}([\s\S]+(?:\=[\s\S]+[\,\s]{0,})+)*\)$`, regexp2.RE2|regexp2.Singleline)
+		re := regexp2.MustCompile(RGXP_TRIM_EXTRA_VARS, regexp2.RE2|regexp2.Singleline)
 		genCmd, _ := re.Replace(cmdStr, "", -1, 1)
 
-		m.ExecuteCommandSocket(strconv.Quote(genCmd))
+		m.CmdExSocket(strconv.Quote(genCmd))
 		return m, tea.Quit
 
 	default:
@@ -191,7 +191,7 @@ func (m *TuiManager) Start() error {
 	return nil
 }
 
-func (m *TuiManager) ExecuteCommandSocket(msg string) {
+func (m *TuiManager) CmdExSocket(msg string) {
 	cmdStr := fmt.Sprintf("%s%csh%c%s", OUTPUT_SOCKET, ASCII_RS, ASCII_RS, msg)
 	// fmt.Printf("%v\n", cmd)
 	src := strings.NewReader(cmdStr)

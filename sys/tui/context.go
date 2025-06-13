@@ -20,6 +20,8 @@ type T_OutputMode (int)
 const ASCII_RS = 0x1E
 const RGXP_MESSAGE_PAYLOAD = `^((\d+(?=\x1E))((?=\x1E)..[^\x1E\n]*|)((?=\x1E).*)|.*)$`
 const RGXP_INSTALL_PKGINFO = `\(([\d]+)\/([\d]+)\)[\ ]*Installing[\ ]*([\w\S]+)[\ ]*\([a-z\d.-]+\)`
+const RGXP_TRIM_EXTRA_VARS = `\%\!\(EXTRA[\s]{0,}([\s\S]+(?:\=[\s\S]+[\,\s]{0,})+)*\)$`
+const RGXP_TRIM_MISSING_VARS = ``
 const UNIX_VW_SOCKET_PATH = "/run/tuidw.sock"
 const UNIX_EX_SOCKET_PATH = "/run/tuidx.sock"
 const (
