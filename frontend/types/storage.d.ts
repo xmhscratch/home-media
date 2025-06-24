@@ -19,11 +19,26 @@ export type ITreeRootNode = {
     label: string
 }
 
+export type IFileInfo = {
+    stream_index: number
+    codec_name: string
+    lang_code: string
+    lang_title: string
+}
+
+export type IDubFileInfo = IFileInfo & {
+    bps: number
+    number_of_bytes: number
+    number_of_frames: number
+}
+
+export type ISubFileInfo = IFileInfo & { }
+
 export type FileMetaInfo = {
     path: string
     size: number
-    subtitles?: Array<{ stream_index: number, codec_name: string, lang_code: string, lang_title: string }>
-    dubs?: Array<{ stream_index: number, codec_name: string, lang_code: string, lang_title: string }>
+    subtitles?: Array<ISubFileInfo>
+    dubs?: Array<IDubFileInfo>
     duration?: float
     sourceReady?: boolean
 }

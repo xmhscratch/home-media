@@ -186,18 +186,24 @@ export class FileService {
     );
   }
 
-  fetchFile(srcUrl: string, byteStart?: number, byteEnd?: number) {
+  fetchFile(
+    srcUrl: string,
+    byteStart?: number,
+    byteEnd?: number,
+  ): Observable<ArrayBuffer> {
     const headers = new HttpHeaders({
-      range: `bytes=${byteStart || ''}-${byteEnd || ''}`,
-      responseType: 'arraybuffer',
+      range: `bytes=${byteStart || 0}-${byteEnd || ''}`,
       endpoint: <string>this.env.get('endpoint.file'),
     });
 
     return this.http
-      .get<unknown>(`${srcUrl}`, {
+      .get(`${srcUrl}`, {
         headers,
-        // observe: "body",
+        responseType: 'arraybuffer',
       })
-      .pipe(tap((v) => console.log(v)));
+      .pipe();
+    // .pipe(
+    //   tap((v) => console.log(v)),
+    // );
   }
 }

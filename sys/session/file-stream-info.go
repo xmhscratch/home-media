@@ -2,17 +2,18 @@ package session
 
 import (
 	"encoding/json"
+	"strconv"
 )
 
 type fStreamInfoAlias struct {
-	StreamIndex    int64  `json:"stream_index"`
-	CodecName      string `json:"codec_name"`
-	LangCode       string `json:"lang_code"`
-	LangTitle      string `json:"lang_title"`
-	BitRate        int64  `json:"bps,string,omitempty"`
-	Duration       string `json:"duration,omitempty"`
-	NumberOfFrames int64  `json:"number_of_frames,string,omitempty"`
-	NumberOfBytes  int64  `json:"number_of_bytes,string,omitempty"`
+	StreamIndex    int64       `json:"stream_index"`
+	CodecName      string      `json:"codec_name"`
+	LangCode       string      `json:"lang_code"`
+	LangTitle      string      `json:"lang_title"`
+	BitRate        interface{} `json:"bps,omitempty"`
+	Duration       string      `json:"duration,omitempty"`
+	NumberOfFrames interface{} `json:"number_of_frames,omitempty"`
+	NumberOfBytes  interface{} `json:"number_of_bytes,omitempty"`
 }
 
 func (ctx FStreamInfo) MarshalJSON() ([]byte, error) {
@@ -51,26 +52,54 @@ doneParsing:
 		err = nil
 	}
 
+	var (
+		bps            int64
+		numberOfFrames int64
+		numberOfBytes  int64
+	)
+	switch a.BitRate.(type) {
+	case string:
+		if bps, err = strconv.ParseInt(a.BitRate.(string), 10, 64); err != nil {
+			break
+		}
+	}
+	switch a.NumberOfFrames.(type) {
+	case string:
+		if numberOfFrames, err = strconv.ParseInt(a.NumberOfFrames.(string), 10, 64); err != nil {
+			break
+		}
+	}
+	switch a.NumberOfBytes.(type) {
+	case string:
+		if numberOfBytes, err = strconv.ParseInt(a.NumberOfBytes.(string), 10, 64); err != nil {
+			break
+		}
+	}
+
+	if err != nil {
+		return err
+	}
+
 	if ctx == nil {
 		ctx = &FStreamInfo{
 			StreamIndex:    a.StreamIndex,
 			CodecName:      a.CodecName,
 			LangCode:       a.LangCode,
 			LangTitle:      a.LangTitle,
-			BitRate:        a.BitRate,
+			BitRate:        bps,
 			Duration:       a.Duration,
-			NumberOfFrames: a.NumberOfFrames,
-			NumberOfBytes:  a.NumberOfBytes,
+			NumberOfFrames: numberOfFrames,
+			NumberOfBytes:  numberOfBytes,
 		}
 	} else {
 		ctx.StreamIndex = a.StreamIndex
 		ctx.CodecName = a.CodecName
 		ctx.LangCode = a.LangCode
 		ctx.LangTitle = a.LangTitle
-		ctx.BitRate = a.BitRate
+		ctx.BitRate = bps
 		ctx.Duration = a.Duration
-		ctx.NumberOfFrames = a.NumberOfFrames
-		ctx.NumberOfBytes = a.NumberOfBytes
+		ctx.NumberOfFrames = numberOfFrames
+		ctx.NumberOfBytes = numberOfBytes
 	}
 
 	return err
@@ -109,7 +138,44 @@ doneParsing:
 
 	var ls []FStreamInfo = []FStreamInfo{}
 	for _, f := range rs {
-		ls = append(ls, FStreamInfo(f))
+		var (
+			bps            int64
+			numberOfFrames int64
+			numberOfBytes  int64
+		)
+		switch f.BitRate.(type) {
+		case string:
+			if bps, err = strconv.ParseInt(f.BitRate.(string), 10, 64); err != nil {
+				break
+			}
+		}
+		switch f.NumberOfFrames.(type) {
+		case string:
+			if numberOfFrames, err = strconv.ParseInt(f.NumberOfFrames.(string), 10, 64); err != nil {
+				break
+			}
+		}
+		switch f.NumberOfBytes.(type) {
+		case string:
+			if numberOfBytes, err = strconv.ParseInt(f.NumberOfBytes.(string), 10, 64); err != nil {
+				break
+			}
+		}
+
+		if err != nil {
+			return err
+		}
+		fsInf := FStreamInfo{
+			StreamIndex:    f.StreamIndex,
+			CodecName:      f.CodecName,
+			LangCode:       f.LangCode,
+			LangTitle:      f.LangTitle,
+			BitRate:        bps,
+			Duration:       f.Duration,
+			NumberOfFrames: numberOfFrames,
+			NumberOfBytes:  numberOfBytes,
+		}
+		ls = append(ls, fsInf)
 	}
 	*list = ls
 	return err

@@ -25,9 +25,9 @@ import { Message } from 'primeng/message';
 import { PanelModule } from 'primeng/panel';
 
 import { clamp as ldClamp } from 'lodash-es';
-import { Subscription, Subject, debounceTime, delay, of, first } from 'rxjs';
+import { Subscription, Subject, debounceTime, timeout, lastValueFrom, delay, of, first } from 'rxjs';
 
-import { IFileListItem, ISocketMessage } from '@T/storage';
+import { IFileListItem, ISocketMessage, IDubFileInfo } from '@T/storage';
 import { EnvService } from '@/env.service';
 import { StorageService } from '@/storage.service';
 import { FileService, TFileList } from '@/file.service';
@@ -35,8 +35,6 @@ import { FileURLPipe } from '@/fileurl.pipe';
 import { FileSizePipe } from '@/filesize.pipe';
 import { MyPercentPipe } from '@/mypercent.pipe';
 // import parseRange from 'range-parser';
-
-const BUFFER_CHUNK_SIZE = 1024 * 100;
 
 @Component({
   selector: 'app-player',
@@ -151,38 +149,25 @@ export class CPlayer implements OnInit, OnDestroy, AfterViewInit {
     );
   }
 
-  async initAudio() {
+  async initAudio(dub: IDubFileInfo) {
     let context;
     if (!context) {
       // @ts-ignore
       context = new (window.AudioContext || window.webkitAudioContext)();
     }
 
-    // @for (dub of f().dubs; track $index) {
-    //   <source
-    //     src="http://192.168.56.55:4150/{{ f().nodeId }}/{{
-    //       f().fileKey
-    //     }}.{{ dub.lang_code }}{{ dub.stream_index }}.mp4"
-    //     type="audio/ogg"
-    //   />
-    // }
+    // console.log(dub)
+    // 0-22920625/22920626
+    // number_of_bytes:22721005
+    // number_of_frames:61157
 
-    // Fetch and decode the audio file
-    const dubs = this.f().dubs;
-    if (!dubs || dubs.length == 0) {
-      return;
-    }
+    const res$ = this.fileService
+      .fetchFile(`${this.f().nodeId}/${this.f().fileKey}.${dub.lang_code}${dub.stream_index}.mp4`, 0)
+      .pipe(timeout({ first: 10_000, each: 10_000 }));
 
-    // interval(10000).pipe(
-    //   takeWhile(() => currentStart < totalSize),
-    //   switchMap(() => { }),
-    // ).subscribe()
-
-    const fileUrl = new URL(`${this.f().nodeId}/${this.f().fileKey}.${dubs[0].lang_code}${dubs[0].stream_index}.mp4`, this.baseURL());
-    // this.fileService.fetchFile(fileUrl, 0, 1024 - 1).subscribe()
-    const response = await fetch(fileUrl.href);
-    const arrayBuffer = await response.arrayBuffer();
+    const arrayBuffer = await lastValueFrom(res$);
     // console.log(arrayBuffer);
+
     const audioBuffer = await context.decodeAudioData(arrayBuffer);
 
     // Create a GainNode for volume control
@@ -220,6 +205,11 @@ export class CPlayer implements OnInit, OnDestroy, AfterViewInit {
           // Restart from seeked position
           source = initSource();
           source.start(0, time || 0);
+
+          // interval(10000).pipe(
+          //   takeWhile(() => currentStart < totalSize),
+          //   switchMap(() => { }),
+          // ).subscribe()
         }
       },
       async pause() {
@@ -241,7 +231,13 @@ export class CPlayer implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
-    const audio = await this.initAudio();
+    // Fetch and decode the audio file
+    const dubs = this.f().dubs;
+    if (!dubs || dubs.length == 0) {
+      return;
+    }
+
+    const audio = await this.initAudio(dubs[0]);
     const audioEventInit = () => {
       if (!audio) {
         return;
@@ -276,6 +272,43 @@ export class CPlayer implements OnInit, OnDestroy, AfterViewInit {
         controls: true,
         fluid: true,
         responsive: true,
+        userActions: {
+          hotkeys: (e: KeyboardEvent) => {
+            switch (e.key) {
+              case 'ArrowLeft': {
+                const destTime = this.getPlayerCurrentTime()-5;
+                this.player.currentTime(destTime) && audio.start(destTime);
+                break;
+              }
+              case 'ArrowRight': {
+                const destTime = this.getPlayerCurrentTime()+5;
+                this.player.currentTime(destTime) && audio.start(destTime);
+                break;
+              }
+              case 'ArrowUp': {
+                const destVol = this.getPlayerCurrentVolume()+0.1;
+                this.player.volume(destVol) && audio.setVolume(destVol);
+                break;
+              }
+              case 'ArrowDown': {
+                const destVol = this.getPlayerCurrentVolume()-0.1;
+                this.player.volume(destVol) && audio.setVolume(destVol);
+                break;
+              }
+              case ' ': case 'Spacebar': {
+                if (!this.player.paused()) {
+                  this.player.pause();
+                  audio.pause();
+                } else {
+                  this.player.play();
+                  audio.start(this.getPlayerCurrentTime());
+                }
+                break;
+              }
+              default: break;
+            }
+          }
+        }
       },
       audioEventInit,
     );

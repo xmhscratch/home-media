@@ -17,10 +17,13 @@ func TestFStreamInfoMarshalJSON(t *testing.T) {
 		b               []byte
 		rawFStreamInfos FStreamInfoList = FStreamInfoList{
 			FStreamInfo{
-				StreamIndex: 1,
-				CodecName:   "eac3",
-				LangCode:    "jpn",
-				LangTitle:   "Japanese (E-AC-3) (2.0) [AMZN]",
+				StreamIndex:    1,
+				CodecName:      "eac3",
+				LangCode:       "jpn",
+				LangTitle:      "Japanese (E-AC-3) (2.0) [AMZN]",
+				BitRate:        128000,
+				NumberOfFrames: 61159,
+				NumberOfBytes:  22721748,
 			},
 		}
 	)

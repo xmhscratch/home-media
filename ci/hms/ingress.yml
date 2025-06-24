@@ -103,7 +103,7 @@ metadata:
     nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/enable-cors: "true"
     nginx.ingress.kubernetes.io/cors-allow-methods: "OPTIONS,GET,POST,PUT,PATCH,HEAD,DELETE"
-    nginx.ingress.kubernetes.io/cors-allow-headers: "Enctype,Endpoint"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "Enctype,Endpoint,ResponseType,Range"
     nginx.ingress.kubernetes.io/cors-allow-credentials: "false"
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
     ingress.kubernetes.io/ssl-redirect: "false"
