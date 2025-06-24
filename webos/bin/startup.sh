@@ -127,10 +127,10 @@ init() {
 
 		touch "$usr_home_dir"/.renovated
 	else
-		wait_apiserver "$usr_home_dir"
-		wait_system
-		wait_redis
-		wait_logstash
+		# wait_apiserver "$usr_home_dir"
+		# wait_system
+		# wait_redis
+		# wait_logstash
 		wait_hms
 	fi
 }

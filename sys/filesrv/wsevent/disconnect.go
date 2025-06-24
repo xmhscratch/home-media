@@ -9,6 +9,5 @@ import (
 
 func HandleDisconnect(cfg *sys.Config, app *fiber.App) func(*socketio.EventPayload) {
 	return func(ep *socketio.EventPayload) {
-		// ep.Kws.Fire(socketio.EventClose, []byte{})
 	}
 }

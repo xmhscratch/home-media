@@ -18,6 +18,7 @@ nfs-utils-openrc
 pam-rundir
 pm-utils
 sfdisk
+socat
 sudo
 syslinux
 udisks2

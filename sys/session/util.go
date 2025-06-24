@@ -117,11 +117,11 @@ func torrentConfig() (config *torrent.ClientConfig) {
 	config.MaxUnverifiedBytes = 0
 
 	config.ListenPort = RandomInt() + 42000
-	// config.NoDefaultPortForwarding = true
+	config.NoDefaultPortForwarding = true
 	// config.NoUpload = true
 	config.Seed = false
 	config.DisableUTP = true
-	// config.DisableIPv6 = false
+	config.DisableIPv6 = true
 	// config.DisableIPv4 = false
 	// config.DisableIPv4Peers = false
 	// config.DisableTCP = false

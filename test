@@ -1,0 +1,2 @@
+go build -mod=vendor -o /home/data/dist/file ./cmd/file/main.go
+kubectl rollout restart deployment/file -n hms

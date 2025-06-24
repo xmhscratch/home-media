@@ -122,9 +122,19 @@ tty6::respawn:/sbin/getty -n -l /usr/sbin/autologin 38400 tty6
 EOF
 ###########
 mkdir -pv "$tmp"/root/
+makefile root:root 0755 "$tmp"/etc/motd <<-EOF
+EOF
 makefile root:root 0755 "$tmp"/root/.profile <<-EOF
 #!/bin/sh
-echo "================================================="
+. "/usr/lib/libalpine.sh"
+ask_yesno "Choose 'y' to includes dev environment, 'n' for minimal system (y/n)"
+case \$? in
+    0) echo "/usr/sbin/install-hms.sh" | /bin/sh ;;
+    *)
+		ask "What's the IP address of devserver? [192.168.56.55]" 192.168.56.55
+		echo "DEV=\$resp /usr/sbin/install-hms.sh" | /bin/sh
+	;;
+esac
 EOF
 ###########
 mkdir -pv "$tmp"/etc/init.d/

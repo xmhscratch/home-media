@@ -18,7 +18,7 @@ setup() {
 	sed -Ei "s@[\#]{0,}AllowTcpForwarding.+@AllowTcpForwarding yes@g" "$mnt"/etc/ssh/sshd_config
 
 	cat >>"$mnt"/etc/fstab <<-EOF
-		$dev_server:/$repo_name/	/home/dev/	nfs	addr=$dev_server,nfsvers=4,exec,nodev,noatime,nodiratime,soft,rsize=1048576,wsize=1048576,X-mount.mkdir=0775   0 0
+		$dev_server:/$repo_name/    /home/dev/    nfs    addr=$dev_server,nfsvers=4,exec,nodev,noatime,nodiratime,soft,rsize=1048576,wsize=1048576,X-mount.mkdir=0775   0 0
 	EOF
 
 	echo -e "https://dl-cdn.alpinelinux.org/alpine/v3.21/main/" >> /etc/apk/repositories;

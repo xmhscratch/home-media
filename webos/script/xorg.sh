@@ -172,7 +172,7 @@ setup() {
 	exec dbus-launch --sh-syntax --exit-with-session chromium \
 	    --window-size="1440,900" \
 	    --window-position="0,0" \
-	    --app="http://frontend.hms/" \
+		--app="http://127.0.0.1:8001/api/v1/namespaces/default/services/https:kubernetes-dashboard:/proxy/" \
 	    --no-sandbox \
 	    --kiosk \
 	    --start-fullscreen \

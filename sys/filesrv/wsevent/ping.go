@@ -7,6 +7,7 @@ import (
 	"home-media/sys"
 	"home-media/sys/filesrv"
 	"home-media/sys/session"
+	"sync"
 	"time"
 
 	"github.com/gofiber/contrib/socketio"
@@ -19,28 +20,21 @@ import (
 func HandlePing(cfg *sys.Config, app *fiber.App) func(*socketio.EventPayload) {
 	return func(ep *socketio.EventPayload) {
 		var (
-			err        error
-			fileKey    string = ep.Kws.GetStringAttribute("file_key")
-			sessionId  string = ep.Kws.GetStringAttribute("session_id")
-			keyName    string = session.GetKeyName(sessionId)
-			rds        *redis.Client
-			subscriber *redis.PubSub
+			err  error
+			sock *SocketConnection
 		)
 
-		rds = sys.NewClient(cfg)
-		ep.Kws.SetAttribute("rds", rds)
-
-		if subscriber == nil {
-			subscriber = rds.Subscribe(context.TODO(), fileKey)
-			ep.Kws.SetAttribute("subscriber", subscriber)
+		if s, ok := socketManager.Get(ep.Kws.UUID); !ok {
+			ep.Kws.Fire(socketio.EventClose, []byte{})
+			return
+		} else {
+			sock = s.(*sync.Pool).Get().(*SocketConnection)
 		}
 
 		go func() {
 		stopMessage:
-			for {
-				time.Sleep(time.Duration(50) * time.Millisecond)
-
-				if subscriber == nil || ep.Kws.GetAttribute("subscriber") == nil {
+			for range time.Tick(time.Duration(10) * time.Millisecond) {
+				if sock.Subscriber == nil {
 					break stopMessage
 				}
 
@@ -48,8 +42,10 @@ func HandlePing(cfg *sys.Config, app *fiber.App) func(*socketio.EventPayload) {
 					break stopMessage
 				}
 
-				var msgChan <-chan *redis.Message = subscriber.Channel()
-				var msg *redis.Message = <-msgChan
+				var (
+					msgChan <-chan *redis.Message = sock.Subscriber.Channel()
+					msg     *redis.Message        = <-msgChan
+				)
 
 				// fmt.Println(msg)
 
@@ -72,7 +68,7 @@ func HandlePing(cfg *sys.Config, app *fiber.App) func(*socketio.EventPayload) {
 		if err = (&session.FSMessage{
 			Stage:   1,
 			Message: "Initializing...",
-		}).SendToSocket(rds, fileKey); err != nil {
+		}).SendToSocket(rds, sock.FileKey); err != nil {
 			fmt.Println(err)
 			return
 		}
@@ -82,8 +78,9 @@ func HandlePing(cfg *sys.Config, app *fiber.App) func(*socketio.EventPayload) {
 		var (
 			metaJSON string
 			meta     *session.FileMetaInfo
+			keyName  string = session.GetKeyName(sock.SessionId)
 		)
-		if metaJSON, err = rds.HGet(context.TODO(), sys.BuildString(keyName, ":files"), fileKey).Result(); err != nil {
+		if metaJSON, err = rds.HGet(context.TODO(), sys.BuildString(keyName, ":files"), sock.FileKey).Result(); err != nil {
 			fmt.Println(err)
 			return
 		} else {
@@ -99,14 +96,14 @@ func HandlePing(cfg *sys.Config, app *fiber.App) func(*socketio.EventPayload) {
 			if err = (&session.FSMessage{
 				Stage:   5,
 				Message: metaJSON,
-			}).SendToSocket(rds, fileKey); err != nil {
+			}).SendToSocket(rds, sock.FileKey); err != nil {
 				fmt.Println(err)
 			}
 		default:
 			if err = (&session.FSMessage{
 				Stage:   0,
 				Message: "",
-			}).SendToSocket(rds, fileKey); err != nil {
+			}).SendToSocket(rds, sock.FileKey); err != nil {
 				fmt.Println(err)
 				return
 			}
